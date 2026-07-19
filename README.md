@@ -92,6 +92,33 @@ than the DANDI API and its S3 storage bucket.
 - Keep the tab open while uploading; the app warns before you close it
   mid-upload.
 
+## Troubleshooting CORS (for instance operators)
+
+The app runs on a different origin than the archive API, so the API
+deployment must allow it. If "Save & test connection" works but uploads fail
+at `POST /uploads/initialize/` with a missing `Access-Control-Allow-Origin`
+header, the app prints a differential CORS diagnosis; server-side, check:
+
+1. **API (Django)** — the origin hosting this page must be included in
+   `DJANGO_CORS_ALLOWED_ORIGINS` (or matched by
+   `DJANGO_CORS_ALLOWED_ORIGIN_REGEXES`), e.g.
+   `https://<owner>.github.io`. Note that `django-cors-headers` applies to
+   all methods equally — if GETs pass but POSTs don't, look for a proxy, WAF,
+   or gateway in front of the API that answers `OPTIONS` itself or strips
+   response headers on POST.
+2. **Storage bucket (S3/MinIO)** — the bucket receiving the presigned part
+   uploads needs a CORS rule allowing `PUT`/`POST` from the app's origin
+   **and exposing the `ETag` response header**:
+
+   ```json
+   [{
+     "AllowedOrigins": ["*"],
+     "AllowedMethods": ["GET", "PUT", "POST"],
+     "AllowedHeaders": ["*"],
+     "ExposeHeaders": ["ETag"]
+   }]
+   ```
+
 ## Deployment (GitHub Pages)
 
 Two workflows publish the site to the `gh-pages` branch:
