@@ -758,13 +758,58 @@ async function processFile(file) {
       row.setStatus("Upload cancelled.", "warn");
     } else {
       row.setBadge("Error", "err");
-      row.setStatus(friendlyError(e), "err");
+      let msg = friendlyError(e);
+      if (e instanceof ApiError && e.status === 0) {
+        try {
+          msg += `\n\n${await diagnoseCors(cfg)}`;
+        } catch (probeErr) {
+          /* diagnosis is best-effort */
+        }
+      }
+      row.setStatus(msg, "err");
       console.error(e);
     }
     row.clearActions();
   } finally {
     activeUploads.delete(abort);
   }
+}
+
+// When a request dies with a network/CORS error, probe the API two ways to
+// pinpoint which layer of the server's CORS setup is broken. (Browsers don't
+// let a page inspect another origin's CORS headers directly, so this
+// differential probe is the best client-side diagnosis available.)
+async function diagnoseCors(cfg) {
+  const probe = async (headers) => {
+    try {
+      const r = await fetch(`${cfg.api}/info/`, { headers });
+      return r.status > 0; // readable response of any status = CORS passed
+    } catch {
+      return false;
+    }
+  };
+  const simple = await probe({}); // no preflight needed
+  const preflighted = await probe({ Authorization: `token ${cfg.apiKey}` });
+  const origin = window.location.origin;
+  if (!simple && !preflighted) {
+    return (
+      `CORS diagnosis: the API refuses ALL cross-origin requests from ${origin}. ` +
+      "The instance operators must add this origin to the server's CORS allowlist " +
+      "(DJANGO_CORS_ALLOWED_ORIGINS / DJANGO_CORS_ALLOWED_ORIGIN_REGEXES)."
+    );
+  }
+  if (!preflighted) {
+    return (
+      `CORS diagnosis: simple requests from ${origin} pass, but preflighted (OPTIONS) ` +
+      "requests are rejected — the API's CORS layer is not answering preflights for this origin."
+    );
+  }
+  return (
+    `CORS diagnosis: GET requests from ${origin} pass CORS, but this write request's ` +
+    "response came back without an Access-Control-Allow-Origin header. Something in the " +
+    "server's stack (CORS middleware config, or a proxy/WAF in front of the API) is not " +
+    "adding CORS headers to POST responses. This can only be fixed by the instance operators."
+  );
 }
 
 function friendlyError(e) {
@@ -811,7 +856,15 @@ async function testConnection() {
       " You can now drop .mp4 files below.";
     statusEl.className = "status ok";
   } catch (e) {
-    statusEl.textContent = `✗ ${friendlyError(e)}`;
+    let msg = friendlyError(e);
+    if (e instanceof ApiError && e.status === 0) {
+      try {
+        msg += ` ${await diagnoseCors(cfg)}`;
+      } catch (probeErr) {
+        /* diagnosis is best-effort */
+      }
+    }
+    statusEl.textContent = `✗ ${msg}`;
     statusEl.className = "status err";
   } finally {
     els.connectBtn.disabled = false;
@@ -875,7 +928,10 @@ els.instance.addEventListener("change", () => {
   el.addEventListener("change", saveSettings)
 );
 els.remember.addEventListener("change", saveSettings);
-els.connectBtn.addEventListener("click", testConnection);
+document.getElementById("config-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  testConnection();
+});
 els.apiKeyHelp.addEventListener("click", () => {
   els.apiKeyHelpText.hidden = !els.apiKeyHelpText.hidden;
 });
