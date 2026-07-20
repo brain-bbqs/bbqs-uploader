@@ -804,11 +804,38 @@ async function diagnoseCors(cfg) {
       "requests are rejected — the API's CORS layer is not answering preflights for this origin."
     );
   }
+  // GETs pass — check whether POSTs fail across the board or only the upload
+  // endpoint, using a harmless read-only POST (/blobs/digest/ lookup).
+  let postPasses = false;
+  try {
+    const r = await fetch(`${cfg.api}/blobs/digest/`, {
+      method: "POST",
+      headers: {
+        Authorization: `token ${cfg.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        algorithm: "dandi:dandi-etag",
+        value: `${"0".repeat(32)}-1`,
+      }),
+    });
+    postPasses = r.status > 0;
+  } catch {
+    postPasses = false;
+  }
+  if (postPasses) {
+    return (
+      `CORS diagnosis: GET requests AND other POST requests from ${origin} pass CORS, ` +
+      "but the upload-initialize response came back without an Access-Control-Allow-Origin " +
+      "header. A proxy/WAF rule specific to the /uploads/ path on the API server is the " +
+      "likely culprit. This can only be fixed by the instance operators."
+    );
+  }
   return (
-    `CORS diagnosis: GET requests from ${origin} pass CORS, but this write request's ` +
-    "response came back without an Access-Control-Allow-Origin header. Something in the " +
-    "server's stack (CORS middleware config, or a proxy/WAF in front of the API) is not " +
-    "adding CORS headers to POST responses. This can only be fixed by the instance operators."
+    `CORS diagnosis: GET requests from ${origin} pass CORS, but every POST response ` +
+    "comes back without an Access-Control-Allow-Origin header. Something in the " +
+    "server's stack (a proxy, gateway, or WAF in front of the Django API) is stripping " +
+    "CORS headers from POST responses. This can only be fixed by the instance operators."
   );
 }
 
