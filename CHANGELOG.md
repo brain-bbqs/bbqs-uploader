@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.7
+
+#### 🚀 Enhancement
+
+- Added a short message next to the status dot explaining the problem when the connection check fails, matching what was previously only in the hover tooltip ([#13](https://github.com/brain-bbqs/ember-uploader/pull/13))
+
 ## 0.0.6
 
 #### 🚀 Enhancement

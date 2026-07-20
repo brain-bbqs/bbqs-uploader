@@ -15,8 +15,9 @@ function buildConnectionCard(status?: { text: string; kind: "ok" | "err" | "busy
         <label>
           <span
             >Dandiset ID
-            <span class="status-dot${status ? ` ${status.kind}` : ""}"${status ? "" : " hidden"}>
-              <span class="sr-only">${status?.text ?? ""}</span>
+            <span class="status-indicator" role="status" aria-live="polite">
+              <span class="status-dot${status ? ` ${status.kind}` : ""}"${status ? "" : " hidden"}></span>
+              <span class="status-text${status?.kind === "err" ? "" : " sr-only"}">${status?.text ?? ""}</span>
             </span>
           </span>
           <input type="text" placeholder="e.g. 000123 or DANDI:000123" spellcheck="false" />
