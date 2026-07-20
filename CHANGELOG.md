@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.8
+
+#### 🐛 Bug Fix
+
+- Tightened the bottom-left version link flush to the page corner and restyled the Center for Open Neuroscience logo as a large, faint watermark in the bottom-right corner, matching the footer treatment on the stamped-checklist site ([#10](https://github.com/brain-bbqs/ember-uploader/pull/10))
+
 ## 0.0.7
 
 #### 🚀 Enhancement
