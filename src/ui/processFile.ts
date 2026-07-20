@@ -11,21 +11,20 @@ import { ApiError, friendlyError } from "../lib/errors";
 
 let fileCounter = 0;
 
+function isMp4(file: File): boolean {
+  return /\.mp4$/i.test(file.name) || file.type === "video/mp4";
+}
+
 export async function processFile(
   els: UploaderElements,
   file: File,
+  relativePath: string,
   getConfig: () => UploaderConfig,
   activeUploads: Set<AbortController>,
+  container: HTMLUListElement,
 ): Promise<void> {
   const id = `file-${fileCounter++}`;
-  const row = createFileRow(els.fileList, file, id);
-
-  if (!/\.mp4$/i.test(file.name) && file.type !== "video/mp4") {
-    row.setBadge("Rejected", "err");
-    row.setStatus("Only .mp4 files are accepted by this tool.", "err");
-    row.pathInput.disabled = true;
-    return;
-  }
+  const row = createFileRow(container, file, id);
 
   const cfg = getConfig();
   const problems = configProblems(cfg);
@@ -36,38 +35,44 @@ export async function processFile(
     return;
   }
 
-  row.pathInput.value = sanitizeFilename(file.name);
+  const prefix = ["sourcedata", "raw", ...relativePath.split("/").filter(Boolean)].join("/");
+  row.pathInput.value = sanitizePath(prefix, sanitizeFilename(file.name));
 
-  // --- 1. Integrity checks -------------------------------------------------
-  try {
-    row.setBadge("Checking", "busy");
-    row.setStatus("Verifying MP4 structure…");
-    await checkMp4Structure(file);
-    row.setStatus("Verifying the file can be opened…");
-    const probe = await probeVideoDecodable(els.probeVideo, file);
-    if (probe.ok) {
-      const secs = Number.isFinite(probe.duration) ? `${Math.round(probe.duration!)} s` : "unknown length";
-      row.setStatus(`MP4 verified (${probe.width}×${probe.height}, ${secs}).`, "ok");
-    } else {
-      const answer = await askUser(
-        row,
-        `MP4 structure looks fine, but this browser could not decode it (${probe.reason}). ` +
-          "This can happen with codecs the browser lacks. Upload anyway?",
-        [
-          { label: "Upload anyway", value: "upload", primary: true },
-          { label: "Skip file", value: "skip" },
-        ],
-      );
-      if (answer === "skip") {
-        row.setBadge("Skipped", "warn");
-        row.setStatus("Skipped by user.", "warn");
-        return;
+  // --- 1. Integrity checks (MP4-specific; skipped for other file types) ----
+  if (isMp4(file)) {
+    try {
+      row.setBadge("Checking", "busy");
+      row.setStatus("Verifying MP4 structure…");
+      await checkMp4Structure(file);
+      row.setStatus("Verifying the file can be opened…");
+      const probe = await probeVideoDecodable(els.probeVideo, file);
+      if (probe.ok) {
+        const secs = Number.isFinite(probe.duration) ? `${Math.round(probe.duration!)} s` : "unknown length";
+        row.setStatus(`MP4 verified (${probe.width}×${probe.height}, ${secs}).`, "ok");
+      } else {
+        const answer = await askUser(
+          row,
+          `MP4 structure looks fine, but this browser could not decode it (${probe.reason}). ` +
+            "This can happen with codecs the browser lacks. Upload anyway?",
+          [
+            { label: "Upload anyway", value: "upload", primary: true },
+            { label: "Skip file", value: "skip" },
+          ],
+        );
+        if (answer === "skip") {
+          row.setBadge("Skipped", "warn");
+          row.setStatus("Skipped by user.", "warn");
+          return;
+        }
       }
+    } catch (e) {
+      row.setBadge("Invalid", "err");
+      row.setStatus(e instanceof Error ? e.message : String(e), "err");
+      return;
     }
-  } catch (e) {
-    row.setBadge("Invalid", "err");
-    row.setStatus(e instanceof Error ? e.message : String(e), "err");
-    return;
+  } else {
+    row.setBadge("Queued", "busy");
+    row.setStatus("File added.");
   }
 
   // --- 2. Wait for the user to confirm the destination path ---------------
@@ -81,9 +86,9 @@ export async function processFile(
   }
 
   const path = sanitizePath("", row.pathInput.value.trim().replace(/^\/+|\/+$/g, ""));
-  if (!/\.mp4$/i.test(path)) {
+  if (!path || path.endsWith("/")) {
     row.setBadge("Error", "err");
-    row.setStatus("Destination path must end in .mp4", "err");
+    row.setStatus("Destination path is invalid.", "err");
     return;
   }
   row.pathInput.value = path;
@@ -141,7 +146,7 @@ export async function processFile(
 
     // --- 6. Asset registration -------------------------------------------
     row.setStatus(reused ? "Identical file already stored — registering asset…" : "Registering asset…");
-    const asset = await createOrReplaceAsset(cfg, path, blobId, existingAssetId);
+    const asset = await createOrReplaceAsset(cfg, path, blobId, existingAssetId, file.type || undefined);
 
     row.setBadge("Done", "ok");
     row.setProgress(1, true);

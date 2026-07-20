@@ -56,7 +56,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
       createdAssets.push(route.request().postDataJSON());
-      return route.fulfill({ json: { asset_id: "asset-1", path: "clip.mp4" } });
+      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/clip.mp4" } });
     }
     return route.continue();
   });
@@ -83,6 +83,8 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await row.getByRole("button", { name: "Start upload" }).click();
 
   await expect(row.locator('[data-role="badge"]')).toHaveText("Done", { timeout: 15000 });
-  await expect(row.locator('[data-role="status"]')).toContainText("Uploaded successfully as clip.mp4");
-  expect(createdAssets).toEqual([{ blob_id: "blob-1", metadata: { path: "clip.mp4", encodingFormat: "video/mp4" } }]);
+  await expect(row.locator('[data-role="status"]')).toContainText("Uploaded successfully as sourcedata/raw/clip.mp4");
+  expect(createdAssets).toEqual([
+    { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
+  ]);
 });

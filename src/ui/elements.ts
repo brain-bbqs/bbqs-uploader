@@ -14,6 +14,8 @@ export function getElements() {
     apiKeyHelpText: required<HTMLParagraphElement>("api-key-help-text"),
     dropzone: required<HTMLDivElement>("dropzone"),
     fileInput: required<HTMLInputElement>("file-input"),
+    folderInput: required<HTMLInputElement>("folder-input"),
+    folderPickerBtn: required<HTMLButtonElement>("folder-picker-btn"),
     fileList: required<HTMLUListElement>("file-list"),
     probeVideo: required<HTMLVideoElement>("probe-video"),
     versionIndicator: document.getElementById("version-indicator"),

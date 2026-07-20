@@ -3,8 +3,10 @@ import { getElements } from "./ui/elements";
 import { initDropzone } from "./ui/dropzone";
 import { processFile } from "./ui/processFile";
 import { testConnection } from "./ui/connection";
+import { renderFileTree } from "./ui/fileTree";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
 import type { UploaderConfig } from "./lib/types";
+import type { DroppedFile } from "./lib/fileTree";
 
 declare const __APP_VERSION__: string;
 
@@ -38,9 +40,11 @@ function currentConfig(): UploaderConfig {
   });
 }
 
-function addFiles(fileList: FileList): void {
-  for (const file of Array.from(fileList)) {
-    void processFile(els, file, currentConfig, activeUploads);
+function addFiles(entries: DroppedFile[]): void {
+  const targets = renderFileTree(els.fileList, entries);
+  for (const entry of entries) {
+    const container = targets.get(entry.file) ?? els.fileList;
+    void processFile(els, entry.file, entry.relativePath, currentConfig, activeUploads, container);
   }
 }
 
