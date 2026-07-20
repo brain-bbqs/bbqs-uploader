@@ -3,12 +3,13 @@ import { test, expect } from "@playwright/test";
 test.describe("EMBER uploader shell", () => {
   test("renders branding, version, and the connection form", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/EMBER .mp4 Uploader/);
+    await expect(page).toHaveTitle(/EMBER Uploader/);
     await expect(page.locator(".brand-logo")).toBeVisible();
-    await expect(page.locator("#version-indicator")).toHaveText(/^v\d+\.\d+\.\d+$/);
-    await expect(
-      page.locator('.footer-credit a[href="https://centerforopenneuroscience.org"]').first()
-    ).toBeVisible();
+    const versionLink = page.locator("#version-indicator");
+    await expect(versionLink).toHaveText(/^v\d+\.\d+\.\d+$/);
+    await expect(versionLink).toHaveAttribute("href", "https://github.com/brain-bbqs/ember-uploader");
+    const conLink = page.locator('a.con-brand-link[href="https://centerforopenneuroscience.org"]');
+    await expect(conLink).toBeVisible();
     await expect(page.locator("#dropzone")).toBeVisible();
   });
 
