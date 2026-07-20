@@ -375,20 +375,21 @@ button.hint {
   right: 0;
   bottom: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.6rem 1.25rem;
+  padding: 0 0.5rem 0.15rem 0.35rem;
 }
 
 .version-link {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 1.04rem;
   text-decoration: underline;
 }
 
 .con-brand-link img {
   display: block;
-  height: 2.75rem;
+  height: 5rem;
   width: auto;
+  opacity: 0.312;
 }
