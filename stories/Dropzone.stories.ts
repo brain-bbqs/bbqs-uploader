@@ -1,0 +1,31 @@
+import { withCard } from "./utils";
+
+function buildDropzone(dragover: boolean): HTMLElement {
+  const dz = document.createElement("div");
+  dz.id = "dropzone";
+  dz.tabIndex = 0;
+  dz.setAttribute("role", "button");
+  dz.setAttribute("aria-label", "Drop .mp4 files here or click to browse");
+  if (dragover) dz.classList.add("dragover");
+  dz.innerHTML = `
+    <div class="dz-inner">
+      <div class="dz-icon">⬆️</div>
+      <p><strong>Drop .mp4 files here</strong> or click to browse</p>
+    </div>
+  `;
+  return withCard(dz);
+}
+
+export default {
+  title: "Components/Dropzone",
+};
+
+export const Idle = {
+  name: "Idle",
+  render: () => buildDropzone(false),
+};
+
+export const DragOver = {
+  name: "Drag over",
+  render: () => buildDropzone(true),
+};
