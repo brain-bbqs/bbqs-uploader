@@ -4,7 +4,8 @@
 
 #### 🚀 Enhancement
 
-- Added a "Sign in with EMBER" button that authenticates via the archive's OAuth2 (Authorization Code + PKCE) flow instead of pasting an API key; the pasted-key field is now a fallback, hidden while signed in ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Replaced pasting a DANDI API key with a "Sign in with EMBER" button, top-right in the header (mirroring the main archive's layout), that authenticates via the archive's OAuth2 (Authorization Code + PKCE) flow ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Replaced the free-text Dandiset ID field with a dropdown that auto-populates with the signed-in user's own dandisets titled "Incoming: ..." (the BBQS convention for a lab's staging dataset), so there's nothing to type or look up ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 
 ## 0.0.10
 

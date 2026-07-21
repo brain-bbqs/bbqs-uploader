@@ -7,8 +7,7 @@ export interface DandiInstance {
 export interface UploaderConfig {
   api: string;
   web: string | null;
-  apiKey: string;
-  authScheme: "token" | "Bearer";
+  accessToken: string;
   dandisetId: string;
 }
 
@@ -20,7 +19,6 @@ export interface OAuthTokenSet {
 }
 
 export interface StoredSettings {
-  apiKey?: string;
   dandisetId?: string;
   oauth?: OAuthTokenSet;
 }

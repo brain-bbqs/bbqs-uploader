@@ -10,6 +10,7 @@ import { planParts } from "./lib/etag";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
 import { maxDepth, buildTree } from "./lib/fileTree";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
+import { listIncomingDandisets } from "./lib/dandisets";
 import type { UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { DroppedFile } from "./lib/fileTree";
 import type { FileRow } from "./ui/fileRow";
@@ -190,12 +191,14 @@ els.whatsNewModal.addEventListener("click", (e) => {
 });
 
 let oauthTokens: OAuthTokenSet | null = null;
+// The dandiset id restored from a previous session, applied once the dropdown is populated with
+// the signed-in user's incoming datasets (a <select> can't hold a value before its options exist).
+let storedDandisetId = "";
 
 function loadSettings(): boolean {
   const s = loadStoredSettings();
   if (s) {
-    if (s.apiKey) els.apiKey.value = s.apiKey;
-    if (s.dandisetId) els.dandisetId.value = s.dandisetId;
+    if (s.dandisetId) storedDandisetId = s.dandisetId;
     if (s.oauth) oauthTokens = s.oauth;
   }
   return s !== null;
@@ -203,7 +206,6 @@ function loadSettings(): boolean {
 
 function saveSettings(): void {
   saveStoredSettings({
-    apiKey: els.apiKey.value.trim(),
     dandisetId: els.dandisetId.value.trim(),
     oauth: oauthTokens ?? undefined,
   });
@@ -211,7 +213,6 @@ function saveSettings(): void {
 
 function currentConfig(): UploaderConfig {
   return resolveConfig({
-    apiKey: els.apiKey.value,
     dandisetId: els.dandisetId.value,
     oauthAccessToken: oauthTokens?.accessToken,
   });
@@ -221,7 +222,6 @@ function renderAuthUI(): void {
   const signedIn = !!oauthTokens;
   els.oauthSigninBtn.hidden = signedIn;
   els.oauthSignedIn.hidden = !signedIn;
-  els.apiKeyLabel.hidden = signedIn;
 }
 
 // Refreshes the OAuth access token first if it's near expiry, so the config used for the request
@@ -233,6 +233,50 @@ async function ensureFreshOAuth(): Promise<void> {
     oauthTokens = fresh;
     saveSettings();
   }
+}
+
+function setDandisetPlaceholder(text: string, disabled: boolean): void {
+  const opt = document.createElement("option");
+  opt.value = "";
+  opt.textContent = text;
+  opt.disabled = true;
+  opt.selected = true;
+  els.dandisetId.replaceChildren(opt);
+  els.dandisetId.disabled = disabled;
+}
+
+// Populates the "Incoming dataset" dropdown from the signed-in user's owned dandisets, since
+// there's no longer a free-text Dandiset ID field to type into.
+async function refreshDandisetOptions(): Promise<void> {
+  if (!oauthTokens) {
+    setDandisetPlaceholder("Sign in to see your incoming datasets", true);
+    updateViewDatasetLink();
+    return;
+  }
+  await ensureFreshOAuth();
+  setDandisetPlaceholder("Loading your incoming datasets…", true);
+  try {
+    const datasets = await listIncomingDandisets(currentConfig());
+    if (!datasets.length) {
+      setDandisetPlaceholder("No incoming datasets found for your account", true);
+    } else {
+      els.dandisetId.replaceChildren(
+        ...datasets.map((d) => {
+          const opt = document.createElement("option");
+          opt.value = d.identifier;
+          opt.textContent = `${d.title} (${d.identifier})`;
+          return opt;
+        }),
+      );
+      els.dandisetId.disabled = false;
+      const match = datasets.find((d) => d.identifier === storedDandisetId);
+      els.dandisetId.value = match ? match.identifier : datasets[0].identifier;
+    }
+  } catch {
+    setDandisetPlaceholder("Could not load your datasets", true);
+  }
+  saveSettings();
+  runConnectionCheck();
 }
 
 function updateViewDatasetLink(): void {
@@ -329,14 +373,14 @@ const callbackTokens = await handleRedirectCallback().catch((e) => {
   console.warn("OAuth sign-in callback failed:", e);
   return null;
 });
-const hadStoredSettings = loadSettings();
+loadSettings();
 if (callbackTokens) {
   oauthTokens = callbackTokens;
   saveSettings();
 }
 renderAuthUI();
 initDropzone(els, addFiles);
-[els.apiKey, els.dandisetId].forEach((el) => el.addEventListener("change", runConnectionCheck));
+els.dandisetId.addEventListener("change", runConnectionCheck);
 document.getElementById("config-form")!.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
 els.oauthSignoutBtn.addEventListener("click", () => {
@@ -345,12 +389,9 @@ els.oauthSignoutBtn.addEventListener("click", () => {
   saveSettings();
   renderAuthUI();
   if (tokens) void revokeToken(tokens);
-  runConnectionCheck();
+  void refreshDandisetOptions();
 });
-if (hadStoredSettings || oauthTokens) runConnectionCheck();
-els.apiKeyHelp.addEventListener("click", () => {
-  els.apiKeyHelpText.hidden = !els.apiKeyHelpText.hidden;
-});
+void refreshDandisetOptions();
 els.expandDepthInput.addEventListener("input", () => {
   const depth = Number(els.expandDepthInput.value);
   els.expandDepthValue.textContent = String(depth);

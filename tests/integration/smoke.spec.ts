@@ -28,7 +28,7 @@ test.describe("EMBER uploader shell", () => {
     await expect(row.locator('[data-role="badge"]')).toBeHidden();
     await page.locator("#upload-all-btn").click();
     await expect(row.locator('[data-role="badge"]')).toHaveText("Blocked");
-    await expect(row.locator('[data-role="status"]')).toContainText("API key is missing");
+    await expect(row.locator('[data-role="status"]')).toContainText("Not signed in");
   });
 
   test("accepts non-mp4 files (queued, not rejected, once configured)", async ({ page }) => {
@@ -47,6 +47,6 @@ test.describe("EMBER uploader shell", () => {
     await page.locator("#upload-all-btn").click();
     // Not rejected for its file type; it's only "Blocked" because the connection isn't configured.
     await expect(row.locator('[data-role="badge"]')).toHaveText("Blocked");
-    await expect(row.locator('[data-role="status"]')).toContainText("API key is missing");
+    await expect(row.locator('[data-role="status"]')).toContainText("Not signed in");
   });
 });

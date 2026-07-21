@@ -1,4 +1,5 @@
 import { test, expect, type Route } from "@playwright/test";
+import { seedSignedIn } from "./helpers/auth";
 
 const API = "https://api-dandi.emberarchive.org/api";
 
@@ -54,10 +55,8 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
     return route.continue();
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
-  await page.locator("#dandiset-id").blur();
   await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
   await expect(page.locator("#connect-status-text")).toContainText("Connected");
 
@@ -103,10 +102,8 @@ test("skips a file automatically when an asset already exists at its path, no pr
     return route.continue();
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
-  await page.locator("#dandiset-id").blur();
   await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
 
   const fileChooserPromise = page.waitForEvent("filechooser");

@@ -1,4 +1,5 @@
 import { test, expect, type Route } from "@playwright/test";
+import { seedSignedIn } from "./helpers/auth";
 
 const API = "https://api-dandi.emberarchive.org/api";
 
@@ -42,9 +43,9 @@ test("tracks overall progress and per-outcome counts across a mixed batch", asyn
     return route.continue();
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
+  await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
 
   await expect(page.locator("#progress-summary")).toBeHidden();
 

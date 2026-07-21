@@ -31,10 +31,13 @@ export async function testConnection(
     let who = "";
     try {
       const me = await apiFetch<{ username?: string }>(cfg, "/users/me/");
-      who = me?.username ? ` Signed in as ${me.username}.` : "";
+      if (me?.username) {
+        who = ` Signed in as ${me.username}.`;
+        els.oauthUsername.textContent = me.username;
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
-        throw new ApiError("API key was rejected (HTTP 401): check that it is correct.", 401);
+        throw new ApiError("Sign-in was rejected (HTTP 401): please sign in again.", 401);
       }
       // Any other failure here is non-fatal; the dandiset check below still runs.
     }

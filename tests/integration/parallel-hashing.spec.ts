@@ -1,4 +1,5 @@
 import { test, expect, type Route } from "@playwright/test";
+import { seedSignedIn } from "./helpers/auth";
 
 const API = "https://api-dandi.emberarchive.org/api";
 
@@ -20,9 +21,9 @@ test("hashes concurrently-uploading files on separate workers, not the main thre
     await route.fulfill({ status: 500, body: "stalled for test" });
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
+  await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
 
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.locator("#dropzone").click();
