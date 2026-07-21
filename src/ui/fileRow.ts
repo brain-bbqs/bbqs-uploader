@@ -16,7 +16,7 @@ export function createFileRow(fileList: HTMLUListElement, file: File, id: string
   li.id = id;
   li.title = destinationPath;
   li.innerHTML = `
-    <span class="badge busy" data-role="badge">Queued</span>
+    <span class="badge" data-role="badge" hidden></span>
     <span class="file-name"></span>
     <span class="file-size">${humanSize(file.size)}</span>
     <span class="file-status" data-role="status"></span>
@@ -34,6 +34,7 @@ export function createFileRow(fileList: HTMLUListElement, file: File, id: string
     el: li,
     status,
     setBadge(text, kind) {
+      badge.hidden = false;
       badge.textContent = text;
       badge.className = `badge ${kind}`;
     },

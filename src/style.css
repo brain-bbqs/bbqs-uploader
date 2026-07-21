@@ -268,62 +268,67 @@ button.hint {
 }
 .dir-item .dir-children {
   list-style: none;
-  margin: 0.5rem 0 0 1.25rem;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  padding-left: 1rem;
 }
 .dir-toggle {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   width: 100%;
   text-align: left;
   background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  padding: 0.15rem 0.3rem;
   font: inherit;
+  font-size: 0.85rem;
   color: var(--text);
   cursor: pointer;
 }
+.dir-toggle:hover {
+  background: var(--accent-soft);
+}
 .dir-name {
   font-weight: 600;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .dir-count {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   margin-left: auto;
+  white-space: nowrap;
 }
 
 .dest-root {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 1rem;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 #file-list {
   list-style: none;
-  margin: 0.5rem 0 0;
+  margin: 0.25rem 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
 }
 
 .file-item {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.4rem 0.65rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
   flex-wrap: nowrap;
+}
+.file-item:hover {
+  background: var(--accent-soft);
 }
 
 .file-name {
@@ -334,13 +339,13 @@ button.hint {
 }
 .file-size {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   white-space: nowrap;
 }
 
 .file-status {
   margin-left: auto;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -358,10 +363,10 @@ button.hint {
 
 .progress {
   display: inline-block;
-  width: 90px;
+  width: 50px;
   flex-shrink: 0;
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: var(--border);
   overflow: hidden;
 }
@@ -370,7 +375,7 @@ button.hint {
   display: block;
   height: 100%;
   width: 0%;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--accent);
   transition: width 0.15s linear;
 }
@@ -388,12 +393,13 @@ button.hint {
 
 .badge {
   display: inline-block;
-  font-size: 0.72rem;
+  flex-shrink: 0;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  border-radius: 5px;
-  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
 }
 .badge.ok {
   background: var(--ok-soft);

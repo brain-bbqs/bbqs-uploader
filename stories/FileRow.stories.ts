@@ -16,7 +16,7 @@ export default {
 
 export const Queued = {
   name: "Queued",
-  render: () => buildRow((row) => row.setBadge("Queued", "busy")),
+  render: () => buildRow(() => {}),
 };
 
 export const Uploading = {

@@ -19,7 +19,6 @@ export function queueFileRow(
   const prefix = ["sourcedata", "raw", ...relativePath.split("/").filter(Boolean)].join("/");
   const path = sanitizePath(prefix, sanitizeFilename(file.name));
   const row = createFileRow(container, file, id, path);
-  row.setBadge("Queued", "busy");
   return { row, path };
 }
 

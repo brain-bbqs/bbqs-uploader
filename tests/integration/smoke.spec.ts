@@ -25,7 +25,7 @@ test.describe("EMBER uploader shell", () => {
     });
 
     const row = page.locator("#file-list .file-item").first();
-    await expect(row.locator('[data-role="badge"]')).toHaveText("Queued");
+    await expect(row.locator('[data-role="badge"]')).toBeHidden();
     await page.locator("#upload-all-btn").click();
     await expect(row.locator('[data-role="badge"]')).toHaveText("Blocked");
     await expect(row.locator('[data-role="status"]')).toContainText("API key is missing");
@@ -43,7 +43,7 @@ test.describe("EMBER uploader shell", () => {
     });
 
     const row = page.locator("#file-list .file-item").first();
-    await expect(row.locator('[data-role="badge"]')).toHaveText("Queued");
+    await expect(row.locator('[data-role="badge"]')).toBeHidden();
     await page.locator("#upload-all-btn").click();
     // Not rejected for its file type; it's only "Blocked" because the connection isn't configured.
     await expect(row.locator('[data-role="badge"]')).toHaveText("Blocked");

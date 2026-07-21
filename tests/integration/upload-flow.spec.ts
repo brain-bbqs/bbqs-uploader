@@ -67,7 +67,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await fileChooser.setFiles({ name: "clip.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(32) });
 
   const row = page.locator("#file-list .file-item").first();
-  await expect(row.locator('[data-role="badge"]')).toHaveText("Queued");
+  await expect(row.locator('[data-role="badge"]')).toBeHidden();
   await expect(row).toHaveAttribute("title", "sourcedata/raw/clip.mp4");
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file");
   await page.locator("#upload-all-btn").click();
