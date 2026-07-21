@@ -22,6 +22,7 @@ var e=(e,t)=>()=>(t||(e((t={exports:{}}).exports,t),e=null),t.exports);(function
 
 - Replaced pasting a DANDI API key with a "Sign in with EMBER" button, top-right in the header (mirroring the main archive's layout), that authenticates via the archive's OAuth2 (Authorization Code + PKCE) flow ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 - Replaced the free-text Dandiset ID field with a dropdown that auto-populates with the signed-in user's own dandisets titled "Incoming: ..." (the BBQS convention for a lab's staging dataset), so there's nothing to type or look up ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Colored the "Sign in with EMBER" button in the archive's flame red (matched from the logo mark) instead of the app's generic accent color ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 
 ## 0.0.10
 
