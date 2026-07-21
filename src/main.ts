@@ -263,7 +263,10 @@ function showDandisetSingle(dataset: IncomingDandiset): void {
 // datasets, shared by the real signed-in fetch and the "?test&num_datasets=N" debug override.
 function applyDatasetList(datasets: IncomingDandiset[]): void {
   if (!datasets.length) {
-    setDandisetPlaceholder("No incoming datasets found for your account", true);
+    setDandisetPlaceholder(
+      "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins and request to be added.",
+      true,
+    );
     return;
   }
   els.dandisetId.replaceChildren(
@@ -285,13 +288,15 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
   }
 }
 
-// Debug-only escape hatch for previewing the multi-dataset dropdown without a real account that
-// owns several "Incoming: " dandisets: e.g. "?test&num_datasets=2" fills in that many fake
-// datasets. Bypasses sign-in entirely, so it also works for a signed-out visitor.
+// Debug-only escape hatch for previewing the dataset picker's various states without a real
+// account: e.g. "?test&num_datasets=2" fills in that many fake datasets, and "?test&num_datasets=0"
+// previews the no-datasets-found state. Bypasses sign-in entirely, so it also works for a
+// signed-out visitor. Defaults to 1 dataset when num_datasets is omitted.
 function readTestDatasetOverride(): IncomingDandiset[] | null {
   const params = new URLSearchParams(window.location.search);
   if (!params.has("test")) return null;
-  const count = Math.max(1, Number(params.get("num_datasets")) || 1);
+  const raw = params.get("num_datasets");
+  const count = Math.max(0, raw === null ? 1 : Number(raw) || 0);
   return Array.from({ length: count }, (_, i) => ({
     identifier: String(i + 1).padStart(6, "0"),
     title: `Incoming: Test dataset ${i + 1}`,
