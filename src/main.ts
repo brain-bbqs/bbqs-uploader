@@ -297,8 +297,9 @@ function readTestDatasetOverride(): IncomingDandiset[] | null {
   if (!params.has("test")) return null;
   const raw = params.get("num_datasets");
   const count = Math.max(0, raw === null ? 1 : Number(raw) || 0);
+  // Negative identifiers (e.g. "-000001") so a fake dataset is never mistaken for a real one.
   return Array.from({ length: count }, (_, i) => ({
-    identifier: String(i + 1).padStart(6, "0"),
+    identifier: `-${String(i + 1).padStart(6, "0")}`,
     title: `Incoming: Test dataset ${i + 1}`,
   }));
 }
@@ -308,6 +309,12 @@ function readTestDatasetOverride(): IncomingDandiset[] | null {
 async function refreshDandisetOptions(): Promise<void> {
   const testDatasets = readTestDatasetOverride();
   if (testDatasets) {
+    // Only the dataset list is faked; sign-in state (and thus the header avatar) still reflects
+    // whatever the browser is really signed in as, if anything.
+    if (oauthTokens) {
+      await ensureFreshOAuth();
+      void renderIdentity(els, currentConfig());
+    }
     applyDatasetList(testDatasets);
     updateViewDatasetLink();
     return;
