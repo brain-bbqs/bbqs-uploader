@@ -105,18 +105,31 @@ function elapsedMsSince(start: number | null): number {
   return start !== null ? performance.now() - start : 0;
 }
 
+// Hash/upload progress arrives in a flood of worker messages (one per 16MB chunk, across up to
+// 8 concurrent lanes). Coalescing them into at most one DOM update per animation frame keeps the
+// main thread from being swamped by redundant layout-invalidating writes.
+let progressUpdateScheduled = false;
+function scheduleProgressUpdate(): void {
+  if (progressUpdateScheduled) return;
+  progressUpdateScheduled = true;
+  requestAnimationFrame(() => {
+    progressUpdateScheduled = false;
+    updateProgressSummary();
+  });
+}
+
 function reportHashBytes(file: File, bytesDone: number): void {
   const prev = lastHashBytes.get(file) ?? 0;
   hashDoneBytes += bytesDone - prev;
   lastHashBytes.set(file, bytesDone);
-  updateProgressSummary();
+  scheduleProgressUpdate();
 }
 
 function reportUploadBytes(file: File, bytesDone: number): void {
   const prev = lastUploadBytes.get(file) ?? 0;
   uploadDoneBytes += bytesDone - prev;
   lastUploadBytes.set(file, bytesDone);
-  updateProgressSummary();
+  scheduleProgressUpdate();
 }
 
 function renderPhaseBar(
@@ -355,7 +368,16 @@ function updateUploadBar(): void {
   els.uploadAllBtn.textContent = `Upload ${pending.length} file${pending.length === 1 ? "" : "s"}`;
 }
 
-function addFiles(entries: DroppedFile[]): void {
+// How many files to queue (create a row + start hashing) per animation frame. Doing this for an
+// entire large folder in one synchronous loop would block the browser from painting until it's
+// done, on top of the tree render itself.
+const ADD_FILES_CHUNK_SIZE = 200;
+
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function addFiles(entries: DroppedFile[]): Promise<void> {
   const isFirstBatch = totalFiles === 0;
   treeMaxDepth = Math.max(treeMaxDepth, maxDepth(buildTree(entries)));
   updateExpandDepthRange();
@@ -364,13 +386,15 @@ function addFiles(entries: DroppedFile[]): void {
     els.expandDepthValue.textContent = els.expandDepthInput.value;
   }
 
-  const targets = renderFileTree(els.fileList, entries, Number(els.expandDepthInput.value));
-  for (const entry of entries) {
+  const targets = await renderFileTree(els.fileList, entries, Number(els.expandDepthInput.value));
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     const container = targets.get(entry.file) ?? els.fileList;
     const { row, path } = queueFileRow(container, entry.file, entry.relativePath);
     pending.push({ file: entry.file, row, path });
     totalBytes += entry.file.size;
     startHashing(entry.file, row);
+    if ((i + 1) % ADD_FILES_CHUNK_SIZE === 0) await yieldToMain();
   }
   totalFiles += entries.length;
 
@@ -451,10 +475,18 @@ els.oauthSignoutBtn.addEventListener("click", () => {
   void refreshDandisetOptions();
 });
 void refreshDandisetOptions();
+// A range input fires "input" continuously while dragging (many events per second).
+// setExpandDepth() walks every directory toggle in the tree, so coalescing to at most once per
+// animation frame keeps a drag from becoming an unresponsive flood of full-tree traversals.
+let expandDepthUpdateScheduled = false;
 els.expandDepthInput.addEventListener("input", () => {
-  const depth = Number(els.expandDepthInput.value);
-  els.expandDepthValue.textContent = String(depth);
-  setExpandDepth(els.fileList, depth);
+  els.expandDepthValue.textContent = els.expandDepthInput.value;
+  if (expandDepthUpdateScheduled) return;
+  expandDepthUpdateScheduled = true;
+  requestAnimationFrame(() => {
+    expandDepthUpdateScheduled = false;
+    setExpandDepth(els.fileList, Number(els.expandDepthInput.value));
+  });
 });
 els.uploadAllBtn.addEventListener("click", () => void startUpload());
 els.cancelAllBtn.addEventListener("click", () => {

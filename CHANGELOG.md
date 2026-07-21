@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.14
+
+#### 🐛 Bug Fix
+
+- Fixed the file tree failing to render and the expand-depth slider becoming unresponsive when dropping a large folder, by yielding to the browser periodically while building the tree/queueing files, coalescing hash-progress UI updates to once per animation frame, and debouncing the slider's full-tree traversal ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
+
 ## 0.0.13
 
 #### 🚀 Enhancement
