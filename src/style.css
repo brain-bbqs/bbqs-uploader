@@ -422,11 +422,28 @@ button.hint {
   gap: 0.75rem;
   margin-top: 1rem;
 }
+.view-dataset-link {
+  margin-left: auto;
+  font-size: 0.85rem;
+}
 
 .progress-summary {
   margin-bottom: 1rem;
 }
+.progress-phase {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.progress-phase-label {
+  flex-shrink: 0;
+  width: 4.2rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
 .progress-summary-bar {
+  flex: 1;
   height: 8px;
   border-radius: 4px;
   background: var(--border);
@@ -439,11 +456,31 @@ button.hint {
   background: var(--accent);
   transition: width 0.15s linear;
 }
-#progress-summary-text {
-  display: block;
-  margin-top: 0.35rem;
+.progress-phase-stats {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.progress-summary-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
   font-size: 0.82rem;
   color: var(--muted);
+}
+.progress-summary-footer > :first-child {
+  text-align: left;
+}
+.progress-summary-footer > :nth-child(2) {
+  text-align: center;
+}
+.progress-summary-footer > :last-child {
+  text-align: right;
 }
 
 .badge {

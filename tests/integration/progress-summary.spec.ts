@@ -56,18 +56,20 @@ test("tracks overall progress and per-outcome counts across a mixed batch", asyn
     { name: "other.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(16) },
   ]);
 
-  // The summary is present as soon as files are queued, showing the total size up front.
+  // The summary is present as soon as files are queued, showing the total size up front, and no
+  // files have finished (hashing happens in the background, but that isn't a "finished" outcome).
   await expect(page.locator("#progress-summary")).toBeVisible();
-  await expect(page.locator("#progress-summary-text")).toContainText("0/2 files");
-  await expect(page.locator("#progress-summary-text")).toContainText("32 B");
-  await expect(page.locator("#progress-summary-text")).toContainText("not started");
+  await expect(page.locator("#progress-footer-right")).toContainText("0/2 files");
+  await expect(page.locator("#progress-hash-text")).toContainText("32 B");
+  await expect(page.locator("#progress-upload-text")).toContainText("32 B");
 
   await page.locator("#upload-all-btn").click();
 
-  await expect(page.locator("#progress-summary-text")).toContainText("2/2 files", { timeout: 15000 });
-  await expect(page.locator("#progress-summary-text")).toContainText("1 done");
-  await expect(page.locator("#progress-summary-text")).toContainText("1 skipped");
-  await expect(page.locator("#progress-summary-fill")).toHaveCSS("width", /.+/);
-  const width = await page.locator("#progress-summary-fill").evaluate((el) => el.style.width);
-  expect(width).toBe("100%");
+  await expect(page.locator("#progress-footer-right")).toContainText("2/2 files", { timeout: 15000 });
+  await expect(page.locator("#progress-footer-left")).toContainText("1 done");
+  await expect(page.locator("#progress-footer-mid")).toContainText("1 skipped");
+  const hashWidth = await page.locator("#progress-hash-fill").evaluate((el) => el.style.width);
+  const uploadWidth = await page.locator("#progress-upload-fill").evaluate((el) => el.style.width);
+  expect(hashWidth).toBe("100%");
+  expect(uploadWidth).toBe("100%");
 });

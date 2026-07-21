@@ -13,8 +13,13 @@ export function getElements() {
     apiKeyHelp: required<HTMLButtonElement>("api-key-help"),
     apiKeyHelpText: required<HTMLParagraphElement>("api-key-help-text"),
     progressSummary: required<HTMLDivElement>("progress-summary"),
-    progressSummaryFill: required<HTMLDivElement>("progress-summary-fill"),
-    progressSummaryText: required<HTMLSpanElement>("progress-summary-text"),
+    progressHashFill: required<HTMLDivElement>("progress-hash-fill"),
+    progressHashText: required<HTMLSpanElement>("progress-hash-text"),
+    progressUploadFill: required<HTMLDivElement>("progress-upload-fill"),
+    progressUploadText: required<HTMLSpanElement>("progress-upload-text"),
+    progressFooterLeft: required<HTMLSpanElement>("progress-footer-left"),
+    progressFooterMid: required<HTMLSpanElement>("progress-footer-mid"),
+    progressFooterRight: required<HTMLSpanElement>("progress-footer-right"),
     dropzone: required<HTMLDivElement>("dropzone"),
     fileInput: required<HTMLInputElement>("file-input"),
     folderInput: required<HTMLInputElement>("folder-input"),
@@ -27,6 +32,7 @@ export function getElements() {
     uploadBar: required<HTMLDivElement>("upload-bar"),
     uploadAllBtn: required<HTMLButtonElement>("upload-all-btn"),
     cancelAllBtn: required<HTMLButtonElement>("cancel-all-btn"),
+    viewDatasetLink: required<HTMLAnchorElement>("view-dataset-link"),
     versionIndicator: document.getElementById("version-indicator"),
   };
 }

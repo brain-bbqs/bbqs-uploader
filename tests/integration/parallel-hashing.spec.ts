@@ -33,9 +33,10 @@ test("hashes concurrently-uploading files on separate workers, not the main thre
     { name: "c.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(6 * 1024 * 1024) },
   ]);
 
-  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files");
-  await page.locator("#upload-all-btn").click();
-
+  // Hashing starts the moment files are dropped, before "Upload" is ever clicked.
   await expect(page.locator("[data-role='badge']").first()).toBeVisible({ timeout: 5000 });
   await expect.poll(() => workerUrls.length, { timeout: 5000 }).toBeGreaterThan(1);
+
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files");
+  await page.locator("#upload-all-btn").click();
 });

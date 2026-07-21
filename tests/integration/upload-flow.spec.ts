@@ -73,7 +73,13 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await page.locator("#upload-all-btn").click();
 
   await expect(row.locator('[data-role="badge"]')).toHaveText("Done", { timeout: 15000 });
-  await expect(row.locator('[data-role="status"]')).toContainText("download");
+  // No per-file view/download links — just one dataset-level link, shown once configured.
+  await expect(row.locator('[data-role="status"]')).toHaveText("");
+  await expect(page.locator("#view-dataset-link")).toBeVisible();
+  await expect(page.locator("#view-dataset-link")).toHaveAttribute(
+    "href",
+    "https://dandi.emberarchive.org/dandiset/000123/draft/files",
+  );
   expect(createdAssets).toEqual([
     { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
   ]);

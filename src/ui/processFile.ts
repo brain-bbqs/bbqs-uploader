@@ -2,19 +2,17 @@ import type { FilePart, UploaderConfig } from "../lib/types";
 import { createFileRow, type FileRow } from "./fileRow";
 import { configProblems } from "../lib/settings";
 import { sanitizeFilename, sanitizePath } from "../lib/sanitize";
-import { planParts } from "../lib/etag";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "../lib/upload-pipeline";
 import { diagnoseCors } from "../lib/api";
 import { ApiError, friendlyError } from "../lib/errors";
 
-export type HashFn = (
-  file: File,
-  parts: FilePart[],
-  onProgress: (fraction: number) => void,
-  signal?: AbortSignal,
-) => Promise<string>;
-
 export type UploadOutcome = "blocked" | "cancelled" | "error" | "skipped" | "done";
+
+/** A background hash already started (or completed) for a file — see `startHashing` in main.ts. */
+export interface HashJob {
+  parts: FilePart[];
+  promise: Promise<string>;
+}
 
 let fileCounter = 0;
 
@@ -37,16 +35,15 @@ export async function uploadFile(
   path: string,
   cfg: UploaderConfig,
   activeUploads: Set<AbortController>,
-  hash: HashFn,
-  // Reports bytes "accounted for" so far for this file (0..file.size), weighting the hash and
-  // upload phases evenly — a rough but reasonable estimate for an aggregate progress bar.
-  onBytesProgress?: (bytesDone: number) => void,
+  hashJob: HashJob,
+  // Reports bytes uploaded so far for this file (0..file.size), for an aggregate progress bar.
+  onUploadProgress?: (bytesDone: number) => void,
 ): Promise<UploadOutcome> {
   const problems = configProblems(cfg);
   if (problems.length) {
     row.setBadge("Blocked", "err");
     row.setStatus(problems.join(" "), "err");
-    onBytesProgress?.(file.size);
+    onUploadProgress?.(file.size);
     return "blocked";
   }
 
@@ -54,18 +51,8 @@ export async function uploadFile(
   activeUploads.add(abort);
 
   try {
-    // --- 1. Checksum (off the main thread, via a per-lane worker) ------
-    row.setBadge("Hashing", "busy");
-    const parts = planParts(file.size);
-    const etag = await hash(
-      file,
-      parts,
-      (f) => {
-        row.setProgress(f * 0.999);
-        onBytesProgress?.(f * file.size * 0.5);
-      },
-      abort.signal,
-    );
+    // --- 1. Checksum — already started (or finished) in the background -----
+    const etag = await hashJob.promise;
     row.setProgress(0);
 
     // --- 2. Conflict check (skip automatically; never overwrites) ------
@@ -74,7 +61,7 @@ export async function uploadFile(
     if (existing) {
       row.setBadge("Skipped", "warn");
       row.setStatus("already exists", "warn");
-      onBytesProgress?.(file.size);
+      onUploadProgress?.(file.size);
       return "skipped";
     }
 
@@ -83,41 +70,25 @@ export async function uploadFile(
       cfg,
       file,
       etag,
-      parts,
+      hashJob.parts,
       (f) => {
         row.setProgress(f);
         row.setStatus(`${(f * 100).toFixed(0)}%`);
-        onBytesProgress?.(file.size * 0.5 + f * file.size * 0.5);
+        onUploadProgress?.(f * file.size);
       },
       abort.signal,
     );
 
     // --- 4. Asset registration -------------------------------------------
-    const asset = await createOrReplaceAsset(cfg, path, blobId, null, file.type || undefined);
+    await createOrReplaceAsset(cfg, path, blobId, null, file.type || undefined);
 
     row.setBadge("Done", "ok");
     row.setProgress(1, true);
     row.setStatus("", "ok");
-    if (cfg.web) {
-      const folder = path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
-      const viewUrl = `${cfg.web}/dandiset/${cfg.dandisetId}/draft/files` + `?location=${encodeURIComponent(folder)}`;
-      const link = document.createElement("a");
-      link.href = viewUrl;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = "view ↗";
-      row.status.append(link, " ");
-    }
-    const dl = document.createElement("a");
-    dl.href = `${cfg.api}/assets/${asset.asset_id}/download/`;
-    dl.target = "_blank";
-    dl.rel = "noopener";
-    dl.textContent = "download ↗";
-    row.status.append(dl);
-    onBytesProgress?.(file.size);
+    onUploadProgress?.(file.size);
     return "done";
   } catch (e) {
-    onBytesProgress?.(file.size);
+    onUploadProgress?.(file.size);
     if (abort.signal.aborted) {
       row.setBadge("Cancelled", "warn");
       return "cancelled";

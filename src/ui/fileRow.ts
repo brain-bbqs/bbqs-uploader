@@ -6,6 +6,7 @@ export interface FileRow {
   el: HTMLLIElement;
   status: HTMLSpanElement;
   setBadge(text: string, kind: BadgeKind): void;
+  hideBadge(): void;
   setStatus(text: string, kind?: BadgeKind | ""): void;
   setProgress(fraction: number, done?: boolean): void;
 }
@@ -37,6 +38,9 @@ export function createFileRow(fileList: HTMLUListElement, file: File, id: string
       badge.hidden = false;
       badge.textContent = text;
       badge.className = `badge ${kind}`;
+    },
+    hideBadge() {
+      badge.hidden = true;
     },
     setStatus(text, kind = "") {
       status.textContent = text;
