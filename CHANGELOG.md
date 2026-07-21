@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.0.11
+
+#### 🚀 Enhancement
+
+- Replaced pasting a DANDI API key with a "Sign in with EMBER" button, top-right in the header (mirroring the main archive's layout), that authenticates via the archive's OAuth2 (Authorization Code + PKCE) flow ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Replaced the free-text Dandiset ID field with a dropdown that auto-populates with the signed-in user's own dandisets titled "Incoming: ..." (the BBQS convention for a lab's staging dataset), so there's nothing to type or look up ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Colored the "Sign in with EMBER" button in the archive's flame red (matched from the logo mark) instead of the app's generic accent color ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Added a colored initials avatar (e.g. "CB") next to the username once signed in, matching the main archive's own convention, so there's a clearer signal of being signed in than just the button disappearing ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- The signed-in header now shows just the avatar; the username and "Sign out" only appear in a hover popover beneath it, matching the main archive's own avatar-menu behavior ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Reworded the avatar popover to match the main archive's own wording ("You are logged in as **{username}**.") and outlined the avatar in flame red instead of filling it, and added a logout icon next to "Sign out" ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Shortened the "Incoming dataset" label to just "Dataset", and the dropdown now greys out (disabled) when there's only one dataset to pick, since there's nothing to choose between ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+
+#### 🐛 Bug Fix
+
+- The signed-in username/avatar in the header now appears as soon as sign-in succeeds, instead of being gated behind having an "Incoming: " dataset available to select ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- The OAuth redirect URI is now computed from wherever the page is actually being served (production root, a PR preview, local dev) instead of a hardcoded production URL, so sign-in can work from any of those locations once registered on the archive side ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+
 ## 0.0.10
 
 #### 🚀 Enhancement

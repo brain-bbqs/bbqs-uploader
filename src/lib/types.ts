@@ -1,18 +1,26 @@
 export interface DandiInstance {
   api: string;
   web: string | null;
+  oauth: string;
 }
 
 export interface UploaderConfig {
   api: string;
   web: string | null;
-  apiKey: string;
+  accessToken: string;
   dandisetId: string;
 }
 
+export interface OAuthTokenSet {
+  accessToken: string;
+  refreshToken?: string;
+  /** ms since epoch */
+  expiresAt: number;
+}
+
 export interface StoredSettings {
-  apiKey?: string;
   dandisetId?: string;
+  oauth?: OAuthTokenSet;
 }
 
 export interface FilePart {

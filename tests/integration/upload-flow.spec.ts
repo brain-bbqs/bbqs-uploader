@@ -1,11 +1,14 @@
 import { test, expect, type Route } from "@playwright/test";
+import { seedSignedIn } from "./helpers/auth";
 
 const API = "https://api-dandi.emberarchive.org/api";
 
 test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   const createdAssets: unknown[] = [];
 
-  await page.route(`${API}/users/me/`, (route: Route) => route.fulfill({ json: { username: "test-user" } }));
+  await page.route(`${API}/users/me/`, (route: Route) =>
+    route.fulfill({ json: { username: "test-user", name: "Test User" } }),
+  );
   await page.route(`${API}/dandisets/000123/`, (route: Route) =>
     route.fulfill({ json: { draft_version: { name: "Test dandiset" } } }),
   );
@@ -54,12 +57,15 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
     return route.continue();
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
-  await page.locator("#dandiset-id").blur();
   await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
   await expect(page.locator("#connect-status-text")).toContainText("Connected");
+  await expect(page.locator("#oauth-signed-in")).toBeVisible();
+  // Only one "Incoming: " dataset was seeded, so there's nothing to pick between.
+  await expect(page.locator("#dandiset-id")).toBeDisabled();
+  await expect(page.locator("#oauth-avatar")).toHaveText("TU");
+  await expect(page.locator("#oauth-username")).toHaveText("test-user");
 
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.locator("#dropzone").click();
@@ -88,7 +94,9 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
 test("skips a file automatically when an asset already exists at its path, no prompt", async ({ page }) => {
   let assetCreated = false;
 
-  await page.route(`${API}/users/me/`, (route: Route) => route.fulfill({ json: { username: "test-user" } }));
+  await page.route(`${API}/users/me/`, (route: Route) =>
+    route.fulfill({ json: { username: "test-user", name: "Test User" } }),
+  );
   await page.route(`${API}/dandisets/000123/`, (route: Route) =>
     route.fulfill({ json: { draft_version: { name: "Test dandiset" } } }),
   );
@@ -103,10 +111,8 @@ test("skips a file automatically when an asset already exists at its path, no pr
     return route.continue();
   });
 
+  await seedSignedIn(page);
   await page.goto("/");
-  await page.fill("#api-key", "test-key");
-  await page.fill("#dandiset-id", "000123");
-  await page.locator("#dandiset-id").blur();
   await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
 
   const fileChooserPromise = page.waitForEvent("filechooser");

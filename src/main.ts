@@ -3,13 +3,15 @@ import { getElements } from "./ui/elements";
 import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { humanSize, formatDuration } from "./lib/format";
-import { testConnection } from "./ui/connection";
+import { testConnection, renderIdentity } from "./ui/connection";
 import { renderFileTree, setExpandDepth, DEFAULT_EXPAND_DEPTH } from "./ui/fileTree";
 import { createEtagWorker } from "./lib/etag-worker";
 import { planParts } from "./lib/etag";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
 import { maxDepth, buildTree } from "./lib/fileTree";
-import type { UploaderConfig } from "./lib/types";
+import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
+import { listIncomingDandisets } from "./lib/dandisets";
+import type { UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { DroppedFile } from "./lib/fileTree";
 import type { FileRow } from "./ui/fileRow";
 import { renderChangelogHtml } from "./lib/changelog";
@@ -188,27 +190,96 @@ els.whatsNewModal.addEventListener("click", (e) => {
   if (e.target === els.whatsNewModal) els.whatsNewModal.close();
 });
 
+let oauthTokens: OAuthTokenSet | null = null;
+// The dandiset id restored from a previous session, applied once the dropdown is populated with
+// the signed-in user's incoming datasets (a <select> can't hold a value before its options exist).
+let storedDandisetId = "";
+
 function loadSettings(): boolean {
   const s = loadStoredSettings();
   if (s) {
-    if (s.apiKey) els.apiKey.value = s.apiKey;
-    if (s.dandisetId) els.dandisetId.value = s.dandisetId;
+    if (s.dandisetId) storedDandisetId = s.dandisetId;
+    if (s.oauth) oauthTokens = s.oauth;
   }
   return s !== null;
 }
 
 function saveSettings(): void {
   saveStoredSettings({
-    apiKey: els.apiKey.value.trim(),
     dandisetId: els.dandisetId.value.trim(),
+    oauth: oauthTokens ?? undefined,
   });
 }
 
 function currentConfig(): UploaderConfig {
   return resolveConfig({
-    apiKey: els.apiKey.value,
     dandisetId: els.dandisetId.value,
+    oauthAccessToken: oauthTokens?.accessToken,
   });
+}
+
+function renderAuthUI(): void {
+  const signedIn = !!oauthTokens;
+  els.oauthSigninBtn.hidden = signedIn;
+  els.oauthSignedIn.hidden = !signedIn;
+}
+
+// Refreshes the OAuth access token first if it's near expiry, so the config used for the request
+// that follows always carries a live token instead of one that's about to be rejected.
+async function ensureFreshOAuth(): Promise<void> {
+  if (!oauthTokens) return;
+  const fresh = await ensureFreshToken(oauthTokens).catch(() => oauthTokens!);
+  if (fresh !== oauthTokens) {
+    oauthTokens = fresh;
+    saveSettings();
+  }
+}
+
+function setDandisetPlaceholder(text: string, disabled: boolean): void {
+  const opt = document.createElement("option");
+  opt.value = "";
+  opt.textContent = text;
+  opt.disabled = true;
+  opt.selected = true;
+  els.dandisetId.replaceChildren(opt);
+  els.dandisetId.disabled = disabled;
+}
+
+// Populates the "Incoming dataset" dropdown from the signed-in user's owned dandisets, since
+// there's no longer a free-text Dandiset ID field to type into.
+async function refreshDandisetOptions(): Promise<void> {
+  if (!oauthTokens) {
+    setDandisetPlaceholder("Sign in to see your incoming datasets", true);
+    updateViewDatasetLink();
+    return;
+  }
+  await ensureFreshOAuth();
+  void renderIdentity(els, currentConfig());
+  setDandisetPlaceholder("Loading your incoming datasets…", true);
+  try {
+    const datasets = await listIncomingDandisets(currentConfig());
+    if (!datasets.length) {
+      setDandisetPlaceholder("No incoming datasets found for your account", true);
+    } else {
+      els.dandisetId.replaceChildren(
+        ...datasets.map((d) => {
+          const opt = document.createElement("option");
+          opt.value = d.identifier;
+          opt.textContent = `${d.title} (${d.identifier})`;
+          return opt;
+        }),
+      );
+      // Nothing to choose between with only one dataset, so grey it out rather than implying
+      // there's a live pick to make.
+      els.dandisetId.disabled = datasets.length === 1;
+      const match = datasets.find((d) => d.identifier === storedDandisetId);
+      els.dandisetId.value = match ? match.identifier : datasets[0].identifier;
+    }
+  } catch {
+    setDandisetPlaceholder("Could not load your datasets", true);
+  }
+  saveSettings();
+  runConnectionCheck();
 }
 
 function updateViewDatasetLink(): void {
@@ -267,6 +338,7 @@ async function runQueue<T>(items: T[], worker: (item: T, lane: number) => Promis
 }
 
 async function startUpload(): Promise<void> {
+  await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
   els.cancelAllBtn.hidden = false;
@@ -293,18 +365,36 @@ async function startUpload(): Promise<void> {
 }
 
 function runConnectionCheck(): void {
-  void testConnection(els, currentConfig, saveSettings);
-  updateViewDatasetLink();
+  void (async () => {
+    await ensureFreshOAuth();
+    await testConnection(els, currentConfig, saveSettings);
+    updateViewDatasetLink();
+  })();
 }
 
-const hadStoredSettings = loadSettings();
-initDropzone(els, addFiles);
-[els.apiKey, els.dandisetId].forEach((el) => el.addEventListener("change", runConnectionCheck));
-document.getElementById("config-form")!.addEventListener("submit", (e) => e.preventDefault());
-if (hadStoredSettings) runConnectionCheck();
-els.apiKeyHelp.addEventListener("click", () => {
-  els.apiKeyHelpText.hidden = !els.apiKeyHelpText.hidden;
+const callbackTokens = await handleRedirectCallback().catch((e) => {
+  console.warn("OAuth sign-in callback failed:", e);
+  return null;
 });
+loadSettings();
+if (callbackTokens) {
+  oauthTokens = callbackTokens;
+  saveSettings();
+}
+renderAuthUI();
+initDropzone(els, addFiles);
+els.dandisetId.addEventListener("change", runConnectionCheck);
+document.getElementById("config-form")!.addEventListener("submit", (e) => e.preventDefault());
+els.oauthSigninBtn.addEventListener("click", () => void startLogin());
+els.oauthSignoutBtn.addEventListener("click", () => {
+  const tokens = oauthTokens;
+  oauthTokens = null;
+  saveSettings();
+  renderAuthUI();
+  if (tokens) void revokeToken(tokens);
+  void refreshDandisetOptions();
+});
+void refreshDandisetOptions();
 els.expandDepthInput.addEventListener("input", () => {
   const depth = Number(els.expandDepthInput.value);
   els.expandDepthValue.textContent = String(depth);

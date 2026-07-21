@@ -8,3 +8,4 @@
 - PR titles should be human-readable and in the past tense; they should NOT use conventional commit style
 - Keep PR descriptions short and to the point
 - Limit use of em-dashes in all text
+- Before storing any new credential/token client-side, adding/changing `innerHTML`/`outerHTML`/`insertAdjacentHTML` usage, or responding to a CodeQL "clear text storage of sensitive data" alert, read `SECURITY.md`

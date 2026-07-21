@@ -6,6 +6,9 @@
   --border: #dde1ec;
   --accent: #4f46e5;
   --accent-soft: #eef0ff;
+  /* EMBER's flame red, matched from the logo mark — used for the archive sign-in button only. */
+  --ember-red: #c81a24;
+  --ember-red-hover: #a8151d;
   --ok: #15803d;
   --ok-soft: #e9f9ef;
   --warn: #b45309;
@@ -165,6 +168,18 @@ button.primary {
   font-weight: 600;
 }
 
+#oauth-signin-btn {
+  background: var(--ember-red);
+  border-color: var(--ember-red);
+}
+#oauth-signin-btn:hover {
+  background: var(--ember-red-hover);
+  border-color: var(--ember-red-hover);
+}
+#oauth-signin-btn:focus-visible {
+  outline-color: var(--ember-red);
+}
+
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -261,6 +276,93 @@ button.hint {
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
+}
+
+.oauth-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.oauth-signed-in {
+  position: relative;
+  display: inline-flex;
+}
+.oauth-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--ember-red);
+  color: var(--ember-red);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  cursor: default;
+}
+/* Revealed on hover/focus, mirroring the main archive's own avatar-menu behavior. */
+.oauth-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  min-width: 220px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    visibility 0.12s;
+  z-index: 20;
+}
+.oauth-signed-in:hover .oauth-popover,
+.oauth-signed-in:focus-within .oauth-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.oauth-popover-greeting {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.oauth-popover-divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+.oauth-popover-signout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.oauth-popover-signout:hover {
+  color: var(--ember-red);
+}
+.oauth-popover-signout-icon {
+  flex-shrink: 0;
 }
 
 .dir-item {

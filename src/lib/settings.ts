@@ -19,16 +19,19 @@ export function saveStoredSettings(settings: StoredSettings | null): void {
     localStorage.removeItem(STORAGE_KEY);
     return;
   }
+  // codeql[js/clear-text-storage-of-sensitive-data]: ember-uploader is a fully static,
+  // backend-free page (no server to hold a session), so client storage is the only place
+  // to persist the OAuth token between page loads; the pasted API key was stored the same way.
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-export function resolveConfig(input: { apiKey: string; dandisetId: string }): UploaderConfig {
+export function resolveConfig(input: { dandisetId: string; oauthAccessToken?: string }): UploaderConfig {
   const rawId = input.dandisetId.trim();
   const idMatch = rawId.match(/(\d{6,})/);
   return {
     api: EMBER_INSTANCE.api,
     web: EMBER_INSTANCE.web,
-    apiKey: input.apiKey.trim(),
+    accessToken: input.oauthAccessToken ?? "",
     dandisetId: idMatch ? idMatch[1] : "",
   };
 }
@@ -36,7 +39,7 @@ export function resolveConfig(input: { apiKey: string; dandisetId: string }): Up
 export function configProblems(cfg: UploaderConfig): string[] {
   const problems: string[] = [];
   if (!cfg.api || !/^https?:\/\//.test(cfg.api)) problems.push("API base URL is missing or invalid.");
-  if (!cfg.apiKey) problems.push("API key is missing.");
-  if (!cfg.dandisetId) problems.push("Dandiset ID is missing (expected something like 000123).");
+  if (!cfg.accessToken) problems.push("Not signed in.");
+  else if (!cfg.dandisetId) problems.push("No dataset selected.");
   return problems;
 }
