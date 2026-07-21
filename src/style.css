@@ -312,6 +312,16 @@ button.hint {
   margin-left: auto;
   white-space: nowrap;
 }
+.dir-size {
+  color: var(--muted);
+  opacity: 0.7;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dir-size::before {
+  content: "· ";
+}
 
 .dest-root {
   display: flex;

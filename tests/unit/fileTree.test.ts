@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildTree, countDescendants, type DroppedFile } from "../../src/lib/fileTree";
+import { buildTree, countDescendants, sumSize, type DroppedFile } from "../../src/lib/fileTree";
 
-function fakeFile(name: string): File {
-  return new File(["x"], name);
+function fakeFile(name: string, size = 1): File {
+  return new File([new Uint8Array(size)], name);
 }
 
 describe("buildTree", () => {
@@ -45,5 +45,23 @@ describe("countDescendants", () => {
   it("is zero for an empty node", () => {
     const tree = buildTree([]);
     expect(countDescendants(tree)).toBe(0);
+  });
+});
+
+describe("sumSize", () => {
+  it("sums file sizes recursively across subfolders", () => {
+    const entries: DroppedFile[] = [
+      { file: fakeFile("a.txt", 10), relativePath: "top" },
+      { file: fakeFile("b.txt", 20), relativePath: "top/sub" },
+      { file: fakeFile("c.txt", 30), relativePath: "top/sub" },
+    ];
+    const tree = buildTree(entries);
+    const top = tree.dirs.get("top")!;
+    expect(sumSize(top)).toBe(60);
+  });
+
+  it("is zero for an empty node", () => {
+    const tree = buildTree([]);
+    expect(sumSize(tree)).toBe(0);
   });
 });

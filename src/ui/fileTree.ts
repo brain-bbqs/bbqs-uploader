@@ -1,4 +1,5 @@
-import { buildTree, countDescendants, type DroppedFile, type TreeNode } from "../lib/fileTree";
+import { buildTree, countDescendants, sumSize, type DroppedFile, type TreeNode } from "../lib/fileTree";
+import { humanSize } from "../lib/format";
 
 const COLLAPSE_THRESHOLD = 30;
 
@@ -17,6 +18,7 @@ function renderNode(node: TreeNode, container: HTMLUListElement, targets: Map<Fi
   for (const child of node.dirs.values()) {
     const count = countDescendants(child);
     const collapsed = count > COLLAPSE_THRESHOLD;
+    const size = sumSize(child);
 
     const li = document.createElement("li");
     li.className = "dir-item";
@@ -25,6 +27,7 @@ function renderNode(node: TreeNode, container: HTMLUListElement, targets: Map<Fi
         <span class="dir-chevron" aria-hidden="true">▸</span>
         <span class="dir-name"></span>
         <span class="dir-count">${count} item${count === 1 ? "" : "s"}</span>
+        <span class="dir-size">${humanSize(size)}</span>
       </button>
       <ul class="dir-children"></ul>
     `;

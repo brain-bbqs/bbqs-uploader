@@ -12,6 +12,7 @@
 - Simplified each file row to a single compact line (badge, name, size, and a right-aligned progress bar/status) and added a static `sourcedata/raw` heading above the tree, removing the per-file editable archive-path box and idle "Ready to upload." text — the full destination path is still available as a hover tooltip on each row ([#17](https://github.com/brain-bbqs/ember-uploader/pull/17))
 - Dropped the "Queued" badge (a file being in the list already implies it's queued) and shrank the file tree's rows, borders, spacing, and badges considerably so a handful of folders no longer fills the whole page ([#17](https://github.com/brain-bbqs/ember-uploader/pull/17))
 - Added a rotating chevron to each folder row so expanded/collapsed state is visible at a glance, and replaced the folder emoji with a trailing `/` on folder names for a more compact look ([#17](https://github.com/brain-bbqs/ember-uploader/pull/17))
+- Folder rows now show the total size of their contents (e.g. "9 items · 47 MB"), summed recursively across all nested files, styled a bit lighter than the item count for clarity ([#17](https://github.com/brain-bbqs/ember-uploader/pull/17))
 
 #### 🐛 Bug Fix
 

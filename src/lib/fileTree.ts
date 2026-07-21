@@ -43,3 +43,12 @@ export function countDescendants(node: TreeNode): number {
   }
   return count;
 }
+
+/** Total byte size of every file anywhere in this node's subtree. */
+export function sumSize(node: TreeNode): number {
+  let total = node.files.reduce((sum, entry) => sum + entry.file.size, 0);
+  for (const child of node.dirs.values()) {
+    total += sumSize(child);
+  }
+  return total;
+}
