@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>EMBER Uploader</title>
     <link rel="icon" href="./favicon.ico" />
-    <script type="module" crossorigin src="./assets/index-Ca24S9-1.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-ORe3YAw7.css">
+    <script type="module" crossorigin src="./assets/index-CtFkxkFi.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BrYQXJfU.css">
   </head>
   <body>
     <main>
@@ -57,8 +57,21 @@
       <section class="card" id="drop-card">
         <h2>2 · Files</h2>
         <div id="progress-summary" class="progress-summary" hidden>
-          <div class="progress-summary-bar"><div id="progress-summary-fill"></div></div>
-          <span id="progress-summary-text"></span>
+          <div class="progress-phase">
+            <span class="progress-phase-label">Hashing</span>
+            <div class="progress-summary-bar"><div id="progress-hash-fill"></div></div>
+            <span id="progress-hash-text" class="progress-phase-stats"></span>
+          </div>
+          <div class="progress-phase">
+            <span class="progress-phase-label">Uploading</span>
+            <div class="progress-summary-bar"><div id="progress-upload-fill"></div></div>
+            <span id="progress-upload-text" class="progress-phase-stats"></span>
+          </div>
+          <div class="progress-summary-footer">
+            <span id="progress-footer-left"></span>
+            <span id="progress-footer-mid"></span>
+            <span id="progress-footer-right"></span>
+          </div>
         </div>
         <div id="dropzone" tabindex="0" role="button" aria-label="Drop your research contents here, or click to browse">
           <div class="dz-inner">
@@ -74,6 +87,7 @@
         <div id="upload-bar" class="upload-bar" hidden>
           <button type="button" id="upload-all-btn" class="primary">Upload</button>
           <button type="button" id="cancel-all-btn" hidden>Cancel</button>
+          <a id="view-dataset-link" class="view-dataset-link" target="_blank" rel="noopener" hidden>View dataset ↗</a>
         </div>
         <div id="dest-root" class="dest-root" hidden>
           <code>sourcedata/raw/</code>
