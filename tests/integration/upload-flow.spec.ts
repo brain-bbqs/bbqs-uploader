@@ -62,6 +62,8 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await expect(page.locator("#connect-status-dot")).toHaveClass(/\bok\b/);
   await expect(page.locator("#connect-status-text")).toContainText("Connected");
   await expect(page.locator("#oauth-signed-in")).toBeVisible();
+  // Only one "Incoming: " dataset was seeded, so there's nothing to pick between.
+  await expect(page.locator("#dandiset-id")).toBeDisabled();
   await expect(page.locator("#oauth-avatar")).toHaveText("TU");
   await expect(page.locator("#oauth-username")).toHaveText("test-user");
 

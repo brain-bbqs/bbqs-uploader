@@ -269,7 +269,9 @@ async function refreshDandisetOptions(): Promise<void> {
           return opt;
         }),
       );
-      els.dandisetId.disabled = false;
+      // Nothing to choose between with only one dataset, so grey it out rather than implying
+      // there's a live pick to make.
+      els.dandisetId.disabled = datasets.length === 1;
       const match = datasets.find((d) => d.identifier === storedDandisetId);
       els.dandisetId.value = match ? match.identifier : datasets[0].identifier;
     }

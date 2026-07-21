@@ -9,6 +9,8 @@
 - Colored the "Sign in with EMBER" button in the archive's flame red (matched from the logo mark) instead of the app's generic accent color ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 - Added a colored initials avatar (e.g. "CB") next to the username once signed in, matching the main archive's own convention, so there's a clearer signal of being signed in than just the button disappearing ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 - The signed-in header now shows just the avatar; the username and "Sign out" only appear in a hover popover beneath it, matching the main archive's own avatar-menu behavior ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Reworded the avatar popover to match the main archive's own wording ("You are logged in as **{username}**.") and outlined the avatar in flame red instead of filling it, and added a logout icon next to "Sign out" ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
+- Shortened the "Incoming dataset" label to just "Dataset", and the dropdown now greys out (disabled) when there's only one dataset to pick, since there's nothing to choose between ([#19](https://github.com/brain-bbqs/ember-uploader/pull/19))
 
 #### 🐛 Bug Fix
 
