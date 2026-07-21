@@ -9,9 +9,8 @@ function buildDropzone(dragover: boolean): HTMLElement {
   if (dragover) dz.classList.add("dragover");
   dz.innerHTML = `
     <div class="dz-inner">
-      <div class="dz-icon">⬆️</div>
+      <div class="dz-icon">📄</div>
       <p>Drop your research contents here, or click to browse</p>
-      <p class="dz-alt">or <button type="button" class="linklike">select a folder</button></p>
     </div>
   `;
   return withCard(dz);

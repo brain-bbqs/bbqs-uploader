@@ -26,7 +26,6 @@ export function getElements() {
     dropzone: required<HTMLDivElement>("dropzone"),
     fileInput: required<HTMLInputElement>("file-input"),
     folderInput: required<HTMLInputElement>("folder-input"),
-    folderPickerBtn: required<HTMLButtonElement>("folder-picker-btn"),
     fileList: required<HTMLUListElement>("file-list"),
     destRoot: required<HTMLDivElement>("dest-root"),
     expandDepthInput: required<HTMLInputElement>("expand-depth"),
