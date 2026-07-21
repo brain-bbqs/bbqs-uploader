@@ -13,7 +13,7 @@
 
 #### 🏠 Internal
 
-- Added a `?test&num_datasets=N` URL override that fills the dataset picker with fake "Incoming: Test dataset" entries under negative identifiers (e.g. `-000001`, so they're never mistaken for real dandisets), including `N=0` for the no-datasets-found state, so any dataset-picker state can be previewed without a real account ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
+- Added a `?test&num_datasets=N` URL override that fills the dataset picker with fake "Incoming: Test dataset" entries under negative identifiers (e.g. `-000001`, so they're never mistaken for real dandisets), including `N=0` for the no-datasets-found state, so any dataset-picker state can be previewed without a real account; `?test` alone (without `num_datasets`) is a no-op ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
 - Fixed the `?test` override clearing the header avatar/username for an already signed-in user, since it now leaves real sign-in state untouched and only fakes the dataset list ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
 
 ## 0.0.11

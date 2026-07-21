@@ -291,12 +291,13 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
 // Debug-only escape hatch for previewing the dataset picker's various states without a real
 // account: e.g. "?test&num_datasets=2" fills in that many fake datasets, and "?test&num_datasets=0"
 // previews the no-datasets-found state. Bypasses sign-in entirely, so it also works for a
-// signed-out visitor. Defaults to 1 dataset when num_datasets is omitted.
+// signed-out visitor. "?test" alone (no num_datasets) is a no-op, so the override only ever
+// kicks in when explicitly parameterized.
 function readTestDatasetOverride(): IncomingDandiset[] | null {
   const params = new URLSearchParams(window.location.search);
-  if (!params.has("test")) return null;
   const raw = params.get("num_datasets");
-  const count = Math.max(0, raw === null ? 1 : Number(raw) || 0);
+  if (!params.has("test") || raw === null) return null;
+  const count = Math.max(0, Number(raw) || 0);
   // Negative identifiers (e.g. "-000001") so a fake dataset is never mistaken for a real one.
   return Array.from({ length: count }, (_, i) => ({
     identifier: `-${String(i + 1).padStart(6, "0")}`,
