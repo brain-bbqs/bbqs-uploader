@@ -7,7 +7,9 @@ interface HashRequest {
 }
 
 type WorkerResponse =
-  { type: "progress"; fraction: number } | { type: "done"; etag: string } | { type: "error"; message: string };
+  | { type: "progress"; fraction: number }
+  | { type: "done"; etag: string }
+  | { type: "error"; message: string };
 
 // Cast rather than reference the "webworker" lib, which conflicts with the app's "DOM" lib
 // in a single tsconfig (both declare an incompatible global `self`).
