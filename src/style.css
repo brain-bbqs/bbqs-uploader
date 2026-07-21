@@ -86,6 +86,22 @@ header h1 {
   font-size: 1.7rem;
 }
 
+.site-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.site-subtitle-logo {
+  height: 1.1rem;
+  width: auto;
+}
+
 a {
   color: var(--accent);
 }
