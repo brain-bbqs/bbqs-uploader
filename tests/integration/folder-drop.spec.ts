@@ -15,9 +15,9 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await page.locator("#folder-input").setInputFiles(dir);
 
   // Only a.txt should surface — the .git/config file must be filtered out.
+  const row = page.locator("#file-list .file-item").first();
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
-  const pathInput = page.locator("#file-list .file-item").first().locator('[data-role="path"]');
-  await expect(pathInput).toHaveValue(`sourcedata/raw/${dirName}/session1/a.txt`);
+  await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);
 });
 
 test("a subtree with more than 30 entries renders collapsed by default", async ({ page }) => {

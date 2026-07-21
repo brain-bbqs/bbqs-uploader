@@ -17,6 +17,7 @@ export function getElements() {
     folderInput: required<HTMLInputElement>("folder-input"),
     folderPickerBtn: required<HTMLButtonElement>("folder-picker-btn"),
     fileList: required<HTMLUListElement>("file-list"),
+    destRoot: required<HTMLDivElement>("dest-root"),
     uploadBar: required<HTMLDivElement>("upload-bar"),
     uploadAllBtn: required<HTMLButtonElement>("upload-all-btn"),
     cancelAllBtn: required<HTMLButtonElement>("cancel-all-btn"),

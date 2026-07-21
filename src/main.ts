@@ -15,7 +15,7 @@ const FILE_CONCURRENCY = 3;
 
 const els = getElements();
 const activeUploads = new Set<AbortController>();
-const pending: { file: File; row: FileRow }[] = [];
+const pending: { file: File; row: FileRow; path: string }[] = [];
 
 if (els.versionIndicator) {
   els.versionIndicator.textContent = `v${__APP_VERSION__}`;
@@ -53,9 +53,10 @@ function addFiles(entries: DroppedFile[]): void {
   const targets = renderFileTree(els.fileList, entries);
   for (const entry of entries) {
     const container = targets.get(entry.file) ?? els.fileList;
-    const row = queueFileRow(container, entry.file, entry.relativePath);
-    pending.push({ file: entry.file, row });
+    const { row, path } = queueFileRow(container, entry.file, entry.relativePath);
+    pending.push({ file: entry.file, row, path });
   }
+  els.destRoot.hidden = els.fileList.children.length === 0;
   updateUploadBar();
 }
 
@@ -76,8 +77,7 @@ async function startUpload(): Promise<void> {
   updateUploadBar();
   els.cancelAllBtn.hidden = false;
   const cfg = currentConfig();
-  for (const { row } of batch) row.pathInput.disabled = true;
-  await runQueue(batch, ({ file, row }) => uploadFile(row, file, cfg, activeUploads));
+  await runQueue(batch, ({ file, row, path }) => uploadFile(row, file, path, cfg, activeUploads));
   els.cancelAllBtn.hidden = true;
   updateUploadBar();
 }

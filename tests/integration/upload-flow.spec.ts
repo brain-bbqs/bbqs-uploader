@@ -68,11 +68,12 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
 
   const row = page.locator("#file-list .file-item").first();
   await expect(row.locator('[data-role="badge"]')).toHaveText("Queued");
+  await expect(row).toHaveAttribute("title", "sourcedata/raw/clip.mp4");
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file");
   await page.locator("#upload-all-btn").click();
 
   await expect(row.locator('[data-role="badge"]')).toHaveText("Done", { timeout: 15000 });
-  await expect(row.locator('[data-role="status"]')).toContainText("Uploaded successfully as sourcedata/raw/clip.mp4");
+  await expect(row.locator('[data-role="status"]')).toContainText("download");
   expect(createdAssets).toEqual([
     { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
   ]);
@@ -111,6 +112,6 @@ test("skips a file automatically when an asset already exists at its path, no pr
   await page.locator("#upload-all-btn").click();
 
   await expect(row.locator('[data-role="badge"]')).toHaveText("Skipped", { timeout: 15000 });
-  await expect(row.locator('[data-role="status"]')).toContainText("an asset already exists at this path");
+  await expect(row.locator('[data-role="status"]')).toContainText("already exists");
   expect(assetCreated).toBe(false);
 });
