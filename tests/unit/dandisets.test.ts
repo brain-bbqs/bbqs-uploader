@@ -59,10 +59,7 @@ describe("listIncomingDandisets", () => {
   });
 
   it("returns an empty list when the response has no results", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }));
     const result = await listIncomingDandisets(cfg);
     expect(result).toEqual([]);
     vi.unstubAllGlobals();

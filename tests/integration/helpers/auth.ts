@@ -19,6 +19,8 @@ export async function seedSignedIn(
     { key: STORAGE_KEY, expiresAt: Date.now() + 3600_000 },
   );
   await page.route(`${API}/dandisets/?user=me&embargoed=true&page_size=1000`, (route: Route) =>
-    route.fulfill({ json: { count: 1, next: null, previous: null, results: [{ identifier, draft_version: { name: title } }] } }),
+    route.fulfill({
+      json: { count: 1, next: null, previous: null, results: [{ identifier, draft_version: { name: title } }] },
+    }),
   );
 }
