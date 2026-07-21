@@ -265,7 +265,7 @@ function showDandisetSingle(dataset: IncomingDandiset): void {
 function applyDatasetList(datasets: IncomingDandiset[]): void {
   if (!datasets.length) {
     setDandisetPlaceholder(
-      "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins and request to be added.",
+      "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins to request this.",
     );
     return;
   }
