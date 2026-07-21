@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>EMBER Uploader</title>
     <link rel="icon" href="./favicon.ico" />
-    <script type="module" crossorigin src="./assets/index-fBT8-_wx.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DMWBYruD.css">
+    <script type="module" crossorigin src="./assets/index-Dv1fEkPI.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-ORe3YAw7.css">
   </head>
   <body>
     <main>
@@ -56,6 +56,10 @@
 
       <section class="card" id="drop-card">
         <h2>2 · Files</h2>
+        <div id="progress-summary" class="progress-summary" hidden>
+          <div class="progress-summary-bar"><div id="progress-summary-fill"></div></div>
+          <span id="progress-summary-text"></span>
+        </div>
         <div id="dropzone" tabindex="0" role="button" aria-label="Drop your research contents here, or click to browse">
           <div class="dz-inner">
             <div class="dz-icon">⬆️</div>
@@ -73,6 +77,11 @@
         </div>
         <div id="dest-root" class="dest-root" hidden>
           <code>sourcedata/raw/</code>
+          <span class="expand-control">
+            <label for="expand-depth">Expand depth</label>
+            <input type="range" id="expand-depth" min="0" max="6" value="2" />
+            <span id="expand-depth-value">2</span>
+          </span>
         </div>
         <ul id="file-list"></ul>
       </section>
