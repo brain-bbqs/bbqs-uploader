@@ -1,9 +1,10 @@
 import "./style.css";
 import { getElements } from "./ui/elements";
 import { initDropzone } from "./ui/dropzone";
-import { queueFileRow, uploadFile } from "./ui/processFile";
+import { queueFileRow, uploadFile, type UploadOutcome } from "./ui/processFile";
+import { humanSize } from "./lib/format";
 import { testConnection } from "./ui/connection";
-import { renderFileTree } from "./ui/fileTree";
+import { renderFileTree, setExpandDepth } from "./ui/fileTree";
 import { createEtagWorker } from "./lib/etag-worker";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
 import type { UploaderConfig } from "./lib/types";
@@ -25,6 +26,37 @@ function getHashWorker(lane: number): ReturnType<typeof createEtagWorker> {
 const els = getElements();
 const activeUploads = new Set<AbortController>();
 const pending: { file: File; row: FileRow; path: string }[] = [];
+
+// Batch-scoped progress tracker for the current (or most recently finished) "Upload" click.
+let batchTotalBytes = 0;
+let batchDoneBytes = 0;
+let batchTotalFiles = 0;
+const batchCounts: Record<UploadOutcome, number> = { done: 0, skipped: 0, error: 0, cancelled: 0, blocked: 0 };
+const lastReportedBytes = new Map<File, number>();
+
+function reportFileBytes(file: File, bytesDone: number): void {
+  const prev = lastReportedBytes.get(file) ?? 0;
+  batchDoneBytes += bytesDone - prev;
+  lastReportedBytes.set(file, bytesDone);
+  updateProgressSummary();
+}
+
+function updateProgressSummary(): void {
+  const pct = batchTotalBytes > 0 ? Math.min(100, Math.round((batchDoneBytes / batchTotalBytes) * 100)) : 0;
+  els.progressSummaryFill.style.width = `${pct}%`;
+  const finished =
+    batchCounts.done + batchCounts.skipped + batchCounts.error + batchCounts.cancelled + batchCounts.blocked;
+  const parts: string[] = [];
+  if (batchCounts.done) parts.push(`${batchCounts.done} done`);
+  if (batchCounts.skipped) parts.push(`${batchCounts.skipped} skipped`);
+  if (batchCounts.error) parts.push(`${batchCounts.error} error${batchCounts.error === 1 ? "" : "s"}`);
+  if (batchCounts.cancelled) parts.push(`${batchCounts.cancelled} cancelled`);
+  if (batchCounts.blocked) parts.push(`${batchCounts.blocked} blocked`);
+  const summary = parts.length ? parts.join(", ") : "starting…";
+  els.progressSummaryText.textContent =
+    `${pct}% (${humanSize(batchDoneBytes)} / ${humanSize(batchTotalBytes)}) — ` +
+    `${finished}/${batchTotalFiles} files — ${summary}`;
+}
 
 if (els.versionIndicator) {
   els.versionIndicator.textContent = `v${__APP_VERSION__}`;
@@ -59,7 +91,7 @@ function updateUploadBar(): void {
 }
 
 function addFiles(entries: DroppedFile[]): void {
-  const targets = renderFileTree(els.fileList, entries);
+  const targets = renderFileTree(els.fileList, entries, Number(els.expandDepthInput.value));
   for (const entry of entries) {
     const container = targets.get(entry.file) ?? els.fileList;
     const { row, path } = queueFileRow(container, entry.file, entry.relativePath);
@@ -86,9 +118,23 @@ async function startUpload(): Promise<void> {
   updateUploadBar();
   els.cancelAllBtn.hidden = false;
   const cfg = currentConfig();
-  await runQueue(batch, ({ file, row, path }, lane) =>
-    uploadFile(row, file, path, cfg, activeUploads, getHashWorker(lane).hash),
-  );
+
+  batchTotalBytes = batch.reduce((sum, b) => sum + b.file.size, 0);
+  batchDoneBytes = 0;
+  batchTotalFiles = batch.length;
+  lastReportedBytes.clear();
+  (Object.keys(batchCounts) as UploadOutcome[]).forEach((k) => (batchCounts[k] = 0));
+  els.progressSummary.hidden = false;
+  updateProgressSummary();
+
+  await runQueue(batch, async ({ file, row, path }, lane) => {
+    const outcome = await uploadFile(row, file, path, cfg, activeUploads, getHashWorker(lane).hash, (bytesDone) =>
+      reportFileBytes(file, bytesDone),
+    );
+    batchCounts[outcome]++;
+    updateProgressSummary();
+  });
+
   els.cancelAllBtn.hidden = true;
   updateUploadBar();
 }
@@ -104,6 +150,11 @@ document.getElementById("config-form")!.addEventListener("submit", (e) => e.prev
 if (hadStoredSettings) runConnectionCheck();
 els.apiKeyHelp.addEventListener("click", () => {
   els.apiKeyHelpText.hidden = !els.apiKeyHelpText.hidden;
+});
+els.expandDepthInput.addEventListener("input", () => {
+  const depth = Number(els.expandDepthInput.value);
+  els.expandDepthValue.textContent = String(depth);
+  setExpandDepth(els.fileList, depth);
 });
 els.uploadAllBtn.addEventListener("click", () => void startUpload());
 els.cancelAllBtn.addEventListener("click", () => {

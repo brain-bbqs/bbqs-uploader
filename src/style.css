@@ -326,10 +326,22 @@ button.hint {
 .dest-root {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 0.75rem;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.expand-control {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.expand-control input[type="range"] {
+  width: 90px;
 }
 
 #file-list {
@@ -409,6 +421,29 @@ button.hint {
   align-items: center;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.progress-summary {
+  margin-bottom: 1rem;
+}
+.progress-summary-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+.progress-summary-bar > div {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.15s linear;
+}
+#progress-summary-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 .badge {

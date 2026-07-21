@@ -14,6 +14,8 @@ export type HashFn = (
   signal?: AbortSignal,
 ) => Promise<string>;
 
+export type UploadOutcome = "blocked" | "cancelled" | "error" | "skipped" | "done";
+
 let fileCounter = 0;
 
 /** Adds a row to the file list with its computed archive path, ready for a later batch upload. */
@@ -36,12 +38,16 @@ export async function uploadFile(
   cfg: UploaderConfig,
   activeUploads: Set<AbortController>,
   hash: HashFn,
-): Promise<void> {
+  // Reports bytes "accounted for" so far for this file (0..file.size), weighting the hash and
+  // upload phases evenly — a rough but reasonable estimate for an aggregate progress bar.
+  onBytesProgress?: (bytesDone: number) => void,
+): Promise<UploadOutcome> {
   const problems = configProblems(cfg);
   if (problems.length) {
     row.setBadge("Blocked", "err");
     row.setStatus(problems.join(" "), "err");
-    return;
+    onBytesProgress?.(file.size);
+    return "blocked";
   }
 
   const abort = new AbortController();
@@ -51,7 +57,15 @@ export async function uploadFile(
     // --- 1. Checksum (off the main thread, via a per-lane worker) ------
     row.setBadge("Hashing", "busy");
     const parts = planParts(file.size);
-    const etag = await hash(file, parts, (f) => row.setProgress(f * 0.999), abort.signal);
+    const etag = await hash(
+      file,
+      parts,
+      (f) => {
+        row.setProgress(f * 0.999);
+        onBytesProgress?.(f * file.size * 0.5);
+      },
+      abort.signal,
+    );
     row.setProgress(0);
 
     // --- 2. Conflict check (skip automatically; never overwrites) ------
@@ -60,7 +74,8 @@ export async function uploadFile(
     if (existing) {
       row.setBadge("Skipped", "warn");
       row.setStatus("already exists", "warn");
-      return;
+      onBytesProgress?.(file.size);
+      return "skipped";
     }
 
     // --- 3. Blob upload --------------------------------------------------
@@ -72,6 +87,7 @@ export async function uploadFile(
       (f) => {
         row.setProgress(f);
         row.setStatus(`${(f * 100).toFixed(0)}%`);
+        onBytesProgress?.(file.size * 0.5 + f * file.size * 0.5);
       },
       abort.signal,
     );
@@ -98,22 +114,26 @@ export async function uploadFile(
     dl.rel = "noopener";
     dl.textContent = "download ↗";
     row.status.append(dl);
+    onBytesProgress?.(file.size);
+    return "done";
   } catch (e) {
+    onBytesProgress?.(file.size);
     if (abort.signal.aborted) {
       row.setBadge("Cancelled", "warn");
-    } else {
-      row.setBadge("Error", "err");
-      let msg = friendlyError(e);
-      if (e instanceof ApiError && e.status === 0) {
-        try {
-          msg += ` ${await diagnoseCors(cfg)}`;
-        } catch {
-          /* diagnosis is best-effort */
-        }
-      }
-      row.setStatus(msg, "err");
-      console.error(e);
+      return "cancelled";
     }
+    row.setBadge("Error", "err");
+    let msg = friendlyError(e);
+    if (e instanceof ApiError && e.status === 0) {
+      try {
+        msg += ` ${await diagnoseCors(cfg)}`;
+      } catch {
+        /* diagnosis is best-effort */
+      }
+    }
+    row.setStatus(msg, "err");
+    console.error(e);
+    return "error";
   } finally {
     activeUploads.delete(abort);
   }
