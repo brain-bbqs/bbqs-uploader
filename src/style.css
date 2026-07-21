@@ -6,6 +6,9 @@
   --border: #dde1ec;
   --accent: #4f46e5;
   --accent-soft: #eef0ff;
+  /* EMBER's flame red, matched from the logo mark — used for the archive sign-in button only. */
+  --ember-red: #c81a24;
+  --ember-red-hover: #a8151d;
   --ok: #15803d;
   --ok-soft: #e9f9ef;
   --warn: #b45309;
@@ -163,6 +166,18 @@ button.primary {
   border-color: var(--accent);
   color: #fff;
   font-weight: 600;
+}
+
+#oauth-signin-btn {
+  background: var(--ember-red);
+  border-color: var(--ember-red);
+}
+#oauth-signin-btn:hover {
+  background: var(--ember-red-hover);
+  border-color: var(--ember-red-hover);
+}
+#oauth-signin-btn:focus-visible {
+  outline-color: var(--ember-red);
 }
 
 button:disabled {
