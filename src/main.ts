@@ -322,7 +322,7 @@ async function refreshDandisetOptions(): Promise<void> {
     return;
   }
   if (!oauthTokens) {
-    setDandisetPlaceholder("Sign in to see your incoming datasets");
+    setDandisetPlaceholder("Please sign in to see your incoming datasets.");
     updateViewDatasetLink();
     return;
   }

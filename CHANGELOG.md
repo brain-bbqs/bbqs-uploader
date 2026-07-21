@@ -11,6 +11,8 @@
 - Reworded the no-datasets-found message to "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins and request to be added." ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
 - Replaced the dropzone's arrow icon with a page icon, and removed the "or select a folder" link underneath it; folders can still be uploaded by dragging them onto the box ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
 - The dataset picker's status messages (signed out, loading, no datasets, error) are now shown as plain text instead of a disabled dropdown option ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
+- Cropped the BBQS header logo to a circle and made it 25% larger ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
+- Tightened up copy: added periods to the dropzone prompt and the sign-in message ([#20](https://github.com/brain-bbqs/ember-uploader/pull/20))
 
 #### 🏠 Internal
 

@@ -77,8 +77,10 @@ main {
 }
 
 .brand-logo {
-  height: 2.4rem;
-  width: auto;
+  height: 3rem;
+  width: 3rem;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 header h1 {
