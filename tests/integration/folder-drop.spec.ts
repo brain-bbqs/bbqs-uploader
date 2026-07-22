@@ -27,6 +27,20 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await expect(page.locator("#expand-depth-ticks .tick-label")).toHaveCount(2);
 });
 
+test("the dropzone browse links open the file and folder pickers respectively", async ({ page }) => {
+  await page.goto("/");
+
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.locator("#browse-files-btn").click();
+  const fileChooser = await fileChooserPromise;
+  expect(await fileChooser.element().getAttribute("id")).toBe("file-input");
+
+  const folderChooserPromise = page.waitForEvent("filechooser");
+  await page.locator("#browse-folder-btn").click();
+  const folderChooser = await folderChooserPromise;
+  expect(await folderChooser.element().getAttribute("id")).toBe("folder-input");
+});
+
 test("a folder with more than 30 files reveals the first 30 and truncates the rest with a placeholder", async ({
   page,
 }) => {
