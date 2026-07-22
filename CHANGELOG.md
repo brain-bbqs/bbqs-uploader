@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.16
+
+#### 🚀 Enhancement
+
+- Parallelized checksum hashing across the parts of a single large file: the per-file "one worker hashes all of a file's parts sequentially" lanes were replaced by a shared pool of part-hashing workers (one per CPU core, up to 8) fed by a queue of individual parts drained round-robin across all files being hashed, so a lone multi-part file now uses every core instead of one, and a newly dropped file gets serviced as soon as any worker frees up instead of waiting behind another file's remaining parts ([#25](https://github.com/brain-bbqs/ember-uploader/pull/25))
+- Made checksum hashing cancellable: "Cancel all" now also aborts in-progress and queued hashing (mid-part, at 16MB chunk granularity) and is offered while files are still scanning, with cancelled rows marked "Cancelled" ([#25](https://github.com/brain-bbqs/ember-uploader/pull/25))
+
 ## 0.0.15
 
 #### 🚀 Enhancement

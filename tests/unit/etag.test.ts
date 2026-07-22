@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planParts, computeDandiEtag } from "../../src/lib/etag";
+import { planParts, computeDandiEtag, hashPart, combineDigests } from "../../src/lib/etag";
 
 const MB = 2 ** 20;
 
@@ -58,5 +58,38 @@ describe("computeDandiEtag", () => {
     const etagA = await computeDandiEtag(fileA, partsA, () => {});
     const etagB = await computeDandiEtag(fileB, partsB, () => {});
     expect(etagA).toBe(etagB);
+  });
+});
+
+describe("hashPart / combineDigests", () => {
+  it("returns a 16-byte digest and reports cumulative bytes per chunk", async () => {
+    const size = 2 * MB;
+    const file = new Blob([new Uint8Array(size).map((_, i) => i % 251)]);
+    const [part] = planParts(size);
+    const chunkBytes: number[] = [];
+    const digest = await hashPart(file, part, (b) => chunkBytes.push(b));
+    expect(digest).toBeInstanceOf(Uint8Array);
+    expect(digest.length).toBe(16);
+    expect(chunkBytes[chunkBytes.length - 1]).toBe(size);
+  });
+
+  it("matches computeDandiEtag when parts are hashed independently and out of order", async () => {
+    const size = 64 * MB + 3 * MB;
+    const bytes = new Uint8Array(size);
+    for (let i = 0; i < size; i += 4096) bytes[i] = (i / 4096) % 256;
+    const file = new Blob([bytes]);
+    const parts = planParts(size);
+    expect(parts.length).toBeGreaterThan(1);
+
+    const partDigests = new Uint8Array(parts.length * 16);
+    // Reversed order mimics parts finishing in any order across a worker pool.
+    for (const part of [...parts].reverse()) {
+      const digest = await hashPart(file, part, () => {});
+      partDigests.set(digest, (part.number - 1) * 16);
+    }
+    const combined = combineDigests(partDigests, parts.length);
+    const sequential = await computeDandiEtag(file, parts, () => {});
+    expect(combined).toBe(sequential);
+    expect(combined).toMatch(new RegExp(`^[0-9a-f]{32}-${parts.length}$`));
   });
 });
