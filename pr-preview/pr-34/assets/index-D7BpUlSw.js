@@ -20,7 +20,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🚀 Enhancement
 
-- Added a few tips below the subtitle for achieving optimal transfer speeds (SSD storage, wired Ethernet, Fiber internet, and a link to check baseline upload speed) ([#34](https://github.com/brain-bbqs/ember-uploader/pull/34))
+- Added a "Recommendations for optimal transfer speed" box below the subtitle (SSD storage, wired Ethernet, Fiber internet, and a link to check baseline upload speed) ([#34](https://github.com/brain-bbqs/ember-uploader/pull/34))
 
 ## 0.1.1
 
