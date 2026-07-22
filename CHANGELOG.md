@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.4
+
+#### 🐛 Bug Fix
+
+- Dandiset id resolution now rejects digit runs preceded by a hyphen, so the negative fake identifiers used by the `?test&num_datasets=N` injection (e.g. `-000001`) can no longer resolve to a plausible real dandiset id ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+
+#### 🏠 Internal
+
+- Pre-production cleanup pass: removed dead code left over from earlier iterations (the unused `VideoProbeResult` type, the never-called `HashPool.terminate()`, the test-only `directEntryCount`/`maxDirectEntries` tree helpers, the unused `ApiError.body` field and `apiFetch` `expectJson` option, and unused CSS rules for `label`s, text inputs, `button.hint`, `.help`, `.sr-only`, and `button:disabled` from the pre-OAuth form era) ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+- Renamed the `localStorage`/`sessionStorage` keys from the pre-rename `dandi-mp4-uploader.*` prefix to `bbqs-uploader.*`, matching the IndexedDB name; existing visitors are signed out once and lose their stored theme choice ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+- Fixed the broken `npm run lint` script by adding the missing `eslint.config.js` (typescript-eslint recommended, passing clean) and wired a Lint step into CI ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+- Deduplicated repeated logic: one shared bounded-concurrency `runQueue` (previously implemented separately in `main.ts` and the part-upload pool), one shared scaffold for real/mock hashing setup, `yieldToMain` defined once, mock-animation helpers moved next to the other mock-upload code, one shared Playwright config base, and shared integration-test helpers for dropping files, seeding the theme, and mocking the upload API ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+- Aligned tooling versions and coverage: the pre-commit prettier pin now matches `package-lock.json`, `@eslint/js` is a declared devDependency, typecheck now covers the Chromatic and Storybook configs, and `storybook-static/` is ignored ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
+
 ## 0.1.2
 
 #### 🚀 Enhancement

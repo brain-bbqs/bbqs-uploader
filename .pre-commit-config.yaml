@@ -18,7 +18,8 @@ repos:
       - id: prettier
         args: [--config, configs/prettier.config.cjs]
         additional_dependencies:
-          - prettier@3.1.0
+          # Keep in sync with the prettier version locked in package-lock.json.
+          - prettier@3.9.5
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
