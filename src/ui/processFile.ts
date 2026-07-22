@@ -92,7 +92,9 @@ export async function uploadFile(
     return "done";
   } catch (e) {
     onUploadProgress?.(file.size);
-    if (abort.signal.aborted) {
+    // The AbortError check catches a hash cancelled via "Cancel all" before this upload's own
+    // controller existed (hashJob.promise rejects with it when awaited above).
+    if (abort.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) {
       row.setBadge("Cancelled", "warn");
       return "cancelled";
     }

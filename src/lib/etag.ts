@@ -42,35 +42,58 @@ export function planParts(fileSize: number): FilePart[] {
   return parts;
 }
 
+/**
+ * MD5 of one part of a file, streamed in 16MB chunks. Parts are independent of each other, so
+ * callers may hash any subset of a file's parts concurrently (see createHashPool) and stitch the
+ * results together with combineDigests.
+ */
+export async function hashPart(
+  file: Blob,
+  part: FilePart,
+  onChunk: (bytesDoneInPart: number) => void,
+): Promise<Uint8Array> {
+  const spark = new SparkMD5.ArrayBuffer();
+  let read = 0;
+  while (read < part.size) {
+    const n = Math.min(HASH_CHUNK, part.size - read);
+    const start = part.offset + read;
+    const buf = await file.slice(start, start + n).arrayBuffer();
+    if (buf.byteLength !== n) {
+      throw new Error("File changed on disk while hashing — please re-add it.");
+    }
+    spark.append(buf);
+    read += n;
+    onChunk(read);
+  }
+  // end(true) yields the raw 16-byte digest as a binary string
+  const raw = spark.end(true) as unknown as string;
+  const digest = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) {
+    digest[i] = raw.charCodeAt(i) & 0xff;
+  }
+  return digest;
+}
+
+/** Folds the concatenated per-part digests (16 bytes per part, in part order) into the final etag. */
+export function combineDigests(partDigests: Uint8Array, partCount: number): string {
+  const finalSpark = new SparkMD5.ArrayBuffer();
+  finalSpark.append(partDigests.buffer as ArrayBuffer);
+  return `${finalSpark.end()}-${partCount}`;
+}
+
 export async function computeDandiEtag(
   file: Blob,
   parts: FilePart[],
   onProgress: (fraction: number) => void,
 ): Promise<string> {
   const partDigests = new Uint8Array(parts.length * 16);
-  let bytesDone = 0;
+  let bytesBefore = 0;
   for (const part of parts) {
-    const spark = new SparkMD5.ArrayBuffer();
-    let read = 0;
-    while (read < part.size) {
-      const n = Math.min(HASH_CHUNK, part.size - read);
-      const start = part.offset + read;
-      const buf = await file.slice(start, start + n).arrayBuffer();
-      if (buf.byteLength !== n) {
-        throw new Error("File changed on disk while hashing — please re-add it.");
-      }
-      spark.append(buf);
-      read += n;
-      bytesDone += n;
-      onProgress(bytesDone / file.size);
-    }
-    // end(true) yields the raw 16-byte digest as a binary string
-    const raw = spark.end(true) as unknown as string;
-    for (let i = 0; i < 16; i++) {
-      partDigests[(part.number - 1) * 16 + i] = raw.charCodeAt(i) & 0xff;
-    }
+    const digest = await hashPart(file, part, (bytesDoneInPart) => {
+      onProgress((bytesBefore + bytesDoneInPart) / file.size);
+    });
+    partDigests.set(digest, (part.number - 1) * 16);
+    bytesBefore += part.size;
   }
-  const finalSpark = new SparkMD5.ArrayBuffer();
-  finalSpark.append(partDigests.buffer);
-  return `${finalSpark.end()}-${parts.length}`;
+  return combineDigests(partDigests, parts.length);
 }

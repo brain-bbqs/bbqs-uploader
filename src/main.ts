@@ -5,7 +5,7 @@ import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui
 import { humanSize, formatDuration } from "./lib/format";
 import { renderIdentity } from "./ui/connection";
 import { renderFileTree, setRevealCount, DEFAULT_REVEAL_COUNT } from "./ui/fileTree";
-import { createEtagWorker } from "./lib/etag-worker";
+import { createHashPool } from "./lib/etag-worker";
 import { planParts } from "./lib/etag";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
@@ -18,55 +18,63 @@ import changelog from "../CHANGELOG.md?raw";
 
 declare const __APP_VERSION__: string;
 
-// One hashing worker (a real OS thread) per CPU-core "lane", so hashing N files at once actually
-// uses N cores instead of interleaving on the single JS main thread. Workers are spawned lazily
-// per lane on first use, not eagerly at page load.
+// Hashing runs on a pool of FILE_CONCURRENCY generic part-hashing workers (real OS threads), one
+// per CPU-core "lane". Every file's parts feed the same pool, so a lone large file fans out
+// across all cores instead of serializing on one worker, while the worker count stays bounded no
+// matter how many files are in flight. Workers are spawned lazily, not eagerly at page load.
 const FILE_CONCURRENCY = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
-const hashWorkers: ReturnType<typeof createEtagWorker>[] = [];
-function getHashWorker(lane: number): ReturnType<typeof createEtagWorker> {
-  return (hashWorkers[lane] ??= createEtagWorker());
-}
+const hashPool = createHashPool(FILE_CONCURRENCY);
 
 const els = getElements();
 const activeUploads = new Set<AbortController>();
+const activeHashes = new Set<AbortController>();
 const pending: { file: File; row: FileRow; path: string }[] = [];
+let uploadBatchActive = false;
 
-// Hashing starts the moment a file is dropped, not when "Upload" is clicked. Each lane's worker
-// processes one file at a time, so hash requests for the same lane are chained sequentially;
-// different lanes still run fully in parallel.
-const hashJobs = new Map<File, HashJob>();
-const laneQueues: Promise<unknown>[] = [];
-let nextHashLane = 0;
-
-function runOnLane(lane: number, task: () => Promise<string>): Promise<string> {
-  const prev = laneQueues[lane] ?? Promise.resolve();
-  const next = prev.then(task, task);
-  laneQueues[lane] = next.catch(() => {});
-  return next;
+// "Cancel all" is offered whenever there's background work to stop: an upload batch in progress,
+// or files still hashing (which starts on drop, before "Upload" is ever clicked).
+function updateCancelAllVisibility(): void {
+  els.cancelAllBtn.hidden = !uploadBatchActive && activeHashes.size === 0;
 }
+
+// Hashing starts the moment a file is dropped, not when "Upload" is clicked.
+const hashJobs = new Map<File, HashJob>();
 
 function startHashing(file: File, row: FileRow): HashJob {
   ensureScanTimerStarted();
   const parts = planParts(file.size);
-  const lane = nextHashLane++ % FILE_CONCURRENCY;
   row.setBadge("Scanning", "busy");
-  const promise = runOnLane(lane, () =>
-    getHashWorker(lane).hash(file, parts, (f) => {
+  const abort = new AbortController();
+  activeHashes.add(abort);
+  updateCancelAllVisibility();
+  const promise = hashPool.hash(
+    file,
+    parts,
+    (f) => {
       row.setProgress(f * 0.999);
       reportHashBytes(file, f * file.size);
-    }),
+    },
+    abort.signal,
   );
   promise
     .then(() => {
       hashedFiles++;
       reportHashBytes(file, file.size);
+      row.hideBadge();
     })
-    .catch(() => {
-      /* surfaced again (and handled) once uploadFile awaits this same promise */
+    .catch((e: unknown) => {
+      // Surfaced again (and handled) once uploadFile awaits this same promise; a cancelled scan
+      // keeps its badge so the row doesn't silently look untouched.
+      if (e instanceof DOMException && e.name === "AbortError") {
+        row.setBadge("Cancelled", "warn");
+      } else {
+        row.hideBadge();
+      }
     })
     .finally(() => {
       row.setProgress(0);
-      row.hideBadge();
+      activeHashes.delete(abort);
+      updateCancelAllVisibility();
     });
   const job: HashJob = { parts, promise };
   hashJobs.set(file, job);
@@ -108,7 +116,7 @@ function elapsedMsSince(start: number | null): number {
 }
 
 // Hash/upload progress arrives in a flood of worker messages (one per 16MB chunk, across up to
-// 8 concurrent lanes). Coalescing them into at most one DOM update per animation frame keeps the
+// 8 pool workers). Coalescing them into at most one DOM update per animation frame keeps the
 // main thread from being swamped by redundant layout-invalidating writes.
 let progressUpdateScheduled = false;
 function scheduleProgressUpdate(): void {
@@ -472,7 +480,8 @@ async function startUpload(): Promise<void> {
   await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
-  els.cancelAllBtn.hidden = false;
+  uploadBatchActive = true;
+  updateCancelAllVisibility();
   const cfg = currentConfig();
 
   await runQueue(batch, async ({ file, row, path }) => {
@@ -491,7 +500,8 @@ async function startUpload(): Promise<void> {
     updateProgressSummary();
   });
 
-  els.cancelAllBtn.hidden = true;
+  uploadBatchActive = false;
+  updateCancelAllVisibility();
   updateUploadBar();
 }
 
@@ -540,6 +550,7 @@ els.expandDepthInput.addEventListener("input", () => {
 });
 els.uploadAllBtn.addEventListener("click", () => void startUpload());
 els.cancelAllBtn.addEventListener("click", () => {
+  for (const controller of activeHashes) controller.abort();
   for (const controller of activeUploads) controller.abort();
 });
 window.addEventListener("beforeunload", (e) => {
