@@ -24,8 +24,6 @@ repos:
     rev: v9.39.1
     hooks:
       - id: eslint
-        # The upstream hook only targets .js (types: [javascript]); widen it to this
-        # repo's TypeScript and CommonJS config files too.
         types: [file]
         files: \.(js|cjs|mjs|ts|tsx)$
         args: [--fix, --config, configs/eslint.config.cjs]
