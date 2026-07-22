@@ -9,19 +9,19 @@
       // Applies the stored theme override before first paint so a saved dark/light choice doesn't
       // flash the OS-preferred theme first. Key kept in sync with THEME_KEY in src/lib/settings.ts.
       try {
-        var storedTheme = localStorage.getItem("dandi-mp4-uploader.theme");
+        var storedTheme = localStorage.getItem("bbqs-uploader.theme");
         if (storedTheme === "light" || storedTheme === "dark") document.documentElement.dataset.theme = storedTheme;
       } catch (e) {}
     </script>
-    <script type="module" crossorigin src="./assets/index-CP7IaAHp.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Be2rMbAe.css">
+    <script type="module" crossorigin src="./assets/index-Dkr_MIwb.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-B5K2I74k.css">
   </head>
   <body>
     <main>
       <header class="site-header">
         <img class="brand-logo" src="./assets/bbqs-logo-DsiqigcO.png" alt="BBQS" />
         <h1>BBQS Uploader</h1>
-        <div id="oauth-row" class="oauth-row">
+        <div class="oauth-row">
           <button
             type="button"
             id="theme-toggle"
@@ -135,7 +135,7 @@
         </form>
       </section>
 
-      <section class="card" id="drop-card">
+      <section class="card">
         <div id="progress-summary" class="progress-summary" hidden>
           <div class="progress-phase">
             <div class="progress-phase-head">
