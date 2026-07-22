@@ -4,11 +4,17 @@ import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { humanSize, formatDuration } from "./lib/format";
 import { renderIdentity } from "./ui/connection";
-import { renderFileTree, setExpandCount, DEFAULT_MAX_EXPAND_COUNT } from "./ui/fileTree";
+import {
+  renderFileTree,
+  setExpandBudget,
+  computeExpandBudget,
+  maxExpandStep,
+  describeExpandBudget,
+} from "./ui/fileTree";
 import { createEtagWorker } from "./lib/etag-worker";
 import { planParts } from "./lib/etag";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
-import { maxDirCount, buildTree } from "./lib/fileTree";
+import { maxDepth, maxFanout, buildTree } from "./lib/fileTree";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
 import type { UploaderConfig, OAuthTokenSet } from "./lib/types";
@@ -90,7 +96,8 @@ let totalFiles = 0;
 const counts: Record<UploadOutcome, number> = { done: 0, skipped: 0, error: 0, cancelled: 0, blocked: 0 };
 const lastHashBytes = new Map<File, number>();
 const lastUploadBytes = new Map<File, number>();
-let treeMaxItemCount = 0;
+let treeDepth = 0;
+let treeFanout = 0;
 let scanStart: number | null = null;
 let uploadStart: number | null = null;
 let tickerRunning = false;
@@ -187,18 +194,23 @@ function updateProgressSummary(): void {
   if (counts.blocked) leftParts.push(`${counts.blocked} blocked`);
   els.progressFooterLeft.textContent = leftParts.join(", ");
   els.progressFooterMid.textContent = counts.skipped ? `${counts.skipped} skipped` : "";
-  els.progressFooterRight.textContent = `${finished}/${totalFiles} files`;
+  els.progressFooterRight.textContent = `${finished}/${totalFiles} files done`;
 }
 
-// A tick per possible value would mean thousands of <option> elements for a folder with
-// thousands of items — the same kind of unbounded DOM growth this file's other perf fixes
+// A tick per possible value would mean thousands of <option> elements for a folder with a
+// thousands-wide fanout — the same kind of unbounded DOM growth this file's other perf fixes
 // avoid — so cap it at a fixed number of evenly spaced ticks instead.
 const MAX_EXPAND_TICKS = 10;
 
+function currentExpandBudget() {
+  return computeExpandBudget(Number(els.expandDepthInput.value), treeDepth);
+}
+
 function updateExpandDepthRange(): void {
-  els.expandDepthInput.max = String(treeMaxItemCount);
-  const tickCount = Math.min(MAX_EXPAND_TICKS, treeMaxItemCount);
-  const step = tickCount > 0 ? treeMaxItemCount / tickCount : 0;
+  const sliderMax = maxExpandStep(treeDepth, treeFanout);
+  els.expandDepthInput.max = String(sliderMax);
+  const tickCount = Math.min(MAX_EXPAND_TICKS, sliderMax);
+  const step = tickCount > 0 ? sliderMax / tickCount : 0;
   const values = new Set(Array.from({ length: tickCount + 1 }, (_, i) => Math.round(i * step)));
   els.expandDepthTicks.replaceChildren(
     ...Array.from(values, (v) => {
@@ -207,7 +219,7 @@ function updateExpandDepthRange(): void {
       return opt;
     }),
   );
-  els.expandDepthValue.textContent = els.expandDepthInput.value;
+  els.expandDepthValue.textContent = describeExpandBudget(currentExpandBudget());
 }
 
 if (els.versionIndicator) {
@@ -395,16 +407,22 @@ function yieldToMain(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+// Default slider position on the very first dropped batch: one round of depth (2 levels once
+// treeDepth allows it) at the base fanout cap.
+const DEFAULT_EXPAND_STEP = 1;
+
 async function addFiles(entries: DroppedFile[]): Promise<void> {
   const isFirstBatch = totalFiles === 0;
-  treeMaxItemCount = Math.max(treeMaxItemCount, maxDirCount(buildTree(entries)));
+  const batchTree = buildTree(entries);
+  treeDepth = Math.max(treeDepth, maxDepth(batchTree));
+  treeFanout = Math.max(treeFanout, maxFanout(batchTree));
   updateExpandDepthRange();
   if (isFirstBatch) {
-    els.expandDepthInput.value = String(Math.min(DEFAULT_MAX_EXPAND_COUNT, treeMaxItemCount));
-    els.expandDepthValue.textContent = els.expandDepthInput.value;
+    els.expandDepthInput.value = String(Math.min(DEFAULT_EXPAND_STEP, Number(els.expandDepthInput.max)));
+    els.expandDepthValue.textContent = describeExpandBudget(currentExpandBudget());
   }
 
-  const targets = await renderFileTree(els.fileList, entries, Number(els.expandDepthInput.value));
+  const targets = await renderFileTree(els.fileList, entries, currentExpandBudget());
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     const container = targets.get(entry.file) ?? els.fileList;
@@ -497,16 +515,16 @@ els.autoHashToggle.addEventListener("change", () => {
   autoHashEnabled = els.autoHashToggle.checked;
 });
 // A range input fires "input" continuously while dragging (many events per second).
-// setExpandCount() walks every directory toggle in the tree, so coalescing to at most once per
+// setExpandBudget() walks every directory toggle in the tree, so coalescing to at most once per
 // animation frame keeps a drag from becoming an unresponsive flood of full-tree traversals.
 let expandDepthUpdateScheduled = false;
 els.expandDepthInput.addEventListener("input", () => {
-  els.expandDepthValue.textContent = els.expandDepthInput.value;
+  els.expandDepthValue.textContent = describeExpandBudget(currentExpandBudget());
   if (expandDepthUpdateScheduled) return;
   expandDepthUpdateScheduled = true;
   requestAnimationFrame(() => {
     expandDepthUpdateScheduled = false;
-    setExpandCount(els.fileList, Number(els.expandDepthInput.value));
+    setExpandBudget(els.fileList, currentExpandBudget());
   });
 });
 els.uploadAllBtn.addEventListener("click", () => void startUpload());

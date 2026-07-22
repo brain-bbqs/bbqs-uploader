@@ -19,11 +19,12 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
   await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);
 
-  // The outer folder (dirName/) has 2 descendants (session1/, a.txt) — the slider's range should
-  // match that exactly, and default to showing it expanded since 2 is within the default (30).
-  await expect(page.locator("#expand-depth")).toHaveAttribute("max", "2");
-  expect(await page.locator("#expand-depth").inputValue()).toBe("2");
-  await expect(page.locator("#expand-depth-ticks option")).toHaveCount(3);
+  // Two levels of nesting (dirName/, session1/), each with only one subfolder — the depth sweep
+  // needs exactly 1 slider step to reach full depth, and no folder is wide enough to need a
+  // fanout-widening step on top of that.
+  await expect(page.locator("#expand-depth")).toHaveAttribute("max", "1");
+  expect(await page.locator("#expand-depth").inputValue()).toBe("1");
+  await expect(page.locator("#expand-depth-ticks option")).toHaveCount(2);
 });
 
 test("a folder with more than 30 entries renders collapsed by default", async ({ page }) => {
@@ -37,12 +38,14 @@ test("a folder with more than 30 entries renders collapsed by default", async ({
   await page.goto("/");
   await page.locator("#folder-input").setInputFiles(dir);
 
-  const toggle = page.locator(".dir-toggle").first();
+  // "bigfolder" itself holds the 35 files directly, so it's the one that starts collapsed — its
+  // wrapping parent folder (the selected directory) has no files of its own and stays expanded.
+  const toggle = page.locator(".dir-toggle", { hasText: "bigfolder/" });
   await expect(toggle).toBeVisible();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
 
-  const nestedChildren = page.locator(".dir-children");
-  await expect(nestedChildren.first()).toBeHidden();
+  const nestedChildren = toggle.locator("+ .dir-children");
+  await expect(nestedChildren).toBeHidden();
   // The 35 file rows exist in the DOM (queued) but are hidden behind the collapsed folder.
   await expect(page.locator("#file-list .file-item")).toHaveCount(35);
   await expect(page.locator("#file-list .file-item").first()).toBeHidden();

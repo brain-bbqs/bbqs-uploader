@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTree, countDescendants, maxDirCount, sumSize, type DroppedFile } from "../../src/lib/fileTree";
+import { buildTree, countDescendants, maxDepth, maxFanout, sumSize, type DroppedFile } from "../../src/lib/fileTree";
 
 function fakeFile(name: string, size = 1): File {
   return new File([new Uint8Array(size)], name);
@@ -66,28 +66,50 @@ describe("sumSize", () => {
   });
 });
 
-describe("maxDirCount", () => {
+describe("maxDepth", () => {
   it("is zero for a node with only top-level files, no subfolders", () => {
     const tree = buildTree([{ file: fakeFile("a.txt"), relativePath: "" }]);
-    expect(maxDirCount(tree)).toBe(0);
+    expect(maxDepth(tree)).toBe(0);
   });
 
-  it("is the single folder's own count when there's only one", () => {
-    const tree = buildTree([
-      { file: fakeFile("a.txt"), relativePath: "top" },
-      { file: fakeFile("b.txt"), relativePath: "top" },
-    ]);
-    expect(maxDirCount(tree)).toBe(2);
+  it("counts the deepest nested chain of folders", () => {
+    const tree = buildTree([{ file: fakeFile("a.txt"), relativePath: "l1/l2/l3" }]);
+    expect(maxDepth(tree)).toBe(3);
   });
 
-  it("takes the largest folder across nested branches, not just the outermost", () => {
+  it("takes the deepest of multiple branches", () => {
     const tree = buildTree([
-      { file: fakeFile("a.txt"), relativePath: "small" },
-      { file: fakeFile("b.txt"), relativePath: "big/sub" },
-      { file: fakeFile("c.txt"), relativePath: "big/sub" },
-      { file: fakeFile("d.txt"), relativePath: "big/sub" },
+      { file: fakeFile("a.txt"), relativePath: "shallow" },
+      { file: fakeFile("b.txt"), relativePath: "deep/deeper/deepest" },
     ]);
-    // "big" itself has 4 descendants (sub/, b.txt, c.txt, d.txt); "sub" has 3 (b.txt, c.txt, d.txt).
-    expect(maxDirCount(tree)).toBe(4);
+    expect(maxDepth(tree)).toBe(3);
+  });
+});
+
+describe("maxFanout", () => {
+  it("is zero for a node with only top-level files, no subfolders", () => {
+    const tree = buildTree([{ file: fakeFile("a.txt"), relativePath: "" }]);
+    expect(maxFanout(tree)).toBe(0);
+  });
+
+  it("counts the root's own direct subfolders", () => {
+    const tree = buildTree([
+      { file: fakeFile("a.txt"), relativePath: "one" },
+      { file: fakeFile("b.txt"), relativePath: "two" },
+      { file: fakeFile("c.txt"), relativePath: "three" },
+    ]);
+    expect(maxFanout(tree)).toBe(3);
+  });
+
+  it("takes the widest folder across nested branches, not just the outermost", () => {
+    const tree = buildTree([
+      { file: fakeFile("a.txt"), relativePath: "root-child" },
+      { file: fakeFile("b.txt"), relativePath: "root-child/sub/a" },
+      { file: fakeFile("c.txt"), relativePath: "root-child/sub/b" },
+      { file: fakeFile("d.txt"), relativePath: "root-child/sub/c" },
+      { file: fakeFile("e.txt"), relativePath: "root-child/sub/d" },
+    ]);
+    // Root has 1 direct subfolder; "root-child" has 1 ("sub"); "sub" has 4 (a, b, c, d) — the widest.
+    expect(maxFanout(tree)).toBe(4);
   });
 });

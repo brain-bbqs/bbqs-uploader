@@ -5,12 +5,13 @@
 #### 🚀 Enhancement
 
 - Added an "Auto-checksum on drop" toggle, top-right in the header; unchecked, a file's checksum is only computed once its upload reaches it instead of starting the moment it's dropped ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
-- Made the signed-in avatar icon 20% larger ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
+- Made the signed-in avatar icon about a third larger ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
+- Reworded the upload progress footer count from "X/Y files" to "X/Y files done" ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
 
 #### 🐛 Bug Fix
 
 - Fixed the file tree failing to render and the expand-depth slider becoming unresponsive when dropping a large folder, by yielding to the browser periodically while building the tree/queueing files, coalescing hash-progress UI updates to once per animation frame, and debouncing the slider's full-tree traversal ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
-- Changed the tree's expand slider to control folder size (auto-expand folders with up to N items) instead of nesting depth; expanding now cascades out-to-in and top-to-bottom, so a folder past the threshold keeps everything nested inside it collapsed too, instead of the old depth-based rule being silently overridden by a fixed 30-item cap on every large folder ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
+- Reworked the tree's expand slider to progressively reveal folders by depth and per-folder fanout (3 sibling subfolders per level, sweeping deeper before widening), instead of a raw item-count threshold; a single dominant folder no longer acts as an all-or-nothing gate where nothing below it shows until the slider clears it and then everything does at once. A folder with more than 30 files directly inside it still starts collapsed regardless of the slider, since its file rows aren't paced by the same budget ([#23](https://github.com/brain-bbqs/ember-uploader/pull/23))
 
 ## 0.0.13
 
