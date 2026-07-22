@@ -1,4 +1,4 @@
-import { withCard } from "./utils";
+import { withCard, withTheme } from "./utils";
 
 function buildDropzone(dragover: boolean): HTMLElement {
   const dz = document.createElement("div");
@@ -22,12 +22,22 @@ export default {
   title: "Components/Dropzone",
 };
 
-export const Idle = {
-  name: "Idle",
-  render: () => buildDropzone(false),
+export const IdleLight = {
+  name: "Idle (light)",
+  render: () => withTheme("light", () => buildDropzone(false)),
 };
 
-export const DragOver = {
-  name: "Drag over",
-  render: () => buildDropzone(true),
+export const IdleDark = {
+  name: "Idle (dark)",
+  render: () => withTheme("dark", () => buildDropzone(false)),
+};
+
+export const DragOverLight = {
+  name: "Drag over (light)",
+  render: () => withTheme("light", () => buildDropzone(true)),
+};
+
+export const DragOverDark = {
+  name: "Drag over (dark)",
+  render: () => withTheme("dark", () => buildDropzone(true)),
 };
