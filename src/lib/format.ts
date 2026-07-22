@@ -20,14 +20,20 @@ export function initialsFrom(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** Formats seconds as tqdm-style `mm:ss` (or `h:mm:ss` past an hour). */
-export function formatDuration(totalSeconds: number): string {
-  if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "--:--";
-  const s = Math.floor(totalSeconds);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = String(m).padStart(2, "0");
-  const ss = String(sec).padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+/**
+ * Plain-words "time left" estimate for the progress chips: "a few seconds", "~40 seconds",
+ * "~3 minutes", "~1 hour 5 minutes". Rounds more coarsely as the estimate grows, so the readout
+ * stays calm instead of twitching on every tick. Returns "—" when no estimate is possible.
+ */
+export function friendlyEta(totalSeconds: number): string {
+  if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "—";
+  if (totalSeconds < 10) return "a few seconds";
+  const roundedSec = Math.round(totalSeconds / 5) * 5;
+  if (roundedSec < 60) return `~${roundedSec} seconds`;
+  const minutes = Math.round(totalSeconds / 60);
+  if (minutes < 60) return `~${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  const hours = Math.floor(minutes / 60);
+  const remMinutes = minutes % 60;
+  const hoursPart = `~${hours} ${hours === 1 ? "hour" : "hours"}`;
+  return remMinutes ? `${hoursPart} ${remMinutes} ${remMinutes === 1 ? "minute" : "minutes"}` : hoursPart;
 }
