@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+#### 🚀 Enhancement
+
+- The dropzone prompt now ends with explicit "files" and "folder" browse links: clicking "folder" opens the browser's folder picker (recursive, same as dragging a folder onto the box), while "files" and clicks anywhere else on the box open the plain file picker as before. Folders no longer have to be dragged in to be selected ([#32](https://github.com/brain-bbqs/ember-uploader/pull/32))
+
 ## 0.1.0
 
 #### 🚀 Enhancement

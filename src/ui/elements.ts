@@ -31,6 +31,8 @@ export function getElements() {
     progressFooterLeft: required<HTMLSpanElement>("progress-footer-left"),
     progressFooterMid: required<HTMLSpanElement>("progress-footer-mid"),
     dropzone: required<HTMLDivElement>("dropzone"),
+    browseFilesBtn: required<HTMLButtonElement>("browse-files-btn"),
+    browseFolderBtn: required<HTMLButtonElement>("browse-folder-btn"),
     fileInput: required<HTMLInputElement>("file-input"),
     folderInput: required<HTMLInputElement>("folder-input"),
     fileList: required<HTMLUListElement>("file-list"),

@@ -3,14 +3,16 @@ import { withCard } from "./utils";
 function buildDropzone(dragover: boolean): HTMLElement {
   const dz = document.createElement("div");
   dz.id = "dropzone";
-  dz.tabIndex = 0;
-  dz.setAttribute("role", "button");
-  dz.setAttribute("aria-label", "Drop your research contents here, or click to browse.");
   if (dragover) dz.classList.add("dragover");
   dz.innerHTML = `
     <div class="dz-inner">
       <div class="dz-icon"><span>🎥</span><span>🔬</span><span>📄</span></div>
-      <p>Drop your research contents here, or click to browse.</p>
+      <p>
+        Drop your research contents here, or click to browse
+        <button type="button" class="dz-browse">files</button>
+        or a
+        <button type="button" class="dz-browse">folder</button>.
+      </p>
     </div>
   `;
   return withCard(dz);
