@@ -19,9 +19,9 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
   await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);
 
-  // Two levels of nesting (dirName/, session1/), each with only one subfolder — the depth sweep
-  // needs exactly 1 slider step to reach full depth, and no folder is wide enough to need a
-  // fanout-widening step on top of that.
+  // Both dirName/ and session1/ directly hold only 1 entry each (a subfolder, then a.txt) — the
+  // slider's range should match that exactly, and default to showing both expanded since 1 is
+  // within the default (30).
   await expect(page.locator("#expand-depth")).toHaveAttribute("max", "1");
   expect(await page.locator("#expand-depth").inputValue()).toBe("1");
   await expect(page.locator("#expand-depth-ticks option")).toHaveCount(2);

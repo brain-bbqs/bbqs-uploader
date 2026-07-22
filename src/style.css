@@ -568,7 +568,7 @@ button.hint {
 
 .progress-phase-stats {
   flex-shrink: 0;
-  min-width: 27ch;
+  min-width: 36ch;
   font-size: 0.76rem;
   white-space: nowrap;
   text-align: right;
@@ -576,6 +576,10 @@ button.hint {
 .stat-pct {
   font-weight: 700;
   color: var(--accent);
+}
+.stat-files {
+  margin-left: 0.35rem;
+  color: var(--muted);
 }
 .stat-bytes {
   margin-left: 0.35rem;
