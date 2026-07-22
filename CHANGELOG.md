@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.15
+
+#### 🚀 Enhancement
+
+- Reworked the file tree's slider from a per-folder "auto-expand folders up to N entries" threshold into a continuous "show N files" reveal: at position N exactly N file rows are visible in total across the whole tree, handed out one at a time round-robin across directories in breadth-first order so no single large folder can hog the slots; folder rows are always shown, and every folder still holding hidden files gets a "… N more files" placeholder row instead of being cut off silently ([#24](https://github.com/brain-bbqs/ember-uploader/pull/24))
+
 ## 0.0.14
 
 #### 🚀 Enhancement

@@ -442,6 +442,14 @@ button.hint {
   padding: 0;
 }
 
+.more-files {
+  list-style: none;
+  padding: 0.15rem 0.3rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
 .file-item {
   display: flex;
   align-items: center;
