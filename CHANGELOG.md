@@ -1,11 +1,5 @@
 # Changelog
 
-## 0.1.3
-
-#### 🏠 Internal
-
-- Renamed the package and all internal references from `ember-uploader` to `bbqs-uploader`, following the GitHub repository rename ([#35](https://github.com/brain-bbqs/bbqs-uploader/pull/35))
-
 ## 0.1.2
 
 #### 🚀 Enhancement
