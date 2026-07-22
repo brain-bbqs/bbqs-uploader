@@ -16,12 +16,6 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 `)){let e=r.trim();e&&(e.startsWith(`#### `)?(n&&=(t+=`</ul>`,!1),t+=`<h4>${O(e.slice(5))}</h4>`):e.startsWith(`- `)?(n||=(t+=`<ul>`,!0),t+=`<li>${O(e.slice(2))}</li>`):(n&&=(t+=`</ul>`,!1),t+=`<p>${O(e)}</p>`))}return n&&(t+=`</ul>`),t}function kt(e){return e.split(/^## /m).length-1}function At(e,t=3){return e.split(/^## /m).slice(1,t+1).map(e=>{let t=e.indexOf(`
 `),n=(t===-1?e:e.slice(0,t)).trim(),r=t===-1?``:e.slice(t+1);return`<section class="changelog-version"><h3>${Dt(n)}</h3>${Ot(r)}</section>`}).join(``)}var k=`# Changelog
 
-## 0.1.3
-
-#### 🏠 Internal
-
-- Renamed the package and all internal references from \`ember-uploader\` to \`bbqs-uploader\`, following the GitHub repository rename ([#35](https://github.com/brain-bbqs/bbqs-uploader/pull/35))
-
 ## 0.1.2
 
 #### 🚀 Enhancement
