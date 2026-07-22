@@ -88,12 +88,21 @@ function filesFromFileList(fileList: FileList): DroppedFile[] {
 export function initDropzone(els: UploaderElements, addFiles: (entries: DroppedFile[]) => void): void {
   const dz = els.dropzone;
   dz.addEventListener("click", () => els.fileInput.click());
-  dz.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      els.fileInput.click();
-    }
+  // A single input cannot offer both files and folders, so each browse link opens its own
+  // input; stopPropagation keeps the dropzone's own click handler from also firing.
+  els.browseFilesBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.fileInput.click();
   });
+  els.browseFolderBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.folderInput.click();
+  });
+  // The hidden inputs live inside the dropzone, so the synthetic click from input.click()
+  // bubbles back to the dropzone handler and would pop a second (file) picker on top of the
+  // folder picker.
+  els.fileInput.addEventListener("click", (e) => e.stopPropagation());
+  els.folderInput.addEventListener("click", (e) => e.stopPropagation());
   els.fileInput.addEventListener("change", () => {
     if (els.fileInput.files?.length) addFiles(filesFromFileList(els.fileInput.files));
     els.fileInput.value = "";
