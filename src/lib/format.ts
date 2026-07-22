@@ -21,18 +21,19 @@ export function initialsFrom(name: string): string {
 }
 
 /**
- * Compact plain-words "time left" estimate for the progress chips: "a few sec", "~40 sec",
- * "~3 min", "~1 hr 5 min". Rounds more coarsely as the estimate grows, so the readout stays
- * calm instead of twitching on every tick. Returns "—" when no estimate is possible.
+ * Plain-words "time left" estimate for the progress chips: "a few seconds", "~40 seconds",
+ * "~3 minutes", "~1 hour 5 minutes". Rounds more coarsely as the estimate grows, so the readout
+ * stays calm instead of twitching on every tick. Returns "—" when no estimate is possible.
  */
 export function friendlyEta(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "—";
-  if (totalSeconds < 10) return "a few sec";
+  if (totalSeconds < 10) return "a few seconds";
   const roundedSec = Math.round(totalSeconds / 5) * 5;
-  if (roundedSec < 60) return `~${roundedSec} sec`;
+  if (roundedSec < 60) return `~${roundedSec} seconds`;
   const minutes = Math.round(totalSeconds / 60);
-  if (minutes < 60) return `~${minutes} min`;
+  if (minutes < 60) return `~${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
   const hours = Math.floor(minutes / 60);
   const remMinutes = minutes % 60;
-  return remMinutes ? `~${hours} hr ${remMinutes} min` : `~${hours} hr`;
+  const hoursPart = `~${hours} ${hours === 1 ? "hour" : "hours"}`;
+  return remMinutes ? `${hoursPart} ${remMinutes} ${remMinutes === 1 ? "minute" : "minutes"}` : hoursPart;
 }

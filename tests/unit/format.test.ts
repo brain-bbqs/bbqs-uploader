@@ -11,25 +11,25 @@ describe("humanSize", () => {
 
 describe("friendlyEta", () => {
   it("keeps very short estimates vague", () => {
-    expect(friendlyEta(0)).toBe("a few sec");
-    expect(friendlyEta(9)).toBe("a few sec");
+    expect(friendlyEta(0)).toBe("a few seconds");
+    expect(friendlyEta(9)).toBe("a few seconds");
   });
 
   it("rounds sub-minute estimates to 5 seconds", () => {
-    expect(friendlyEta(12)).toBe("~10 sec");
-    expect(friendlyEta(42)).toBe("~40 sec");
+    expect(friendlyEta(12)).toBe("~10 seconds");
+    expect(friendlyEta(42)).toBe("~40 seconds");
   });
 
   it("promotes near-minute and sub-hour estimates to minutes", () => {
-    expect(friendlyEta(58)).toBe("~1 min");
-    expect(friendlyEta(170)).toBe("~3 min");
-    expect(friendlyEta(59.4 * 60)).toBe("~59 min");
+    expect(friendlyEta(58)).toBe("~1 minute");
+    expect(friendlyEta(170)).toBe("~3 minutes");
+    expect(friendlyEta(59.4 * 60)).toBe("~59 minutes");
   });
 
   it("formats hour-scale estimates as hours and minutes", () => {
-    expect(friendlyEta(59.5 * 60)).toBe("~1 hr");
-    expect(friendlyEta(3650)).toBe("~1 hr 1 min");
-    expect(friendlyEta(2 * 3600)).toBe("~2 hr");
+    expect(friendlyEta(59.5 * 60)).toBe("~1 hour");
+    expect(friendlyEta(3650)).toBe("~1 hour 1 minute");
+    expect(friendlyEta(2 * 3600)).toBe("~2 hours");
   });
 
   it("falls back to a placeholder for non-finite or negative input", () => {
