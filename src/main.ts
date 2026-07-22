@@ -4,11 +4,11 @@ import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { humanSize, formatDuration } from "./lib/format";
 import { renderIdentity } from "./ui/connection";
-import { renderFileTree, setExpandDepth, DEFAULT_EXPAND_DEPTH } from "./ui/fileTree";
+import { renderFileTree, setExpandCount, DEFAULT_MAX_EXPAND_COUNT } from "./ui/fileTree";
 import { createEtagWorker } from "./lib/etag-worker";
 import { planParts } from "./lib/etag";
 import { loadStoredSettings, saveStoredSettings, resolveConfig } from "./lib/settings";
-import { maxDepth, buildTree } from "./lib/fileTree";
+import { maxDirCount, buildTree } from "./lib/fileTree";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
 import type { UploaderConfig, OAuthTokenSet } from "./lib/types";
@@ -80,7 +80,7 @@ let totalFiles = 0;
 const counts: Record<UploadOutcome, number> = { done: 0, skipped: 0, error: 0, cancelled: 0, blocked: 0 };
 const lastHashBytes = new Map<File, number>();
 const lastUploadBytes = new Map<File, number>();
-let treeMaxDepth = 0;
+let treeMaxItemCount = 0;
 let scanStart: number | null = null;
 let uploadStart: number | null = null;
 let tickerRunning = false;
@@ -180,12 +180,20 @@ function updateProgressSummary(): void {
   els.progressFooterRight.textContent = `${finished}/${totalFiles} files`;
 }
 
+// A tick per possible value would mean thousands of <option> elements for a folder with
+// thousands of items — the same kind of unbounded DOM growth this file's other perf fixes
+// avoid — so cap it at a fixed number of evenly spaced ticks instead.
+const MAX_EXPAND_TICKS = 10;
+
 function updateExpandDepthRange(): void {
-  els.expandDepthInput.max = String(treeMaxDepth);
+  els.expandDepthInput.max = String(treeMaxItemCount);
+  const tickCount = Math.min(MAX_EXPAND_TICKS, treeMaxItemCount);
+  const step = tickCount > 0 ? treeMaxItemCount / tickCount : 0;
+  const values = new Set(Array.from({ length: tickCount + 1 }, (_, i) => Math.round(i * step)));
   els.expandDepthTicks.replaceChildren(
-    ...Array.from({ length: treeMaxDepth + 1 }, (_, i) => {
+    ...Array.from(values, (v) => {
       const opt = document.createElement("option");
-      opt.value = String(i);
+      opt.value = String(v);
       return opt;
     }),
   );
@@ -379,10 +387,10 @@ function yieldToMain(): Promise<void> {
 
 async function addFiles(entries: DroppedFile[]): Promise<void> {
   const isFirstBatch = totalFiles === 0;
-  treeMaxDepth = Math.max(treeMaxDepth, maxDepth(buildTree(entries)));
+  treeMaxItemCount = Math.max(treeMaxItemCount, maxDirCount(buildTree(entries)));
   updateExpandDepthRange();
   if (isFirstBatch) {
-    els.expandDepthInput.value = String(Math.min(DEFAULT_EXPAND_DEPTH, treeMaxDepth));
+    els.expandDepthInput.value = String(Math.min(DEFAULT_MAX_EXPAND_COUNT, treeMaxItemCount));
     els.expandDepthValue.textContent = els.expandDepthInput.value;
   }
 
@@ -476,7 +484,7 @@ els.oauthSignoutBtn.addEventListener("click", () => {
 });
 void refreshDandisetOptions();
 // A range input fires "input" continuously while dragging (many events per second).
-// setExpandDepth() walks every directory toggle in the tree, so coalescing to at most once per
+// setExpandCount() walks every directory toggle in the tree, so coalescing to at most once per
 // animation frame keeps a drag from becoming an unresponsive flood of full-tree traversals.
 let expandDepthUpdateScheduled = false;
 els.expandDepthInput.addEventListener("input", () => {
@@ -485,7 +493,7 @@ els.expandDepthInput.addEventListener("input", () => {
   expandDepthUpdateScheduled = true;
   requestAnimationFrame(() => {
     expandDepthUpdateScheduled = false;
-    setExpandDepth(els.fileList, Number(els.expandDepthInput.value));
+    setExpandCount(els.fileList, Number(els.expandDepthInput.value));
   });
 });
 els.uploadAllBtn.addEventListener("click", () => void startUpload());

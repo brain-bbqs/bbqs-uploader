@@ -53,11 +53,11 @@ export function sumSize(node: TreeNode): number {
   return total;
 }
 
-/** Deepest level of folder nesting anywhere in this node's subtree (0 if it has no subfolders). */
-export function maxDepth(node: TreeNode): number {
+/** Largest `countDescendants` value found on any single directory node in this subtree (0 if there are no subfolders). */
+export function maxDirCount(node: TreeNode): number {
   let max = 0;
   for (const child of node.dirs.values()) {
-    max = Math.max(max, 1 + maxDepth(child));
+    max = Math.max(max, countDescendants(child), maxDirCount(child));
   }
   return max;
 }

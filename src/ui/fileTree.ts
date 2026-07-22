@@ -1,8 +1,7 @@
 import { buildTree, countDescendants, sumSize, type DroppedFile, type TreeNode } from "../lib/fileTree";
 import { humanSize } from "../lib/format";
 
-const COLLAPSE_THRESHOLD = 30;
-export const DEFAULT_EXPAND_DEPTH = 2;
+export const DEFAULT_MAX_EXPAND_COUNT = 30;
 
 // Building the DOM for a very large dropped folder (thousands of directory nodes) in one
 // synchronous pass blocks the main thread long enough that the browser can't paint anything
@@ -16,28 +15,29 @@ function yieldToMain(): Promise<void> {
 
 /**
  * Renders a nested directory tree into `root` and returns, for each dropped file, the
- * `<ul>` it was placed under so callers can append a matching file row there. Folders past
- * `expandDepth` levels of nesting (or with more than 30 entries) start collapsed.
+ * `<ul>` it was placed under so callers can append a matching file row there. A folder starts
+ * collapsed once it has more than `maxItems` entries; collapsing cascades out-to-in, top-to-bottom
+ * — a folder inside an already-collapsed folder stays collapsed regardless of its own size.
  */
 export async function renderFileTree(
   root: HTMLUListElement,
   entries: DroppedFile[],
-  expandDepth = DEFAULT_EXPAND_DEPTH,
+  maxItems = DEFAULT_MAX_EXPAND_COUNT,
 ): Promise<Map<File, HTMLUListElement>> {
   const targets = new Map<File, HTMLUListElement>();
   let processed = 0;
 
-  async function renderNode(node: TreeNode, container: HTMLUListElement, depth: number): Promise<void> {
+  async function renderNode(node: TreeNode, container: HTMLUListElement, parentCollapsed: boolean): Promise<void> {
     for (const entry of node.files) targets.set(entry.file, container);
     for (const child of node.dirs.values()) {
       const count = countDescendants(child);
-      const collapsed = depth > expandDepth || count > COLLAPSE_THRESHOLD;
+      const collapsed = parentCollapsed || count > maxItems;
       const size = sumSize(child);
 
       const li = document.createElement("li");
       li.className = "dir-item";
       li.innerHTML = `
-        <button type="button" class="dir-toggle" aria-expanded="${!collapsed}" data-depth="${depth}" data-count="${count}">
+        <button type="button" class="dir-toggle" aria-expanded="${!collapsed}" data-count="${count}">
           <span class="dir-chevron" aria-hidden="true">▸</span>
           <span class="dir-name"></span>
           <span class="dir-count">${count} item${count === 1 ? "" : "s"}</span>
@@ -58,22 +58,32 @@ export async function renderFileTree(
       container.appendChild(li);
       if (++processed % RENDER_CHUNK_SIZE === 0) await yieldToMain();
 
-      await renderNode(child, childUl, depth + 1);
+      await renderNode(child, childUl, collapsed);
     }
   }
 
-  await renderNode(buildTree(entries), root, 1);
+  await renderNode(buildTree(entries), root, false);
   return targets;
 }
 
-/** Re-applies a "expand down to N levels" bulk toggle to an already-rendered tree. */
-export function setExpandDepth(root: HTMLUListElement, expandDepth: number): void {
-  root.querySelectorAll<HTMLButtonElement>(".dir-toggle").forEach((toggle) => {
-    const depth = Number(toggle.dataset.depth);
-    const count = Number(toggle.dataset.count);
-    const collapsed = depth > expandDepth || count > COLLAPSE_THRESHOLD;
-    const childUl = toggle.nextElementSibling as HTMLUListElement;
-    childUl.hidden = collapsed;
-    toggle.setAttribute("aria-expanded", String(!collapsed));
-  });
+/**
+ * Re-applies an "auto-expand folders with up to N items" bulk toggle to an already-rendered
+ * tree. Walks out-to-in (root to leaves) and top-to-bottom (document order) so a folder past
+ * `maxItems` forces every folder nested inside it to stay collapsed too, regardless of their
+ * own size.
+ */
+export function setExpandCount(root: HTMLUListElement, maxItems: number): void {
+  function walk(container: HTMLUListElement, parentCollapsed: boolean): void {
+    for (const li of Array.from(container.children)) {
+      if (!(li instanceof HTMLLIElement) || !li.classList.contains("dir-item")) continue;
+      const toggle = li.firstElementChild as HTMLButtonElement;
+      const childUl = li.lastElementChild as HTMLUListElement;
+      const count = Number(toggle.dataset.count);
+      const collapsed = parentCollapsed || count > maxItems;
+      childUl.hidden = collapsed;
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      walk(childUl, collapsed);
+    }
+  }
+  walk(root, false);
 }

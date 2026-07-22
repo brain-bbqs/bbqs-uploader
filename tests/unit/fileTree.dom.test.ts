@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { renderFileTree, setExpandDepth } from "../../src/ui/fileTree";
+import { renderFileTree, setExpandCount } from "../../src/ui/fileTree";
 import type { DroppedFile } from "../../src/lib/fileTree";
 
 function fakeFile(name: string): File {
   return new File(["x"], name);
+}
+
+function toggleByName(root: HTMLUListElement, name: string): HTMLButtonElement {
+  const toggles = Array.from(root.querySelectorAll<HTMLButtonElement>(".dir-toggle"));
+  return toggles.find((t) => t.querySelector(".dir-name")!.textContent === `${name}/`)!;
 }
 
 describe("renderFileTree", () => {
@@ -16,13 +21,13 @@ describe("renderFileTree", () => {
     expect(root.querySelectorAll(".dir-item")).toHaveLength(0);
   });
 
-  it("collapses a subtree with more than 30 descendant entries by default, and expands on click", async () => {
+  it("collapses a folder with more than maxItems entries by default, and expands on click", async () => {
     const root = document.createElement("ul");
     const entries: DroppedFile[] = Array.from({ length: 35 }, (_, i) => ({
       file: fakeFile(`file-${i}.txt`),
       relativePath: "bigfolder",
     }));
-    await renderFileTree(root, entries);
+    await renderFileTree(root, entries, 30);
 
     const toggle = root.querySelector<HTMLButtonElement>(".dir-toggle")!;
     const childUl = root.querySelector<HTMLUListElement>(".dir-children")!;
@@ -35,13 +40,13 @@ describe("renderFileTree", () => {
     expect(childUl.hidden).toBe(false);
   });
 
-  it("does not collapse a subtree with 30 or fewer descendant entries", async () => {
+  it("does not collapse a folder with maxItems or fewer entries", async () => {
     const root = document.createElement("ul");
     const entries: DroppedFile[] = Array.from({ length: 30 }, (_, i) => ({
       file: fakeFile(`file-${i}.txt`),
       relativePath: "smallfolder",
     }));
-    await renderFileTree(root, entries);
+    await renderFileTree(root, entries, 30);
 
     const toggle = root.querySelector<HTMLButtonElement>(".dir-toggle")!;
     const childUl = root.querySelector<HTMLUListElement>(".dir-children")!;
@@ -49,60 +54,77 @@ describe("renderFileTree", () => {
     expect(childUl.hidden).toBe(false);
   });
 
-  it("expands the first two levels by default and collapses anything deeper", async () => {
+  it("keeps a small folder collapsed if it's nested inside a folder past maxItems (out-to-in cascade)", async () => {
     const root = document.createElement("ul");
-    const entries: DroppedFile[] = [{ file: fakeFile("a.txt"), relativePath: "l1/l2/l3" }];
-    await renderFileTree(root, entries);
+    const entries: DroppedFile[] = [
+      ...Array.from({ length: 35 }, (_, i) => ({
+        file: fakeFile(`file-${i}.txt`),
+        relativePath: "big",
+      })),
+      { file: fakeFile("a.txt"), relativePath: "big/small" },
+    ];
+    await renderFileTree(root, entries, 30);
 
-    const toggles = Array.from(root.querySelectorAll<HTMLButtonElement>(".dir-toggle"));
-    const byName = (name: string) => toggles.find((t) => t.querySelector(".dir-name")!.textContent === `${name}/`)!;
-    // l1 (depth 1) and l2 (depth 2) are within the default expand depth; l3 (depth 3) is not.
-    expect(byName("l1").getAttribute("aria-expanded")).toBe("true");
-    expect(byName("l2").getAttribute("aria-expanded")).toBe("true");
-    expect(byName("l3").getAttribute("aria-expanded")).toBe("false");
+    expect(toggleByName(root, "big").getAttribute("aria-expanded")).toBe("false");
+    // "small" only has 1 entry (well under maxItems) but its parent "big" is collapsed, so it
+    // must stay collapsed too rather than being independently expanded.
+    expect(toggleByName(root, "small").getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("honors a custom expandDepth passed to renderFileTree", async () => {
+  it("honors a custom maxItems passed to renderFileTree", async () => {
     const root = document.createElement("ul");
-    const entries: DroppedFile[] = [{ file: fakeFile("a.txt"), relativePath: "l1/l2/l3" }];
-    await renderFileTree(root, entries, 1);
+    const entries: DroppedFile[] = Array.from({ length: 5 }, (_, i) => ({
+      file: fakeFile(`file-${i}.txt`),
+      relativePath: "folder",
+    }));
+    await renderFileTree(root, entries, 2);
 
-    const toggles = Array.from(root.querySelectorAll<HTMLButtonElement>(".dir-toggle"));
-    const byName = (name: string) => toggles.find((t) => t.querySelector(".dir-name")!.textContent === `${name}/`)!;
-    expect(byName("l1").getAttribute("aria-expanded")).toBe("true");
-    expect(byName("l2").getAttribute("aria-expanded")).toBe("false");
+    const toggle = root.querySelector<HTMLButtonElement>(".dir-toggle")!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 });
 
-describe("setExpandDepth", () => {
-  it("re-applies a new expand depth to an already-rendered tree", async () => {
-    const root = document.createElement("ul");
-    const entries: DroppedFile[] = [{ file: fakeFile("a.txt"), relativePath: "l1/l2/l3" }];
-    await renderFileTree(root, entries, 1);
-
-    const toggles = Array.from(root.querySelectorAll<HTMLButtonElement>(".dir-toggle"));
-    const byName = (name: string) => toggles.find((t) => t.querySelector(".dir-name")!.textContent === `${name}/`)!;
-    expect(byName("l3").getAttribute("aria-expanded")).toBe("false");
-
-    setExpandDepth(root, 3);
-    expect(byName("l1").getAttribute("aria-expanded")).toBe("true");
-    expect(byName("l2").getAttribute("aria-expanded")).toBe("true");
-    expect(byName("l3").getAttribute("aria-expanded")).toBe("true");
-
-    setExpandDepth(root, 0);
-    expect(byName("l1").getAttribute("aria-expanded")).toBe("false");
-  });
-
-  it("still respects the item-count threshold regardless of expand depth", async () => {
+describe("setExpandCount", () => {
+  it("re-applies a new maxItems threshold to an already-rendered tree", async () => {
     const root = document.createElement("ul");
     const entries: DroppedFile[] = Array.from({ length: 35 }, (_, i) => ({
       file: fakeFile(`file-${i}.txt`),
       relativePath: "bigfolder",
     }));
-    await renderFileTree(root, entries, 1);
+    await renderFileTree(root, entries, 30);
 
     const toggle = root.querySelector<HTMLButtonElement>(".dir-toggle")!;
-    setExpandDepth(root, 5);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    setExpandCount(root, 40);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+
+    setExpandCount(root, 10);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("re-collapses a folder the user manually expanded, if it's still nested inside a folder past maxItems", async () => {
+    const root = document.createElement("ul");
+    const entries: DroppedFile[] = [
+      ...Array.from({ length: 35 }, (_, i) => ({
+        file: fakeFile(`file-${i}.txt`),
+        relativePath: "big",
+      })),
+      { file: fakeFile("a.txt"), relativePath: "big/small" },
+    ];
+    await renderFileTree(root, entries, 30);
+
+    const smallToggle = toggleByName(root, "small");
+    // Manually expand "big" (its own toggle click bypasses the threshold check) so "small"
+    // becomes reachable, then manually expand "small" too.
+    toggleByName(root, "big").click();
+    smallToggle.click();
+    expect(smallToggle.getAttribute("aria-expanded")).toBe("true");
+
+    // Re-running the bulk threshold re-collapses "big" (still over 30 items), which must cascade
+    // back down onto "small" even though "small" itself is well under the threshold.
+    setExpandCount(root, 30);
+    expect(toggleByName(root, "big").getAttribute("aria-expanded")).toBe("false");
+    expect(smallToggle.getAttribute("aria-expanded")).toBe("false");
   });
 });
