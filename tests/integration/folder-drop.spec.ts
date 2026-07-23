@@ -10,11 +10,12 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   fs.writeFileSync(path.join(dir, "session1", "a.txt"), "a");
   fs.mkdirSync(path.join(dir, ".git"));
   fs.writeFileSync(path.join(dir, ".git", "config"), "ignored");
+  fs.writeFileSync(path.join(dir, ".noannex"), "ignored");
 
   await page.goto("/");
   await page.locator("#folder-input").setInputFiles(dir);
 
-  // Only a.txt should surface — the .git/config file must be filtered out.
+  // Only a.txt should surface — the .git/config file and top-level .noannex must be filtered out.
   const row = page.locator("#file-list .file-item").first();
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
   await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);

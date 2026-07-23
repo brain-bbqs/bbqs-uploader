@@ -5,6 +5,7 @@ const IGNORED_NAMES = new Set([
   ".git",
   ".datalad",
   ".git-annex",
+  ".noannex",
   // Device-specific / OS-generated files and folders that shouldn't be uploaded.
   ".DS_Store",
   "Thumbs.db",
