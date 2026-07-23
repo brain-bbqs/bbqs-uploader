@@ -6,7 +6,7 @@ import { seedTheme } from "../helpers/theme";
 const API = EMBER_INSTANCE.api;
 
 // With more than one incoming dataset the picker is a dropdown, and its options should always be
-// ranked by descending integer dandiset id -- regardless of the order the archive's API returns
+// ranked by ascending integer dandiset id -- regardless of the order the archive's API returns
 // them in (which is sorted by title).
 test.describe("dataset dropdown ordering", () => {
   test.beforeEach(async ({ page }) => {
@@ -33,13 +33,13 @@ test.describe("dataset dropdown ordering", () => {
     );
   });
 
-  test("ranks dropdown options by descending integer id", async ({ page }) => {
+  test("ranks dropdown options by ascending integer id", async ({ page }) => {
     await page.goto("/");
 
     const options = page.locator("#dandiset-id option");
     await expect(options).toHaveCount(3);
-    await expect(options.nth(0)).toHaveText("Incoming: Gamma Lab (000300)");
+    await expect(options.nth(0)).toHaveText("Incoming: Alpha Lab (000100)");
     await expect(options.nth(1)).toHaveText("Incoming: Beta Lab (000200)");
-    await expect(options.nth(2)).toHaveText("Incoming: Alpha Lab (000100)");
+    await expect(options.nth(2)).toHaveText("Incoming: Gamma Lab (000300)");
   });
 });

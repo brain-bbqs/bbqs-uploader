@@ -495,10 +495,10 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
     );
     return;
   }
-  // Dropdown mode (more than one dataset) always ranks options by descending integer id, newest
+  // Dropdown mode (more than one dataset) always ranks options by ascending integer id, oldest
   // dandiset first, regardless of the order the archive returned them in.
   const ordered =
-    datasets.length > 1 ? [...datasets].sort((a, b) => Number(b.identifier) - Number(a.identifier)) : datasets;
+    datasets.length > 1 ? [...datasets].sort((a, b) => Number(a.identifier) - Number(b.identifier)) : datasets;
   els.dandisetId.replaceChildren(
     ...ordered.map((d) => {
       const opt = document.createElement("option");
