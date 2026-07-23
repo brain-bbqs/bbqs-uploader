@@ -68,7 +68,6 @@ function registerHashJob(
   promise
     .then(() => {
       hashedFiles++;
-      reportHashBytes(file, file.size);
       row.hideBadge();
     })
     .catch((e: unknown) => {
@@ -81,6 +80,11 @@ function registerHashJob(
       }
     })
     .finally(() => {
+      // Always account for this file's full size once its hash settles, cancelled or not —
+      // otherwise a cancelled scan leaves its bytes permanently "pending", the hash phase never
+      // reaches 100%, and the rate tracker keeps resampling a stalled byte count forever, which
+      // decays the smoothed rate toward 0 and sends the ETA (remaining/rate) toward infinity.
+      reportHashBytes(file, file.size);
       row.setProgress(0);
       activeHashes.delete(abort);
       updateCancelAllVisibility();
