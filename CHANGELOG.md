@@ -2,8 +2,14 @@
 
 ## 0.1.10
 
+#### 🚀 Enhancement
+
+- Added a "Reset" button to the far right of the upload bar that clears the file queue back to the empty state, cancelling any in-progress scanning or uploading first ([#44](https://github.com/brain-bbqs/bbqs-uploader/pull/44))
+- Added a "Clear scan cache" button next to the version/What's New links that forgets every cached file scan digest, so the next drop of any file re-scans it from scratch ([#44](https://github.com/brain-bbqs/bbqs-uploader/pull/44))
+
 #### 🐛 Bug Fix
 
+- Fixed a bug where clicking "Reset" while an upload batch was still running left the rest of that batch reading from bookkeeping Reset had already cleared, surfacing a spurious "Cannot read properties of undefined (reading 'promise')" error in the console for files that were mid-queue at the time ([#44](https://github.com/brain-bbqs/bbqs-uploader/pull/44))
 - Hitting "Cancel" no longer leaves the scanning/uploading summary bars' speed and time-left estimates climbing without bound: the rate tracker kept resampling a stalled byte count every tick once a cancelled phase stopped making progress, decaying the smoothed speed toward 0 and sending the "time left" estimate toward infinity. The summary bars now freeze in place — at whatever percentage cancellation actually landed on — instead of continuing to grow the estimate, or (for a cancellation specifically, as opposed to a real per-file error) jumping straight to 100%/"done" ([#45](https://github.com/brain-bbqs/bbqs-uploader/pull/45))
 - Uploading content that's already stored server-side under a different (or the same) path no longer provokes a console-logged 409 from `/uploads/initialize/`: the client now checks `/blobs/digest/` for a matching blob before ever attempting to initialize an upload, instead of relying on the 409 response to signal a match ([#45](https://github.com/brain-bbqs/bbqs-uploader/pull/45))
 
