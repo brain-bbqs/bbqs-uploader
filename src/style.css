@@ -90,12 +90,16 @@ main {
   gap: 1rem;
 }
 
+.site-header > a:has(.brand-logo) {
+  justify-self: start;
+  line-height: 0;
+}
+
 .brand-logo {
   height: 3rem;
   width: 3rem;
   object-fit: cover;
   border-radius: 50%;
-  justify-self: start;
 }
 
 header h1 {

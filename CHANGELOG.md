@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+#### 🚀 Enhancement
+
+- The BBQS logo in the header now links to brain-bbqs.org
+
 ## 0.1.8
 
 #### 🐛 Bug Fix
