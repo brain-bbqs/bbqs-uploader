@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9
+
+#### 🚀 Enhancement
+
+- The BBQS logo in the header now links to brain-bbqs.org
+- Redesigned the dropped-file tree: directory rows now trace a connector rail down to their children and drop the item-count figure, for a more compact, VS Code explorer-style layout
+- The "Scanning" and "Uploading" progress bars now each get their own color (teal and indigo, respectively), mirrored in the bar title, its percentage, and a small lead-in dot, so the two phases are distinguishable at a glance instead of sharing one color at two widths; each row's own badge and mini progress bar now pick up the same coloring while that row is scanning or uploading
+
 ## 0.1.8
 
 #### 🐛 Bug Fix

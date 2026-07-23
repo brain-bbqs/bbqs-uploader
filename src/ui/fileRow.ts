@@ -1,6 +1,6 @@
 import { humanSize } from "../lib/format";
 
-export type BadgeKind = "busy" | "ok" | "warn" | "err";
+export type BadgeKind = "scan" | "upload" | "ok" | "warn" | "err";
 
 export interface FileRow {
   el: HTMLLIElement;

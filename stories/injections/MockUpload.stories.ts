@@ -2,7 +2,7 @@
 // docs/README.md -- a snapshot of the scanning/uploading UI mid-flight against a nested batch of
 // fake files, in both color themes. Paste e.g. "?test&mock_upload=25" into the running app's
 // address bar to see the real (animated) thing.
-import { buildTree, countDescendants, sumSize, type TreeNode } from "../../src/lib/fileTree";
+import { buildTree, sumSize, type TreeNode } from "../../src/lib/fileTree";
 import { generateMockDroppedFiles } from "../../src/lib/mockUpload";
 import { createFileRow, type FileRow } from "../../src/ui/fileRow";
 import { humanSize } from "../../src/lib/format";
@@ -16,7 +16,6 @@ function renderNode(node: TreeNode, container: HTMLUListElement, rows: FileRow[]
     rows.push(createFileRow(container, entry.file, `mock-file-${rows.length}`, path));
   }
   for (const child of node.dirs.values()) {
-    const count = countDescendants(child);
     const size = sumSize(child);
     const li = document.createElement("li");
     li.className = "dir-item";
@@ -24,7 +23,6 @@ function renderNode(node: TreeNode, container: HTMLUListElement, rows: FileRow[]
       <button type="button" class="dir-toggle" aria-expanded="true">
         <span class="dir-chevron" aria-hidden="true">▸</span>
         <span class="dir-name"></span>
-        <span class="dir-count">${count} item${count === 1 ? "" : "s"}</span>
         <span class="dir-size">${humanSize(size)}</span>
       </button>
       <ul class="dir-children"></ul>
@@ -36,6 +34,7 @@ function renderNode(node: TreeNode, container: HTMLUListElement, rows: FileRow[]
 }
 
 function progressPhaseMarkup(opts: {
+  kind: "scan" | "upload";
   label: string;
   pct: number;
   doneLabel: string;
@@ -47,8 +46,9 @@ function progressPhaseMarkup(opts: {
   filesTotal: number;
 }): string {
   return `
-    <div class="progress-phase">
+    <div class="progress-phase progress-phase--${opts.kind}">
       <div class="progress-phase-head">
+        <span class="progress-phase-dot" aria-hidden="true"></span>
         <span class="progress-phase-label">${opts.label}</span>
         <span class="progress-phase-pct">${opts.pct}%</span>
       </div>
@@ -87,6 +87,7 @@ function buildMockUploadPanel(): HTMLElement {
   wrap.innerHTML = `
     <div class="progress-summary">
       ${progressPhaseMarkup({
+        kind: "scan",
         label: "Scanning",
         pct: 100,
         doneLabel: "Scanned",
@@ -98,6 +99,7 @@ function buildMockUploadPanel(): HTMLElement {
         filesTotal: 6,
       })}
       ${progressPhaseMarkup({
+        kind: "upload",
         label: "Uploading",
         pct: 42,
         doneLabel: "Uploaded",
@@ -127,13 +129,13 @@ function buildMockUploadPanel(): HTMLElement {
   rows[0]?.setProgress(1, true);
   rows[1]?.setBadge("Done", "ok");
   rows[1]?.setProgress(1, true);
-  rows[2]?.setBadge("Uploading", "busy");
+  rows[2]?.setBadge("Uploading", "upload");
   rows[2]?.setStatus("64%");
   rows[2]?.setProgress(0.64);
-  rows[3]?.setBadge("Uploading", "busy");
+  rows[3]?.setBadge("Uploading", "upload");
   rows[3]?.setStatus("21%");
   rows[3]?.setProgress(0.21);
-  rows[4]?.setBadge("Scanning", "busy");
+  rows[4]?.setBadge("Scanning", "scan");
   rows[4]?.setProgress(0.8);
 
   return withCard(wrap);
