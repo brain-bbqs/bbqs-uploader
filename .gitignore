@@ -16,3 +16,8 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Python cache (e.g. from pre-commit hook environments)
+__pycache__/
+*.pyc
+*.pyo
