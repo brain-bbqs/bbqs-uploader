@@ -1,4 +1,4 @@
-import { buildTree, countDescendants, sumSize, type DroppedFile, type TreeNode } from "../lib/fileTree";
+import { buildTree, sumSize, type DroppedFile, type TreeNode } from "../lib/fileTree";
 import { humanSize } from "../lib/format";
 
 export const DEFAULT_REVEAL_COUNT = 30;
@@ -30,7 +30,6 @@ export async function renderFileTree(
   async function renderNode(node: TreeNode, container: HTMLUListElement): Promise<void> {
     for (const entry of node.files) targets.set(entry.file, container);
     for (const child of node.dirs.values()) {
-      const count = countDescendants(child);
       const size = sumSize(child);
 
       const li = document.createElement("li");
@@ -39,7 +38,6 @@ export async function renderFileTree(
         <button type="button" class="dir-toggle" aria-expanded="true">
           <span class="dir-chevron" aria-hidden="true">▸</span>
           <span class="dir-name"></span>
-          <span class="dir-count">${count} item${count === 1 ? "" : "s"}</span>
           <span class="dir-size">${humanSize(size)}</span>
         </button>
         <ul class="dir-children"></ul>

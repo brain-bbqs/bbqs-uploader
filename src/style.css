@@ -16,6 +16,10 @@
   --warn-soft: #fdf3e3;
   --err: #b91c1c;
   --err-soft: #fdecec;
+  /* Distinct from --accent so the scanning phase bar reads as a different thing from the
+     uploading phase bar (which keeps using --accent) at a glance, not the same color at two
+     different widths. */
+  --scan: #0d7d72;
 }
 
 /* The header's theme toggle sets data-theme on <html> to override the OS preference; without it
@@ -35,6 +39,7 @@
     --warn-soft: #3a2d12;
     --err: #f87171;
     --err-soft: #3d1a1a;
+    --scan: #2dd4bf;
   }
 }
 
@@ -52,6 +57,7 @@
   --warn-soft: #3a2d12;
   --err: #f87171;
   --err-soft: #3d1a1a;
+  --scan: #2dd4bf;
 }
 
 * {
@@ -417,24 +423,27 @@ button.primary {
 .dir-item {
   list-style: none;
 }
+/* The guide rail: a thin vertical line tracing each branch down to its children, VS
+   Code-explorer style, so nesting stays legible even once rows are tightened up. */
 .dir-item .dir-children {
   list-style: none;
-  margin: 0;
-  padding: 0;
-  padding-left: 1rem;
+  margin: 0 0 0 0.5rem;
+  padding: 0 0 0 0.7rem;
+  border-left: 1px solid var(--border);
 }
 .dir-toggle {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   width: 100%;
   text-align: left;
   background: none;
   border: none;
   border-radius: 4px;
-  padding: 0.15rem 0.3rem;
+  padding: 0.06rem 0.3rem;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
   color: var(--text);
   cursor: pointer;
 }
@@ -443,7 +452,7 @@ button.primary {
 }
 .dir-chevron {
   display: inline-block;
-  width: 0.75em;
+  width: 0.6em;
   flex-shrink: 0;
   color: var(--muted);
   transition: transform 0.12s ease;
@@ -451,28 +460,27 @@ button.primary {
 .dir-toggle[aria-expanded="true"] .dir-chevron {
   transform: rotate(90deg);
 }
-.dir-name,
-.file-name {
-  font-weight: 600;
+.dir-name {
+  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.dir-count {
-  color: var(--muted);
-  font-size: 0.78rem;
-  margin-left: auto;
+.file-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .dir-size {
+  margin-left: auto;
+  width: 5.5rem;
+  flex-shrink: 0;
+  text-align: right;
   color: var(--muted);
-  opacity: 0.7;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-.dir-size::before {
-  content: "· ";
 }
 
 .dest-root {
@@ -563,8 +571,9 @@ button.primary {
 
 .more-files {
   list-style: none;
-  padding: 0.15rem 0.3rem;
-  font-size: 0.8rem;
+  padding: 0.06rem 0.3rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
   font-style: italic;
   color: var(--muted);
 }
@@ -573,9 +582,10 @@ button.primary {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.15rem 0.3rem;
+  padding: 0.06rem 0.3rem;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
   flex-wrap: nowrap;
 }
 .file-item:hover {
@@ -584,7 +594,7 @@ button.primary {
 
 .file-size {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   white-space: nowrap;
 }
 
@@ -646,13 +656,19 @@ button.primary {
   gap: 0.9rem;
   margin-bottom: 1rem;
 }
-/* Phase name on the left, headline percentage on the right, sitting directly above the bar. */
+/* Phase dot + name on the left, headline percentage pinned to the right, sitting directly
+   above the bar. */
 .progress-phase-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
   margin-bottom: 0.3rem;
+}
+.progress-phase-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 /* Styled exactly like .file-name, so the bar titles read like the per-file rows' names. */
 .progress-phase-label {
@@ -660,9 +676,9 @@ button.primary {
   font-weight: 600;
 }
 .progress-phase-pct {
+  margin-left: auto;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 .progress-summary-bar {
@@ -675,8 +691,26 @@ button.primary {
   height: 100%;
   width: 0%;
   border-radius: 4px;
-  background: var(--accent);
   transition: width 0.15s linear;
+}
+
+/* The scan/upload color pairing: each phase's dot, title, percentage, and bar fill share one
+   hue, so the two bars read as distinct things rather than the same color at two widths. */
+.progress-phase--scan .progress-phase-label,
+.progress-phase--scan .progress-phase-pct {
+  color: var(--scan);
+}
+.progress-phase--scan .progress-phase-dot,
+.progress-phase--scan .progress-summary-bar > div {
+  background: var(--scan);
+}
+.progress-phase--upload .progress-phase-label,
+.progress-phase--upload .progress-phase-pct {
+  color: var(--accent);
+}
+.progress-phase--upload .progress-phase-dot,
+.progress-phase--upload .progress-summary-bar > div {
+  background: var(--accent);
 }
 
 /* Every live figure gets its own captioned chip below the bar, so no number needs decoding. */
