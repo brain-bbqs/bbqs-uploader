@@ -30,7 +30,7 @@ export const UploadingLight = {
   name: "Uploading (in progress, light)",
   render: () =>
     buildRow("light", (row) => {
-      row.setBadge("Uploading", "busy");
+      row.setBadge("Uploading", "upload");
       row.setProgress(0.62);
       row.setStatus("62%");
     }),
@@ -40,7 +40,7 @@ export const UploadingDark = {
   name: "Uploading (in progress, dark)",
   render: () =>
     buildRow("dark", (row) => {
-      row.setBadge("Uploading", "busy");
+      row.setBadge("Uploading", "upload");
       row.setProgress(0.62);
       row.setStatus("62%");
     }),

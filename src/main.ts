@@ -60,7 +60,7 @@ function registerHashJob(
   start: (signal: AbortSignal) => Promise<string>,
 ): HashJob {
   ensureTicker();
-  row.setBadge("Scanning", "busy");
+  row.setBadge("Scanning", "scan");
   const abort = new AbortController();
   activeHashes.add(abort);
   updateCancelAllVisibility();
@@ -168,7 +168,7 @@ async function mockUploadFile(
   try {
     await hashJob.promise;
     row.setProgress(0);
-    row.setBadge("Uploading", "busy");
+    row.setBadge("Uploading", "upload");
     await simulateProgress(file.size, mockPhaseDurationMs(file.size), abort.signal, (bytesDone) => {
       const fraction = file.size > 0 ? bytesDone / file.size : 1;
       row.setProgress(fraction);

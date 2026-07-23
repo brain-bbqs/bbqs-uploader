@@ -129,13 +129,13 @@ function buildMockUploadPanel(): HTMLElement {
   rows[0]?.setProgress(1, true);
   rows[1]?.setBadge("Done", "ok");
   rows[1]?.setProgress(1, true);
-  rows[2]?.setBadge("Uploading", "busy");
+  rows[2]?.setBadge("Uploading", "upload");
   rows[2]?.setStatus("64%");
   rows[2]?.setProgress(0.64);
-  rows[3]?.setBadge("Uploading", "busy");
+  rows[3]?.setBadge("Uploading", "upload");
   rows[3]?.setStatus("21%");
   rows[3]?.setProgress(0.21);
-  rows[4]?.setBadge("Scanning", "busy");
+  rows[4]?.setBadge("Scanning", "scan");
   rows[4]?.setProgress(0.8);
 
   return withCard(wrap);

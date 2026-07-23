@@ -60,7 +60,7 @@ export async function uploadFile(
     // it only tells asset registration to replace (PUT) instead of create (POST).
     // Content dedup stays server-side: uploadBlob's digest check reuses the
     // existing blob without re-transferring bytes when the content is already known.
-    row.setBadge("Uploading", "busy");
+    row.setBadge("Uploading", "upload");
     const existing = await findExistingAsset(cfg, path);
 
     // --- 3. Blob upload --------------------------------------------------

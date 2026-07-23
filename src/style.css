@@ -20,6 +20,7 @@
      uploading phase bar (which keeps using --accent) at a glance, not the same color at two
      different widths. */
   --scan: #0d7d72;
+  --scan-soft: #e3f5f2;
 }
 
 /* The header's theme toggle sets data-theme on <html> to override the OS preference; without it
@@ -40,6 +41,7 @@
     --err: #f87171;
     --err-soft: #3d1a1a;
     --scan: #2dd4bf;
+    --scan-soft: #113a37;
   }
 }
 
@@ -58,6 +60,7 @@
   --err: #f87171;
   --err-soft: #3d1a1a;
   --scan: #2dd4bf;
+  --scan-soft: #113a37;
 }
 
 * {
@@ -635,6 +638,15 @@ button.primary {
   transition: width 0.15s linear;
 }
 
+/* Mirrors the phase bars' scan/upload color pairing onto each row's own mini progress bar,
+   keyed off the row's badge kind (its sibling in .file-item) rather than a separate prop. */
+.file-item:has(.badge.scan) .progress > [data-role="progress"] {
+  background: var(--scan);
+}
+.file-item:has(.badge.upload) .progress > [data-role="progress"] {
+  background: var(--accent);
+}
+
 .progress.done > [data-role="progress"] {
   background: var(--ok);
 }
@@ -786,7 +798,11 @@ button.primary {
   background: var(--err-soft);
   color: var(--err);
 }
-.badge.busy {
+.badge.scan {
+  background: var(--scan-soft);
+  color: var(--scan);
+}
+.badge.upload {
   background: var(--accent-soft);
   color: var(--accent);
 }
