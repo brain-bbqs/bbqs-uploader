@@ -18,9 +18,9 @@
   --err-soft: #fdecec;
   /* Distinct from --accent so the scanning phase bar reads as a different thing from the
      uploading phase bar (which keeps using --accent) at a glance, not the same color at two
-     different widths. */
-  --scan: #0d7d72;
-  --scan-soft: #e3f5f2;
+     different widths. Cyan rather than teal/green so it doesn't get mistaken for --ok. */
+  --scan: #0e7490;
+  --scan-soft: #ecfeff;
 }
 
 /* The header's theme toggle sets data-theme on <html> to override the OS preference; without it
@@ -40,8 +40,8 @@
     --warn-soft: #3a2d12;
     --err: #f87171;
     --err-soft: #3d1a1a;
-    --scan: #2dd4bf;
-    --scan-soft: #113a37;
+    --scan: #22d3ee;
+    --scan-soft: #083344;
   }
 }
 
@@ -59,8 +59,8 @@
   --warn-soft: #3a2d12;
   --err: #f87171;
   --err-soft: #3d1a1a;
-  --scan: #2dd4bf;
-  --scan-soft: #113a37;
+  --scan: #22d3ee;
+  --scan-soft: #083344;
 }
 
 * {
