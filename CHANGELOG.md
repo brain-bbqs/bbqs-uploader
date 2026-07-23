@@ -4,7 +4,7 @@
 
 #### 🐛 Bug Fix
 
-- Cancelling a scan no longer leaves its speed/time-left estimate climbing without bound: a cancelled file's bytes were never credited toward the scanning phase's total, so that phase could never reach 100%, and the rate tracker kept resampling a stalled byte count every tick, decaying the smoothed speed toward 0 and sending the "time left" estimate toward infinity ([#44](https://github.com/brain-bbqs/bbqs-uploader/pull/44))
+- Cancelling a scan no longer leaves its speed/time-left estimate climbing without bound: a cancelled file's bytes were never credited toward the scanning phase's total, so that phase could never reach 100%, and the rate tracker kept resampling a stalled byte count every tick, decaying the smoothed speed toward 0 and sending the "time left" estimate toward infinity ([#45](https://github.com/brain-bbqs/bbqs-uploader/pull/45))
 
 ## 0.1.9
 
