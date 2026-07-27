@@ -4,7 +4,7 @@
 
 #### 🐛 Bug Fix
 
-- Blocked uploads to a dandiset that is not embargoed, instead of allowing direct uploads to any dandiset the user owns. The dataset picker now tracks each incoming dandiset's embargo status, per-file rows show a "Blocked" status explaining direct uploads are only allowed to embargoed dandisets, and the single-dataset view surfaces the same warning up front ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+- Blocked uploads to a dandiset that is not embargoed, instead of allowing direct uploads to any dandiset the user owns. The dataset picker now tracks each incoming dandiset's embargo status, showing a single error card in the Dataset section and disabling the "Upload" button when the selected dandiset isn't embargoed, instead of surfacing the same message on every file row ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
 
 ## 1.0.0
 

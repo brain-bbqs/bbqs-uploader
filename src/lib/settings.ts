@@ -71,7 +71,5 @@ export function configProblems(cfg: UploaderConfig): string[] {
   if (!cfg.api || !/^https?:\/\//.test(cfg.api)) problems.push("API base URL is missing or invalid.");
   if (!cfg.accessToken) problems.push("Not signed in.");
   else if (!cfg.dandisetId) problems.push("No dataset selected.");
-  else if (cfg.embargoed === false)
-    problems.push("This dataset is not embargoed; direct uploads are only allowed to embargoed dandisets.");
   return problems;
 }

@@ -277,6 +277,15 @@ button.primary {
   font-size: 0.95rem;
 }
 
+.dandiset-embargo-error {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--err-soft);
+  color: var(--err);
+  font-size: 0.9rem;
+}
+
 #dropzone {
   border: 2px dashed var(--border);
   border-radius: 12px;

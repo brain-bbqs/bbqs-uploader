@@ -550,6 +550,16 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
   els.dandisetMessage.hidden = view !== "message";
   els.dandisetSingle.hidden = view !== "single";
   els.dandisetId.hidden = view !== "dropdown";
+  updateEmbargoError();
+}
+
+// Shows a single error card in the Dataset section (rather than repeating the same message on
+// every file row) when the currently selected dandiset is not embargoed, and disables the upload
+// button so a blocked batch can't even be started.
+function updateEmbargoError(): void {
+  const blocked = currentConfig().embargoed === false;
+  els.dandisetEmbargoError.hidden = !blocked;
+  els.uploadAllBtn.disabled = blocked;
 }
 
 function setDandisetPlaceholder(text: string): void {
@@ -564,14 +574,7 @@ function showDandisetSingle(dataset: IncomingDandiset): void {
   showDandisetView("single");
   const idCode = document.createElement("code");
   idCode.textContent = dataset.identifier;
-  els.dandisetSingleText.replaceChildren(
-    "Uploading directly to EMBER Dandiset ",
-    idCode,
-    `, "${dataset.title}"`,
-    ...(dataset.embargoed
-      ? []
-      : [". This dataset is not embargoed, so uploads to it are blocked; contact EMBER/BBQS admins."]),
-  );
+  els.dandisetSingleText.replaceChildren("Uploading directly to EMBER Dandiset ", idCode, `, "${dataset.title}"`);
 }
 
 // Populates the dandiset picker (dropdown or single-dataset text) from a resolved list of
@@ -717,6 +720,9 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
 }
 
 async function startUpload(): Promise<void> {
+  // The upload button is disabled while the selected dandiset isn't embargoed (see
+  // updateEmbargoError), so this only matters if startUpload is somehow triggered anyway.
+  if (currentConfig().embargoed === false) return;
   await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
@@ -818,7 +824,10 @@ if (mockUploadCount !== null) {
   mockMode = true;
   void addFiles(generateMockDroppedFiles(mockUploadCount));
 }
-els.dandisetId.addEventListener("change", runConnectionCheck);
+els.dandisetId.addEventListener("change", () => {
+  updateEmbargoError();
+  runConnectionCheck();
+});
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
 els.oauthSignoutBtn.addEventListener("click", () => {
