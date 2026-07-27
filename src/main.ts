@@ -821,8 +821,11 @@ async function startUpload(): Promise<void> {
   updateUploadBar();
 
   // Mock mode has no real API to post to; skip it the same way the rest of the mock path never
-  // touches the network.
-  if (!mockMode) {
+  // touches the network. Also skip a batch that got Reset out from under this still-running
+  // upload: resetUploader() clears fileStats (among everything else this function reads), so an
+  // empty files array here means there's nothing real left to report, not a batch of zero files.
+  const files = Array.from(fileStats.values());
+  if (!mockMode && files.length > 0) {
     const report: TransferReport = {
       schemaVersion: TRANSFER_REPORT_SCHEMA_VERSION,
       dandisetId: cfg.dandisetId,
@@ -836,7 +839,7 @@ async function startUpload(): Promise<void> {
         filesDone: counts.done + counts.replaced,
         filesErrored: counts.error,
       },
-      files: Array.from(fileStats.values()),
+      files,
     };
     try {
       await uploadTransferReport(cfg, report);

@@ -7,11 +7,14 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   const createdAssets: unknown[] = [];
 
   await mockUploadApi(page);
-  // Override the baseline asset-creation mock to also capture each POSTed payload.
+  // Override the baseline asset-creation mock to also capture each POSTed payload. Filtered to
+  // clip.mp4's own path: the batch also posts a transfer-<timestamp>.json report through this
+  // same endpoint (see uploadTransferReport in main.ts), which this test isn't about.
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
-      createdAssets.push(route.request().postDataJSON());
-      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/clip.mp4" } });
+      const body = route.request().postDataJSON();
+      if (body.metadata.path === "sourcedata/raw/clip.mp4") createdAssets.push(body);
+      return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
   });
@@ -58,10 +61,13 @@ test("replaces the existing asset (PUT) when one exists at the path and the cont
   await page.route(`${API}/uploads/upload-1/validate/`, (route: Route) =>
     route.fulfill({ json: { blob_id: "blob-2" } }),
   );
+  // Filtered to clip.mp4's own path: the batch also posts a transfer-<timestamp>.json report
+  // through this same endpoint (see uploadTransferReport in main.ts), which this test isn't about.
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
-      assetCreated = true;
-      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/clip.mp4" } });
+      const body = route.request().postDataJSON();
+      if (body.metadata.path === "sourcedata/raw/clip.mp4") assetCreated = true;
+      return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
   });
@@ -106,10 +112,13 @@ test("replaces via the server digest fast-path (409) without re-transferring byt
     bytesUploaded = true;
     return route.fulfill({ status: 500, body: "" });
   });
+  // Filtered to clip.mp4's own path: the batch also posts a transfer-<timestamp>.json report
+  // through this same endpoint (see uploadTransferReport in main.ts), which this test isn't about.
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
-      assetCreated = true;
-      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/clip.mp4" } });
+      const body = route.request().postDataJSON();
+      if (body.metadata.path === "sourcedata/raw/clip.mp4") assetCreated = true;
+      return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
   });
