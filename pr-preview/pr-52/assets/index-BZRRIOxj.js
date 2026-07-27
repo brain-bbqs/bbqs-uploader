@@ -24,7 +24,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🚀 Enhancement
 
-- Moved the dandiset ID to the front of each dropdown option (e.g. \`(000123) Incoming: Lab Name\`) instead of trailing the title in parentheses, and added a \`?test&num_datasets=N&embargoed=false\` live test injection (documented in \`docs/README.md\`) for previewing the upload-blocked state ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+- Moved the dandiset ID to the front of each dropdown option (e.g. \`(000123) Incoming: Lab Name\`) instead of trailing the title in parentheses, and added a \`?test&num_datasets=N&embargoed=false\` live test injection (documented in \`docs/README.md\`, including the \`num_datasets=0\` case where it's a no-op) for previewing the upload-blocked state ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
 
 ## 1.0.0
 
