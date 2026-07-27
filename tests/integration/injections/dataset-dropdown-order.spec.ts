@@ -28,9 +28,9 @@ test.describe("dataset dropdown ordering", () => {
           next: null,
           previous: null,
           results: [
-            { identifier: "000100", draft_version: { name: "Incoming: Alpha Lab" } },
-            { identifier: "000300", draft_version: { name: "Incoming: Gamma Lab" } },
-            { identifier: "000200", draft_version: { name: "Incoming: Beta Lab" } },
+            { identifier: "000100", draft_version: { name: "Incoming: Alpha Lab" }, embargo_status: "EMBARGOED" },
+            { identifier: "000300", draft_version: { name: "Incoming: Gamma Lab" }, embargo_status: "EMBARGOED" },
+            { identifier: "000200", draft_version: { name: "Incoming: Beta Lab" }, embargo_status: "EMBARGOED" },
           ],
         },
       }),
@@ -42,9 +42,9 @@ test.describe("dataset dropdown ordering", () => {
 
     const options = page.locator("#dandiset-id option");
     await expect(options).toHaveCount(3);
-    await expect(options.nth(0)).toHaveText("Incoming: Alpha Lab (000100)");
-    await expect(options.nth(1)).toHaveText("Incoming: Beta Lab (000200)");
-    await expect(options.nth(2)).toHaveText("Incoming: Gamma Lab (000300)");
+    await expect(options.nth(0)).toHaveText("(000100) Incoming: Alpha Lab");
+    await expect(options.nth(1)).toHaveText("(000200) Incoming: Beta Lab");
+    await expect(options.nth(2)).toHaveText("(000300) Incoming: Gamma Lab");
   });
 
   test("persists a manually picked dataset across reloads", async ({ page }) => {

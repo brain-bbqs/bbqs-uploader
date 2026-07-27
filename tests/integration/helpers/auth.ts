@@ -11,7 +11,11 @@ export const API = EMBER_INSTANCE.api;
  */
 export async function seedSignedIn(
   page: Page,
-  { identifier = "000123", title = "Incoming: Test Lab" }: { identifier?: string; title?: string } = {},
+  {
+    identifier = "000123",
+    title = "Incoming: Test Lab",
+    embargoed = true,
+  }: { identifier?: string; title?: string; embargoed?: boolean } = {},
 ): Promise<void> {
   await page.addInitScript(
     ({ key, expiresAt }) => {
@@ -21,7 +25,18 @@ export async function seedSignedIn(
   );
   await page.route(`${API}/dandisets/?user=me&embargoed=true&page_size=1000`, (route: Route) =>
     route.fulfill({
-      json: { count: 1, next: null, previous: null, results: [{ identifier, draft_version: { name: title } }] },
+      json: {
+        count: 1,
+        next: null,
+        previous: null,
+        results: [
+          {
+            identifier,
+            draft_version: { name: title },
+            embargo_status: embargoed ? "EMBARGOED" : "OPEN",
+          },
+        ],
+      },
     }),
   );
 }

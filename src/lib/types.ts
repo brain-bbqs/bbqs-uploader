@@ -9,6 +9,8 @@ export interface UploaderConfig {
   web: string;
   accessToken: string;
   dandisetId: string;
+  /** Whether the selected dandiset is embargoed, if known. Undefined when not yet resolved. */
+  embargoed?: boolean;
 }
 
 export interface OAuthTokenSet {
