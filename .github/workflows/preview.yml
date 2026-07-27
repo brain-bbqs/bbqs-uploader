@@ -40,3 +40,4 @@ jobs:
         with:
           source-dir: dist
           preview-branch: gh-pages
+          pages-base-url: www.upload.brain-bbqs.org
