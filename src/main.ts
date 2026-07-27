@@ -42,6 +42,13 @@ const activeUploads = new Set<AbortController>();
 const activeHashes = new Set<AbortController>();
 const pending: { file: File; row: FileRow; path: string }[] = [];
 let uploadBatchActive = false;
+// Counts files past their own hash job (i.e. actually transferring bytes right now), as opposed
+// to `uploadBatchActive`, which is true for the whole batch from the moment "Upload" is clicked.
+// A batch can have plenty of large files still mid-scan while only a couple of small ones have
+// started transferring; using the batch-wide flag as the rate tracker's "is anything active"
+// signal would treat that lull as real (near-zero) throughput and decay the ETA toward
+// nonsense instead of freezing it the way a genuine stall does (see `stopped` in renderPhaseBar).
+let activeUploadTransfers = 0;
 // Set once at startup by "?test&mock_upload=N" (see readTestMockUploadCount()); while true, every
 // file — mock or genuinely dropped — is scanned/uploaded by the simulated timers below instead of
 // the real hash pool and network, since this mode exists purely to showcase the UI. Not meant to
@@ -421,7 +428,7 @@ function updateProgressSummary(): void {
     uploadRate,
     uploadDoneBytes,
     finished,
-    uploadBatchActive,
+    activeUploadTransfers > 0,
   );
 
   const leftParts: string[] = [];
@@ -781,11 +788,21 @@ async function startUpload(): Promise<void> {
     // queue; treat a file resetUploader() already forgot about as a no-op rather than crashing.
     const job = hashJobs.get(file);
     if (!job) return;
+    // Wait out this file's own scan before counting it toward the upload phase's "active"
+    // signal — until then it isn't moving any bytes yet, regardless of how many other files in
+    // the batch already are. The hash job itself is unaffected by awaiting it again once settled.
+    await job.promise.catch(() => {});
+    activeUploadTransfers++;
     const uploadStarted = performance.now();
     const uploadStartedAtIso = new Date().toISOString();
-    const outcome = mockMode
-      ? await mockUploadFile(row, file, job, (bytesDone) => reportUploadBytes(file, bytesDone))
-      : await uploadFile(row, file, path, cfg, activeUploads, job, (bytesDone) => reportUploadBytes(file, bytesDone));
+    let outcome: UploadOutcome;
+    try {
+      outcome = mockMode
+        ? await mockUploadFile(row, file, job, (bytesDone) => reportUploadBytes(file, bytesDone))
+        : await uploadFile(row, file, path, cfg, activeUploads, job, (bytesDone) => reportUploadBytes(file, bytesDone));
+    } finally {
+      activeUploadTransfers--;
+    }
     counts[outcome]++;
     const stats = fileStats.get(file);
     if (stats) {
@@ -882,6 +899,7 @@ function resetUploader(): void {
   }
 
   uploadBatchActive = false;
+  activeUploadTransfers = 0;
   els.destRoot.hidden = true;
   els.progressSummary.hidden = true;
   els.expandDepthInput.value = "0";
