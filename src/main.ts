@@ -521,11 +521,17 @@ function updateUploadCardVisibility(): void {
   els.uploadCard.hidden = !isSignedIn() && els.fileList.children.length === 0;
 }
 
+// The dropzone is only useful before anything has been queued; once files are selected it just
+// takes up space above the file list, so it's hidden as soon as the queue is non-empty.
+function updateDropzoneVisibility(): void {
+  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0;
+}
+
 function renderAuthUI(): void {
   const signedIn = isSignedIn();
   els.oauthSigninBtn.hidden = signedIn;
   els.oauthSignedIn.hidden = !signedIn;
-  els.dropzone.hidden = !signedIn;
+  updateDropzoneVisibility();
   updateUploadCardVisibility();
   // Once the real auth state is known, this element-level hidden state is authoritative; the
   // pre-paint script's stand-in attribute (see index.html) is no longer needed.
@@ -716,6 +722,7 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
   const hasFiles = els.fileList.children.length > 0;
   els.destRoot.hidden = !hasFiles;
   els.progressSummary.hidden = !hasFiles;
+  updateDropzoneVisibility();
   updateUploadCardVisibility();
   updateProgressSummary();
   updateUploadBar();
@@ -784,6 +791,7 @@ function resetUploader(): void {
   els.progressSummary.hidden = true;
   els.expandDepthInput.value = "0";
   updateExpandDepthRange();
+  updateDropzoneVisibility();
   updateUploadCardVisibility();
   updateCancelAllVisibility();
   updateUploadBar();

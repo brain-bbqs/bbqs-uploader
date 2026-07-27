@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+#### 🚀 Enhancement
+
+- Hid the dropzone card once files are queued, instead of leaving it visible above the file list alongside the progress bars ([#53](https://github.com/brain-bbqs/bbqs-uploader/pull/53))
+
 ## 1.0.1
 
 #### 🐛 Bug Fix
