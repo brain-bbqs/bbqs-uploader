@@ -6,6 +6,7 @@
 
 - Restyled the "View dataset" link in the Dataset card heading as a filled "View on EMBER" button, matching the archive's flame-red accent instead of a plain underlined text link ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
 - Renamed the footer's "Clear scan cache" button to "Clear checksum cache" (and its confirmation text to "Checksum cache cleared"), matching the digest it actually clears ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Normalized the bottom-left footer text (version link, separator dots, "What's New", "Clear checksum cache") to a single font size and bolded it, instead of three slightly different sizes at normal weight ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
 
 ## 0.1.13
 

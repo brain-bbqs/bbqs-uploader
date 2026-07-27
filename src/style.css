@@ -865,12 +865,14 @@ button.primary {
 
 .footer-dot {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .version-link {
   color: var(--muted);
-  font-size: 1.04rem;
+  font-size: 0.92rem;
+  font-weight: 600;
   text-decoration: underline;
 }
 
@@ -881,6 +883,7 @@ button.primary {
   padding: 0;
   color: var(--accent);
   font-size: 0.92rem;
+  font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
 }
