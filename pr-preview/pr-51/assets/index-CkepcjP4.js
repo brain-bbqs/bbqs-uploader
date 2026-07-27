@@ -19,8 +19,8 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🚀 Enhancement
 
-- Added a "Request a consultation from our Tech Support Team to attempt to improve your transfer speeds" link to the speed tips card, opening a prepopulated Q&A discussion post on the [brain-bbqs GitHub Discussions](https://github.com/orgs/brain-bbqs/discussions) page
-- Moved the "1,000 Mbps is recommended for contents over 100 GB" note out of the speed tips card title and into its own subtitle line
+- Added a "Request a consultation from our Tech Support Team to attempt to improve your transfer speeds" link to the speed tips card, opening a prepopulated Q&A discussion post on the [brain-bbqs GitHub Discussions](https://github.com/orgs/brain-bbqs/discussions) page ([#51](https://github.com/brain-bbqs/bbqs-uploader/pull/51))
+- Moved the "1,000 Mbps is recommended for contents over 100 GB" note out of the speed tips card title and into its own subtitle line ([#51](https://github.com/brain-bbqs/bbqs-uploader/pull/51))
 
 ## 0.1.13
 
