@@ -595,7 +595,7 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
     ...ordered.map((d) => {
       const opt = document.createElement("option");
       opt.value = d.identifier;
-      opt.textContent = `${d.title} (${d.identifier})`;
+      opt.textContent = `(${d.identifier}) ${d.title}`;
       return opt;
     }),
   );
@@ -613,19 +613,21 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
 
 // Debug-only escape hatch for previewing the dataset picker's various states without a real
 // account: e.g. "?test&num_datasets=2" fills in that many fake datasets, and "?test&num_datasets=0"
-// previews the no-datasets-found state. Bypasses sign-in entirely, so it also works for a
-// signed-out visitor. "?test" alone (no num_datasets) is a no-op, so the override only ever
-// kicks in when explicitly parameterized.
+// previews the no-datasets-found state. Adding "&embargoed=false" previews the upload-blocked
+// state instead of the (default) normal embargoed one. Bypasses sign-in entirely, so it also
+// works for a signed-out visitor. "?test" alone (no num_datasets) is a no-op, so the override
+// only ever kicks in when explicitly parameterized.
 function readTestDatasetOverride(): IncomingDandiset[] | null {
   const params = new URLSearchParams(window.location.search);
   const raw = params.get("num_datasets");
   if (!params.has("test") || raw === null) return null;
   const count = Math.max(0, Number(raw) || 0);
+  const embargoed = params.get("embargoed") !== "false";
   // Negative identifiers (e.g. "-000001") so a fake dataset is never mistaken for a real one.
   return Array.from({ length: count }, (_, i) => ({
     identifier: `-${String(i + 1).padStart(6, "0")}`,
     title: `Incoming: Test dataset ${i + 1}`,
-    embargoed: true,
+    embargoed,
   }));
 }
 
