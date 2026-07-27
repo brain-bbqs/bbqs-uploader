@@ -21,6 +21,9 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 - Restyled the "View dataset" link in the Dataset card heading as a filled "View on EMBER" button, matching the archive's flame-red accent instead of a plain underlined text link ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
 - Renamed the footer's "Clear scan cache" button to "Clear checksum cache" (and its confirmation text to "Checksum cache cleared"), matching the digest it actually clears ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Normalized the bottom-left footer text (version link, separator dots, "What's New", "Clear checksum cache") to a single font size and bolded it, instead of three slightly different sizes at normal weight ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Added a "Request a consultation from our Tech Support Team to attempt to improve your transfer speeds" link to the speed tips card, opening a prepopulated Q&A discussion post on the [brain-bbqs GitHub Discussions](https://github.com/orgs/brain-bbqs/discussions) page ([#51](https://github.com/brain-bbqs/bbqs-uploader/pull/51))
+- Moved the "1,000 Mbps is recommended for contents over 100 GB" note out of the speed tips card title and into its own subtitle line ([#51](https://github.com/brain-bbqs/bbqs-uploader/pull/51))
 
 ## 0.1.13
 
