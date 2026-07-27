@@ -9,7 +9,9 @@
 | `?test&num_datasets=0`                 | No-datasets-found message                                               | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0)                 |
 | `?test&num_datasets=1`                 | Single dataset, shown as plain text with an archive link                | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1)                 |
 | `?test&num_datasets=2`                 | Dropdown with 2 fake datasets                                           | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2)                 |
+| `?test&num_datasets=0&embargoed=false` | Same no-datasets-found message; `embargoed` is ignored with no dataset  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0&embargoed=false) |
 | `?test&num_datasets=1&embargoed=false` | Single dataset that isn't embargoed: error card, upload button disabled | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&embargoed=false) |
+| `?test&num_datasets=2&embargoed=false` | Dropdown of 2 fake datasets, neither embargoed: same error card/disable | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2&embargoed=false) |
 | `?test&mock_upload=25`                 | A nested batch of 25 fake files, scanning then uploading                | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25)                 |
 | `?test&signed_out`                     | The page as a signed-out visitor sees it, regardless of your real state | [Open](https://upload.brain-bbqs.org/?test&signed_out)                     |
 | `?test&freeze_scan`                    | Every dropped file hangs mid-scan (badge, Cancel button, 0% figures)    | [Open](https://upload.brain-bbqs.org/?test&freeze_scan)                    |
