@@ -103,6 +103,18 @@ function registerHashJob(
       } else {
         row.hideBadge();
       }
+      // The manifest's checksum field stays null (its initial value) when not a single chunk was
+      // hashed before settling; a partial scan still records the rate it managed up to that point.
+      const stats = fileStats.get(file);
+      const bytesDone = lastHashBytes.get(file) ?? 0;
+      if (stats && bytesDone > 0) {
+        const durationSec = (performance.now() - checksumStarted) / 1000;
+        stats.checksum = {
+          startedAt: checksumStartedAtIso,
+          completedAt: new Date().toISOString(),
+          MBps: durationSec > 0 ? bytesPerSecToMBps(bytesDone / durationSec) : 0,
+        };
+      }
     })
     .finally(() => {
       row.setProgress(0);
@@ -732,7 +744,7 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
     // Rows start hidden; the reveal pass below decides which ones the slider's budget covers.
     row.el.hidden = true;
     pending.push({ file: entry.file, row, path });
-    fileStats.set(entry.file, { path, sizeBytes: entry.file.size, status: "pending" });
+    fileStats.set(entry.file, { path, sizeBytes: entry.file.size, checksum: null, upload: null, status: "pending" });
     totalBytes += entry.file.size;
     startHashing(entry.file, row, entry.relativePath);
     if ((i + 1) % ADD_FILES_CHUNK_SIZE === 0) await yieldToMain();
@@ -773,8 +785,6 @@ async function startUpload(): Promise<void> {
     const stats = fileStats.get(file);
     if (stats) {
       stats.status = outcome;
-      // Only a genuine transfer (not blocked/cancelled/error) has a meaningful duration to
-      // average bytes over.
       if (outcome === "done" || outcome === "replaced") {
         const durationSec = (performance.now() - uploadStarted) / 1000;
         stats.upload = {
@@ -782,6 +792,20 @@ async function startUpload(): Promise<void> {
           completedAt: new Date().toISOString(),
           MBps: durationSec > 0 ? bytesPerSecToMBps(file.size / durationSec) : 0,
         };
+      } else if (outcome === "cancelled") {
+        // "blocked" and "error" both force-credit the progress bar to 100% (see uploadFile), so
+        // lastUploadBytes can't distinguish real transfer from that forced credit for them — only
+        // "cancelled" leaves it uncredited and therefore trustworthy. Stays null (its initial
+        // value) when not a single byte made it out before the cancel.
+        const bytesDone = lastUploadBytes.get(file) ?? 0;
+        if (bytesDone > 0) {
+          const durationSec = (performance.now() - uploadStarted) / 1000;
+          stats.upload = {
+            startedAt: uploadStartedAtIso,
+            completedAt: new Date().toISOString(),
+            MBps: durationSec > 0 ? bytesPerSecToMBps(bytesDone / durationSec) : 0,
+          };
+        }
       }
     }
     updateProgressSummary();

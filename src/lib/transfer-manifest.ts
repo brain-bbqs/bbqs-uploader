@@ -18,8 +18,12 @@ function manifestPath(updatedAt: string): string {
 export interface FileTransferStats {
   path: string;
   sizeBytes: number;
-  checksum?: { startedAt: string; completedAt: string; MBps: number };
-  upload?: { startedAt: string; completedAt: string; MBps: number };
+  // null (rather than omitted) when no chunk/byte of this phase was ever processed — e.g. a
+  // checksum or upload cancelled before its first progress tick, or an upload never attempted
+  // because it was blocked. A cancellation with partial progress still records the rate it
+  // achieved up to that point.
+  checksum: { startedAt: string; completedAt: string; MBps: number } | null;
+  upload: { startedAt: string; completedAt: string; MBps: number } | null;
   status: UploadOutcome | "pending";
 }
 
