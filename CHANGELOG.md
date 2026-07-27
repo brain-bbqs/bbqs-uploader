@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+#### 🚀 Enhancement
+
+- Added Google Analytics (`gtag.js`), gated behind a cookie-consent banner shown on first visit; declining or leaving the banner unanswered never loads GA or sets a cookie, and the choice is stored in `localStorage` under `bbqs-uploader.analytics-consent` and re-checked on every page load ([#56](https://github.com/brain-bbqs/bbqs-uploader/pull/56))
+
 ## 1.0.4
 
 #### 🐛 Bug Fix
