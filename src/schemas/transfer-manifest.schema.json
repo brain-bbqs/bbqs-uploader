@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://upload.brain-bbqs.org/schemas/transfer-manifest.schema.json",
+  "title": "BBQS uploader transfer manifest",
+  "description": "One JSON packet per \"Upload\" batch, posted to sourcedata/raw/.transfer/transfer-<timestamp>.json (see src/lib/transfer-manifest.ts). Records per-file checksum/upload throughput and a session summary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dandisetId", "sessionStartedAt", "updatedAt", "summary", "files"],
+  "properties": {
+    "dandisetId": {
+      "type": "string",
+      "description": "The DANDI/EMBER dandiset identifier this batch was uploaded to."
+    },
+    "sessionStartedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the first file dropped this session, across every \"Upload\" click so far."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp this manifest was generated; also the value the manifest's own filename is keyed on."
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalBytes", "hashMBps", "uploadMBps", "filesTotal", "filesDone", "filesErrored"],
+      "properties": {
+        "totalBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cumulative bytes across every file queued this session."
+        },
+        "hashMBps": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Checksum throughput (decimal MB/s) at manifest generation time."
+        },
+        "uploadMBps": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Upload throughput (decimal MB/s) at manifest generation time."
+        },
+        "filesTotal": { "type": "integer", "minimum": 0 },
+        "filesDone": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Files that completed as \"done\" or \"replaced\"."
+        },
+        "filesErrored": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fileTransferStats" }
+    }
+  },
+  "$defs": {
+    "phaseStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAt", "completedAt", "MBps"],
+      "properties": {
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "MBps": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Decimal (1 MB = 1,000,000 B) megabytes per second, averaged over the phase's actual duration."
+        }
+      }
+    },
+    "fileTransferStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sizeBytes", "checksum", "upload", "status"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Archive-relative asset path, e.g. sourcedata/raw/sub-01/sub-01_ephys.dat."
+        },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "checksum": {
+          "oneOf": [{ "$ref": "#/$defs/phaseStats" }, { "type": "null" }],
+          "description": "null when not a single chunk was hashed before the job settled (e.g. cancelled immediately); otherwise the rate achieved, whether the checksum finished or was cancelled partway through."
+        },
+        "upload": {
+          "oneOf": [{ "$ref": "#/$defs/phaseStats" }, { "type": "null" }],
+          "description": "null when not a single byte was transferred (blocked, errored, or cancelled immediately); otherwise the rate achieved, whether the upload finished or was cancelled partway through."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "blocked", "cancelled", "error", "replaced", "done"],
+          "description": "\"pending\" means the file was queued but this batch never reached it (see UploadOutcome in src/ui/processFile.ts for the rest)."
+        }
+      }
+    }
+  }
+}

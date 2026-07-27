@@ -3,6 +3,10 @@ import type { UploadOutcome } from "../ui/processFile";
 import { planParts, hashPart, combineDigests } from "./etag";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "./upload-pipeline";
 
+// The shape below must stay in sync with src/schemas/transfer-manifest.schema.json, kept
+// alongside as an external, language-agnostic contract for anything reading these files back out
+// of sourcedata/raw/.transfer/ (this TS interface has no runtime presence in the uploaded JSON).
+
 // Not run through sanitizePath: that function strips leading dots from path segments (they read
 // as accidental "trim this" punctuation on a user-supplied filename), which would turn our
 // intentionally-hidden ".transfer" directory into a plain "transfer" one. This path is fully
