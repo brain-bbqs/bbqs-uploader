@@ -471,6 +471,9 @@ let oauthTokens: OAuthTokenSet | null = null;
 // The dandiset id restored from a previous session, applied once the dropdown is populated with
 // the signed-in user's incoming datasets (a <select> can't hold a value before its options exist).
 let storedDandisetId = "";
+// The dandiset picker's current option list, kept around so currentConfig() can look up the
+// selected dandiset's embargo status without a second API round-trip.
+let currentDatasets: IncomingDandiset[] = [];
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
 // "?test&signed_out" forces every auth-dependent render to behave as if oauthTokens were null,
@@ -497,9 +500,11 @@ function saveSettings(): void {
 }
 
 function currentConfig(): UploaderConfig {
+  const selected = currentDatasets.find((d) => d.identifier === els.dandisetId.value);
   return resolveConfig({
     dandisetId: els.dandisetId.value,
     oauthAccessToken: forceSignedOut ? undefined : oauthTokens?.accessToken,
+    embargoed: selected?.embargoed,
   });
 }
 
@@ -559,12 +564,20 @@ function showDandisetSingle(dataset: IncomingDandiset): void {
   showDandisetView("single");
   const idCode = document.createElement("code");
   idCode.textContent = dataset.identifier;
-  els.dandisetSingleText.replaceChildren("Uploading directly to EMBER Dandiset ", idCode, `, "${dataset.title}"`);
+  els.dandisetSingleText.replaceChildren(
+    "Uploading directly to EMBER Dandiset ",
+    idCode,
+    `, "${dataset.title}"`,
+    ...(dataset.embargoed
+      ? []
+      : [". This dataset is not embargoed, so uploads to it are blocked; contact EMBER/BBQS admins."]),
+  );
 }
 
 // Populates the dandiset picker (dropdown or single-dataset text) from a resolved list of
 // datasets, shared by the real signed-in fetch and the "?test&num_datasets=N" debug override.
 function applyDatasetList(datasets: IncomingDandiset[]): void {
+  currentDatasets = datasets;
   if (!datasets.length) {
     setDandisetPlaceholder(
       "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins to request this.",
@@ -609,6 +622,7 @@ function readTestDatasetOverride(): IncomingDandiset[] | null {
   return Array.from({ length: count }, (_, i) => ({
     identifier: `-${String(i + 1).padStart(6, "0")}`,
     title: `Incoming: Test dataset ${i + 1}`,
+    embargoed: true,
   }));
 }
 

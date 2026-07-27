@@ -15,9 +15,13 @@ describe("listIncomingDandisets", () => {
       ok: true,
       json: async () => ({
         results: [
-          { identifier: "000200", draft_version: { name: "Incoming: Zeta Lab" } },
-          { identifier: "000100", most_recent_published_version: { name: "Incoming: Alpha Lab" } },
-          { identifier: "000300", draft_version: { name: "Not an incoming dataset" } },
+          { identifier: "000200", draft_version: { name: "Incoming: Zeta Lab" }, embargo_status: "EMBARGOED" },
+          {
+            identifier: "000100",
+            most_recent_published_version: { name: "Incoming: Alpha Lab" },
+            embargo_status: "OPEN",
+          },
+          { identifier: "000300", draft_version: { name: "Not an incoming dataset" }, embargo_status: "EMBARGOED" },
         ],
       }),
     });
@@ -26,8 +30,8 @@ describe("listIncomingDandisets", () => {
     const result = await listIncomingDandisets(cfg);
 
     expect(result).toEqual([
-      { identifier: "000100", title: "Incoming: Alpha Lab" },
-      { identifier: "000200", title: "Incoming: Zeta Lab" },
+      { identifier: "000100", title: "Incoming: Alpha Lab", embargoed: false },
+      { identifier: "000200", title: "Incoming: Zeta Lab", embargoed: true },
     ]);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://api-dandi.emberarchive.org/api/dandisets/?user=me&embargoed=true&page_size=1000");
@@ -46,6 +50,7 @@ describe("listIncomingDandisets", () => {
               identifier: "000100",
               draft_version: { name: "Incoming: Draft Title" },
               most_recent_published_version: { name: "Incoming: Published Title" },
+              embargo_status: "EMBARGOED",
             },
           ],
         }),
@@ -53,7 +58,7 @@ describe("listIncomingDandisets", () => {
     );
 
     const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([{ identifier: "000100", title: "Incoming: Published Title" }]);
+    expect(result).toEqual([{ identifier: "000100", title: "Incoming: Published Title", embargoed: true }]);
     vi.unstubAllGlobals();
   });
 

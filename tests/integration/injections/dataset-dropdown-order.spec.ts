@@ -28,9 +28,9 @@ test.describe("dataset dropdown ordering", () => {
           next: null,
           previous: null,
           results: [
-            { identifier: "000100", draft_version: { name: "Incoming: Alpha Lab" } },
-            { identifier: "000300", draft_version: { name: "Incoming: Gamma Lab" } },
-            { identifier: "000200", draft_version: { name: "Incoming: Beta Lab" } },
+            { identifier: "000100", draft_version: { name: "Incoming: Alpha Lab" }, embargo_status: "EMBARGOED" },
+            { identifier: "000300", draft_version: { name: "Incoming: Gamma Lab" }, embargo_status: "EMBARGOED" },
+            { identifier: "000200", draft_version: { name: "Incoming: Beta Lab" }, embargo_status: "EMBARGOED" },
           ],
         },
       }),

@@ -48,7 +48,11 @@ export function saveStoredSettings(settings: StoredSettings | null): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-export function resolveConfig(input: { dandisetId: string; oauthAccessToken?: string }): UploaderConfig {
+export function resolveConfig(input: {
+  dandisetId: string;
+  oauthAccessToken?: string;
+  embargoed?: boolean;
+}): UploaderConfig {
   const rawId = input.dandisetId.trim();
   // A digit run preceded by a hyphen is rejected so the "?test&num_datasets=N" injection's
   // negative fake identifiers (e.g. "-000001") never resolve to a plausible real dandiset id.
@@ -58,6 +62,7 @@ export function resolveConfig(input: { dandisetId: string; oauthAccessToken?: st
     web: EMBER_INSTANCE.web,
     accessToken: input.oauthAccessToken ?? "",
     dandisetId: idMatch ? idMatch[2] : "",
+    embargoed: input.embargoed,
   };
 }
 
@@ -66,5 +71,7 @@ export function configProblems(cfg: UploaderConfig): string[] {
   if (!cfg.api || !/^https?:\/\//.test(cfg.api)) problems.push("API base URL is missing or invalid.");
   if (!cfg.accessToken) problems.push("Not signed in.");
   else if (!cfg.dandisetId) problems.push("No dataset selected.");
+  else if (cfg.embargoed === false)
+    problems.push("This dataset is not embargoed; direct uploads are only allowed to embargoed dandisets.");
   return problems;
 }

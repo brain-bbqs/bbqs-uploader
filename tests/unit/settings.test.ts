@@ -28,6 +28,12 @@ describe("resolveConfig", () => {
     const cfg = resolveConfig({ dandisetId: "000123" });
     expect(cfg.accessToken).toBe("");
   });
+
+  it("passes through the selected dataset's embargo status", () => {
+    expect(resolveConfig({ dandisetId: "000123", embargoed: true }).embargoed).toBe(true);
+    expect(resolveConfig({ dandisetId: "000123", embargoed: false }).embargoed).toBe(false);
+    expect(resolveConfig({ dandisetId: "000123" }).embargoed).toBeUndefined();
+  });
 });
 
 describe("configProblems", () => {
@@ -55,6 +61,30 @@ describe("configProblems", () => {
       dandisetId: "",
     });
     expect(problems).toEqual(["No dataset selected."]);
+  });
+
+  it("blocks upload when the selected dandiset is not embargoed", () => {
+    const problems = configProblems({
+      api: "https://api-dandi.emberarchive.org/api",
+      web: "",
+      accessToken: "abc",
+      dandisetId: "000123",
+      embargoed: false,
+    });
+    expect(problems).toEqual([
+      "This dataset is not embargoed; direct uploads are only allowed to embargoed dandisets.",
+    ]);
+  });
+
+  it("passes when the selected dandiset is embargoed", () => {
+    const problems = configProblems({
+      api: "https://api-dandi.emberarchive.org/api",
+      web: "",
+      accessToken: "abc",
+      dandisetId: "000123",
+      embargoed: true,
+    });
+    expect(problems).toHaveLength(0);
   });
 });
 
