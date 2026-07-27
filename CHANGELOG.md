@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.3
+
+#### 🚀 Enhancement
+
+- Added transfer speed tracking: each "Upload" batch now posts a timestamped `transfer-<timestamp>.json` report to a hidden `sourcedata/raw/.transfer/` directory, recording per-file checksum and upload throughput (in MB/s) plus a session summary, using the same checksum/upload pipeline as any other asset ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+- Recorded a null checksum/upload entry in the transfer report for a file cancelled before it processed a single chunk/byte, instead of a misleadingly-omitted field; a cancellation with partial progress still records the rate achieved up to that point ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+- Added `src/schemas/transfer-report.v1.schema.json`, a JSON Schema documenting the transfer report's shape as an external contract for anything reading these files back out of `sourcedata/raw/.transfer/`. Named "report" rather than "manifest": it's a per-batch performance record, not a listing of what was uploaded (DANDI's own asset listing already covers that) ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+- Added a `schemaVersion` field to the transfer report schema and every generated instance, and put the schema's own major version in its filename/`$id` (`transfer-report.v1.schema.json`), so a future shape change can be told apart from older reports already sitting in the archive ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+
+#### 🐛 Bug Fix
+
+- Skipped uploading the transfer report when "Reset" was clicked mid-upload, instead of posting a stale, empty one from the just-cleared state ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+
 ## 1.0.2
 
 #### 🚀 Enhancement

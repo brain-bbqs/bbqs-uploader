@@ -2,7 +2,13 @@ import "./style.css";
 import { getElements } from "./ui/elements";
 import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
-import { humanSize, friendlyEta } from "./lib/format";
+import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
+import {
+  uploadTransferReport,
+  TRANSFER_REPORT_SCHEMA_VERSION,
+  type TransferReport,
+  type FileTransferStats,
+} from "./lib/transfer-report";
 import { renderIdentity } from "./ui/connection";
 import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT } from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
@@ -51,6 +57,12 @@ function updateCancelAllVisibility(): void {
 // Hashing starts the moment a file is dropped, not when "Upload" is clicked.
 const hashJobs = new Map<File, HashJob>();
 
+// Per-file checksum/upload timing, snapshotted into a transfer-<timestamp>.json report asset
+// (see uploadTransferReport) after each "Upload" batch finishes. Persists across multiple Upload
+// clicks in the same session, same as the cumulative byte counters below.
+const fileStats = new Map<File, FileTransferStats>();
+let sessionStartedAt: string | null = null;
+
 // Shared scaffolding for the real and mock hashing paths: the "Scanning" badge, cancel
 // bookkeeping, and settle handling around whatever `start` actually runs.
 function registerHashJob(
@@ -64,6 +76,8 @@ function registerHashJob(
   const abort = new AbortController();
   activeHashes.add(abort);
   updateCancelAllVisibility();
+  const checksumStarted = performance.now();
+  const checksumStartedAtIso = new Date().toISOString();
   const promise = start(abort.signal);
   promise
     .then(() => {
@@ -72,6 +86,15 @@ function registerHashJob(
       hashedFiles++;
       reportHashBytes(file, file.size);
       row.hideBadge();
+      const stats = fileStats.get(file);
+      if (stats) {
+        const durationSec = (performance.now() - checksumStarted) / 1000;
+        stats.checksum = {
+          startedAt: checksumStartedAtIso,
+          completedAt: new Date().toISOString(),
+          MBps: durationSec > 0 ? bytesPerSecToMBps(file.size / durationSec) : 0,
+        };
+      }
     })
     .catch((e: unknown) => {
       // Surfaced again (and handled) once uploadFile awaits this same promise; a cancelled scan
@@ -84,6 +107,18 @@ function registerHashJob(
         row.setBadge("Cancelled", "warn");
       } else {
         row.hideBadge();
+      }
+      // The report's checksum field stays null (its initial value) when not a single chunk was
+      // hashed before settling; a partial scan still records the rate it managed up to that point.
+      const stats = fileStats.get(file);
+      const bytesDone = lastHashBytes.get(file) ?? 0;
+      if (stats && bytesDone > 0) {
+        const durationSec = (performance.now() - checksumStarted) / 1000;
+        stats.checksum = {
+          startedAt: checksumStartedAtIso,
+          completedAt: new Date().toISOString(),
+          MBps: durationSec > 0 ? bytesPerSecToMBps(bytesDone / durationSec) : 0,
+        };
       }
     })
     .finally(() => {
@@ -698,6 +733,7 @@ const ADD_FILES_CHUNK_SIZE = 200;
 
 async function addFiles(entries: DroppedFile[]): Promise<void> {
   const isFirstBatch = totalFiles === 0;
+  if (isFirstBatch) sessionStartedAt = new Date().toISOString();
   totalFiles += entries.length;
   updateExpandDepthRange();
   if (isFirstBatch) {
@@ -713,6 +749,7 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
     // Rows start hidden; the reveal pass below decides which ones the slider's budget covers.
     row.el.hidden = true;
     pending.push({ file: entry.file, row, path });
+    fileStats.set(entry.file, { path, sizeBytes: entry.file.size, checksum: null, upload: null, status: "pending" });
     totalBytes += entry.file.size;
     startHashing(entry.file, row, entry.relativePath);
     if ((i + 1) % ADD_FILES_CHUNK_SIZE === 0) await yieldToMain();
@@ -744,16 +781,72 @@ async function startUpload(): Promise<void> {
     // queue; treat a file resetUploader() already forgot about as a no-op rather than crashing.
     const job = hashJobs.get(file);
     if (!job) return;
+    const uploadStarted = performance.now();
+    const uploadStartedAtIso = new Date().toISOString();
     const outcome = mockMode
       ? await mockUploadFile(row, file, job, (bytesDone) => reportUploadBytes(file, bytesDone))
       : await uploadFile(row, file, path, cfg, activeUploads, job, (bytesDone) => reportUploadBytes(file, bytesDone));
     counts[outcome]++;
+    const stats = fileStats.get(file);
+    if (stats) {
+      stats.status = outcome;
+      if (outcome === "done" || outcome === "replaced") {
+        const durationSec = (performance.now() - uploadStarted) / 1000;
+        stats.upload = {
+          startedAt: uploadStartedAtIso,
+          completedAt: new Date().toISOString(),
+          MBps: durationSec > 0 ? bytesPerSecToMBps(file.size / durationSec) : 0,
+        };
+      } else if (outcome === "cancelled") {
+        // "blocked" and "error" both force-credit the progress bar to 100% (see uploadFile), so
+        // lastUploadBytes can't distinguish real transfer from that forced credit for them — only
+        // "cancelled" leaves it uncredited and therefore trustworthy. Stays null (its initial
+        // value) when not a single byte made it out before the cancel.
+        const bytesDone = lastUploadBytes.get(file) ?? 0;
+        if (bytesDone > 0) {
+          const durationSec = (performance.now() - uploadStarted) / 1000;
+          stats.upload = {
+            startedAt: uploadStartedAtIso,
+            completedAt: new Date().toISOString(),
+            MBps: durationSec > 0 ? bytesPerSecToMBps(bytesDone / durationSec) : 0,
+          };
+        }
+      }
+    }
     updateProgressSummary();
   });
 
   uploadBatchActive = false;
   updateCancelAllVisibility();
   updateUploadBar();
+
+  // Mock mode has no real API to post to; skip it the same way the rest of the mock path never
+  // touches the network. Also skip a batch that got Reset out from under this still-running
+  // upload: resetUploader() clears fileStats (among everything else this function reads), so an
+  // empty files array here means there's nothing real left to report, not a batch of zero files.
+  const files = Array.from(fileStats.values());
+  if (!mockMode && files.length > 0) {
+    const report: TransferReport = {
+      schemaVersion: TRANSFER_REPORT_SCHEMA_VERSION,
+      dandisetId: cfg.dandisetId,
+      sessionStartedAt: sessionStartedAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      summary: {
+        totalBytes,
+        hashMBps: bytesPerSecToMBps(hashRate.bytesPerSec),
+        uploadMBps: bytesPerSecToMBps(uploadRate.bytesPerSec),
+        filesTotal: totalFiles,
+        filesDone: counts.done + counts.replaced,
+        filesErrored: counts.error,
+      },
+      files,
+    };
+    try {
+      await uploadTransferReport(cfg, report);
+    } catch (e) {
+      console.warn("Failed to upload transfer report:", e);
+    }
+  }
 }
 
 // Clears the uploader back to its just-loaded, no-files state: cancels any in-flight scanning or
@@ -766,6 +859,8 @@ function resetUploader(): void {
   hashJobs.clear();
   lastHashBytes.clear();
   lastUploadBytes.clear();
+  fileStats.clear();
+  sessionStartedAt = null;
   els.fileList.replaceChildren();
 
   totalFiles = 0;

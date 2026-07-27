@@ -1,0 +1,79 @@
+import type { UploaderConfig } from "./types";
+import type { UploadOutcome } from "../ui/processFile";
+import { planParts, hashPart, combineDigests } from "./etag";
+import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "./upload-pipeline";
+
+// The shape below must stay in sync with src/schemas/transfer-report.v1.schema.json, kept
+// alongside as an external, language-agnostic contract for anything reading these files back out
+// of sourcedata/raw/.transfer/ (this TS interface has no runtime presence in the uploaded JSON).
+
+// Not run through sanitizePath: that function strips leading dots from path segments (they read
+// as accidental "trim this" punctuation on a user-supplied filename), which would turn our
+// intentionally-hidden ".transfer" directory into a plain "transfer" one. This path is fully
+// under our control, not derived from a dropped file, so it skips that sanitization entirely.
+//
+// The filename is keyed on the report's completion timestamp rather than a fixed name, so each
+// "Upload" batch writes its own file instead of every batch overwriting the same one.
+function reportPath(updatedAt: string): string {
+  return `sourcedata/raw/.transfer/transfer-${updatedAt.replace(/[:.]/g, "-")}.json`;
+}
+
+export interface FileTransferStats {
+  path: string;
+  sizeBytes: number;
+  // null (rather than omitted) when no chunk/byte of this phase was ever processed — e.g. a
+  // checksum or upload cancelled before its first progress tick, or an upload never attempted
+  // because it was blocked. A cancellation with partial progress still records the rate it
+  // achieved up to that point.
+  checksum: { startedAt: string; completedAt: string; MBps: number } | null;
+  upload: { startedAt: string; completedAt: string; MBps: number } | null;
+  status: UploadOutcome | "pending";
+}
+
+// Bump on any breaking shape change, and update the schema's matching `const` (and its `.v1.`
+// filename/`$id`, once the bump is a major one) alongside it, so a reader can tell historical
+// report instances apart. Not tied to the uploader app's own package.json version.
+export const TRANSFER_REPORT_SCHEMA_VERSION = "1.0.0";
+
+export interface TransferReport {
+  schemaVersion: typeof TRANSFER_REPORT_SCHEMA_VERSION;
+  dandisetId: string;
+  sessionStartedAt: string;
+  updatedAt: string;
+  summary: {
+    totalBytes: number;
+    hashMBps: number;
+    uploadMBps: number;
+    filesTotal: number;
+    filesDone: number;
+    filesErrored: number;
+  };
+  files: FileTransferStats[];
+}
+
+/**
+ * Uploads a JSON snapshot of this session's transfer stats to a timestamped hidden path (one
+ * file per "Upload" batch), using the same checksum/multipart-upload pipeline as any other asset
+ * — it's just a small in-memory file instead of a dropped one. It's a performance record, not a
+ * manifest of what was uploaded (DANDI's own asset listing already covers that).
+ */
+export async function uploadTransferReport(
+  cfg: UploaderConfig,
+  report: TransferReport,
+  signal?: AbortSignal,
+): Promise<void> {
+  const path = reportPath(report.updatedAt);
+  const file = new File([JSON.stringify(report, null, 2)], path.split("/").pop()!, {
+    type: "application/json",
+  });
+  const parts = planParts(file.size);
+  const partDigests = new Uint8Array(parts.length * 16);
+  for (const part of parts) {
+    partDigests.set(await hashPart(file, part, () => {}), (part.number - 1) * 16);
+  }
+  const etag = combineDigests(partDigests, parts.length);
+
+  const existing = await findExistingAsset(cfg, path);
+  const { blobId } = await uploadBlob(cfg, file, etag, parts, () => {}, signal);
+  await createOrReplaceAsset(cfg, path, blobId, existing?.asset_id ?? null, file.type);
+}

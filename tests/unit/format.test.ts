@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { friendlyEta, humanSize, initialsFrom } from "../../src/lib/format";
+import { bytesPerSecToMBps, friendlyEta, humanSize, initialsFrom } from "../../src/lib/format";
+
+describe("bytesPerSecToMBps", () => {
+  it("converts using decimal (1 MB = 1,000,000 B) megabytes", () => {
+    expect(bytesPerSecToMBps(1_000_000)).toBe(1);
+    expect(bytesPerSecToMBps(12_500_000)).toBe(12.5);
+    expect(bytesPerSecToMBps(0)).toBe(0);
+  });
+
+  it("rounds to two decimal places", () => {
+    expect(bytesPerSecToMBps(1_234_567)).toBe(1.23);
+  });
+});
 
 describe("humanSize", () => {
   it("formats bytes with the right unit", () => {
