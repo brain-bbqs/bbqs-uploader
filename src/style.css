@@ -145,9 +145,15 @@ header h1 {
   line-height: 1.5;
 }
 .speed-tips-heading {
-  margin: 0 0 0.4rem;
+  margin: 0;
   font-weight: 600;
   color: var(--text);
+}
+.speed-tips-subheading {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
 }
 .speed-tips ul {
   margin: 0;

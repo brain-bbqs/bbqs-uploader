@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+#### 🚀 Enhancement
+
+- Added a "Request a consultation from our Tech Support Team to attempt to improve your transfer speeds" link to the speed tips card, opening a prepopulated Q&A discussion post on the [brain-bbqs GitHub Discussions](https://github.com/orgs/brain-bbqs/discussions) page
+- Moved the "1,000 Mbps is recommended for contents over 100 GB" note out of the speed tips card title and into its own subtitle line
+
 ## 0.1.13
 
 #### 🏠 Internal
