@@ -5,8 +5,12 @@
   "description": "One JSON packet per \"Upload\" batch, posted to sourcedata/raw/.transfer/transfer-<timestamp>.json (see src/lib/transfer-manifest.ts). Records per-file checksum/upload throughput and a session summary.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["dandisetId", "sessionStartedAt", "updatedAt", "summary", "files"],
+  "required": ["schemaVersion", "dandisetId", "sessionStartedAt", "updatedAt", "summary", "files"],
   "properties": {
+    "schemaVersion": {
+      "const": "1.0.0",
+      "description": "Semver of this schema, bumped whenever the manifest shape changes, so a reader can tell historical instances apart. Not tied to the uploader app's own package.json version."
+    },
     "dandisetId": {
       "type": "string",
       "description": "The DANDI/EMBER dandiset identifier this batch was uploaded to."

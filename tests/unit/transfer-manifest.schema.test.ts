@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import schema from "../../src/schemas/transfer-manifest.schema.json";
-import type { TransferManifest, FileTransferStats } from "../../src/lib/transfer-manifest";
+import {
+  TRANSFER_MANIFEST_SCHEMA_VERSION,
+  type TransferManifest,
+  type FileTransferStats,
+} from "../../src/lib/transfer-manifest";
 
 // Not a full JSON Schema validator (the project has no ajv/etc. dependency for that); this just
 // keeps the schema's key lists from silently drifting out of sync with the TS interfaces it
@@ -20,6 +24,7 @@ const fileStats: FileTransferStats = {
 };
 
 const manifest: TransferManifest = {
+  schemaVersion: TRANSFER_MANIFEST_SCHEMA_VERSION,
   dandisetId: "000123",
   sessionStartedAt: "2026-07-27T18:00:00.000Z",
   updatedAt: "2026-07-27T18:04:12.000Z",
@@ -58,6 +63,10 @@ describe("transfer-manifest.schema.json", () => {
       fileStats.checksum!,
       schema.$defs.phaseStats as { required?: string[]; properties: Record<string, unknown> },
     );
+  });
+
+  it("pins schemaVersion to the same value the schema declares", () => {
+    expect(TRANSFER_MANIFEST_SCHEMA_VERSION).toBe(schema.properties.schemaVersion.const);
   });
 
   it("enumerates every real status value", () => {

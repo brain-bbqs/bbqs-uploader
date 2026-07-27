@@ -3,7 +3,12 @@ import { getElements } from "./ui/elements";
 import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
-import { uploadTransferManifest, type TransferManifest, type FileTransferStats } from "./lib/transfer-manifest";
+import {
+  uploadTransferManifest,
+  TRANSFER_MANIFEST_SCHEMA_VERSION,
+  type TransferManifest,
+  type FileTransferStats,
+} from "./lib/transfer-manifest";
 import { renderIdentity } from "./ui/connection";
 import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT } from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
@@ -819,6 +824,7 @@ async function startUpload(): Promise<void> {
   // touches the network.
   if (!mockMode) {
     const manifest: TransferManifest = {
+      schemaVersion: TRANSFER_MANIFEST_SCHEMA_VERSION,
       dandisetId: cfg.dandisetId,
       sessionStartedAt: sessionStartedAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),

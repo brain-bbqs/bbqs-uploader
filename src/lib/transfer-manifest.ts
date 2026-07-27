@@ -31,7 +31,13 @@ export interface FileTransferStats {
   status: UploadOutcome | "pending";
 }
 
+// Bump whenever TransferManifest's shape changes, and update the schema's matching `const`
+// alongside it, so a reader can tell historical manifest instances apart. Not tied to the
+// uploader app's own package.json version.
+export const TRANSFER_MANIFEST_SCHEMA_VERSION = "1.0.0";
+
 export interface TransferManifest {
+  schemaVersion: typeof TRANSFER_MANIFEST_SCHEMA_VERSION;
   dandisetId: string;
   sessionStartedAt: string;
   updatedAt: string;
