@@ -471,6 +471,9 @@ let oauthTokens: OAuthTokenSet | null = null;
 // The dandiset id restored from a previous session, applied once the dropdown is populated with
 // the signed-in user's incoming datasets (a <select> can't hold a value before its options exist).
 let storedDandisetId = "";
+// The dandiset picker's current option list, kept around so currentConfig() can look up the
+// selected dandiset's embargo status without a second API round-trip.
+let currentDatasets: IncomingDandiset[] = [];
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
 // "?test&signed_out" forces every auth-dependent render to behave as if oauthTokens were null,
@@ -497,9 +500,11 @@ function saveSettings(): void {
 }
 
 function currentConfig(): UploaderConfig {
+  const selected = currentDatasets.find((d) => d.identifier === els.dandisetId.value);
   return resolveConfig({
     dandisetId: els.dandisetId.value,
     oauthAccessToken: forceSignedOut ? undefined : oauthTokens?.accessToken,
+    embargoed: selected?.embargoed,
   });
 }
 
@@ -551,6 +556,16 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
   els.dandisetMessage.hidden = view !== "message";
   els.dandisetSingle.hidden = view !== "single";
   els.dandisetId.hidden = view !== "dropdown";
+  updateEmbargoError();
+}
+
+// Shows a single error card in the Dataset section (rather than repeating the same message on
+// every file row) when the currently selected dandiset is not embargoed, and disables the upload
+// button so a blocked batch can't even be started.
+function updateEmbargoError(): void {
+  const blocked = currentConfig().embargoed === false;
+  els.dandisetEmbargoError.hidden = !blocked;
+  els.uploadAllBtn.disabled = blocked;
 }
 
 function setDandisetPlaceholder(text: string): void {
@@ -571,6 +586,7 @@ function showDandisetSingle(dataset: IncomingDandiset): void {
 // Populates the dandiset picker (dropdown or single-dataset text) from a resolved list of
 // datasets, shared by the real signed-in fetch and the "?test&num_datasets=N" debug override.
 function applyDatasetList(datasets: IncomingDandiset[]): void {
+  currentDatasets = datasets;
   if (!datasets.length) {
     setDandisetPlaceholder(
       "You have not been added to any direct-upload datasets; please reach out to EMBER/BBQS admins to request this.",
@@ -585,7 +601,7 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
     ...ordered.map((d) => {
       const opt = document.createElement("option");
       opt.value = d.identifier;
-      opt.textContent = `${d.title} (${d.identifier})`;
+      opt.textContent = `(${d.identifier}) ${d.title}`;
       return opt;
     }),
   );
@@ -603,18 +619,21 @@ function applyDatasetList(datasets: IncomingDandiset[]): void {
 
 // Debug-only escape hatch for previewing the dataset picker's various states without a real
 // account: e.g. "?test&num_datasets=2" fills in that many fake datasets, and "?test&num_datasets=0"
-// previews the no-datasets-found state. Bypasses sign-in entirely, so it also works for a
-// signed-out visitor. "?test" alone (no num_datasets) is a no-op, so the override only ever
-// kicks in when explicitly parameterized.
+// previews the no-datasets-found state. Adding "&embargoed=false" previews the upload-blocked
+// state instead of the (default) normal embargoed one. Bypasses sign-in entirely, so it also
+// works for a signed-out visitor. "?test" alone (no num_datasets) is a no-op, so the override
+// only ever kicks in when explicitly parameterized.
 function readTestDatasetOverride(): IncomingDandiset[] | null {
   const params = new URLSearchParams(window.location.search);
   const raw = params.get("num_datasets");
   if (!params.has("test") || raw === null) return null;
   const count = Math.max(0, Number(raw) || 0);
+  const embargoed = params.get("embargoed") !== "false";
   // Negative identifiers (e.g. "-000001") so a fake dataset is never mistaken for a real one.
   return Array.from({ length: count }, (_, i) => ({
     identifier: `-${String(i + 1).padStart(6, "0")}`,
     title: `Incoming: Test dataset ${i + 1}`,
+    embargoed,
   }));
 }
 
@@ -710,6 +729,9 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
 }
 
 async function startUpload(): Promise<void> {
+  // The upload button is disabled while the selected dandiset isn't embargoed (see
+  // updateEmbargoError), so this only matters if startUpload is somehow triggered anyway.
+  if (currentConfig().embargoed === false) return;
   await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
@@ -812,7 +834,10 @@ if (mockUploadCount !== null) {
   mockMode = true;
   void addFiles(generateMockDroppedFiles(mockUploadCount));
 }
-els.dandisetId.addEventListener("change", runConnectionCheck);
+els.dandisetId.addEventListener("change", () => {
+  updateEmbargoError();
+  runConnectionCheck();
+});
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
 els.oauthSignoutBtn.addEventListener("click", () => {

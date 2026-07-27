@@ -28,6 +28,12 @@ describe("resolveConfig", () => {
     const cfg = resolveConfig({ dandisetId: "000123" });
     expect(cfg.accessToken).toBe("");
   });
+
+  it("passes through the selected dataset's embargo status", () => {
+    expect(resolveConfig({ dandisetId: "000123", embargoed: true }).embargoed).toBe(true);
+    expect(resolveConfig({ dandisetId: "000123", embargoed: false }).embargoed).toBe(false);
+    expect(resolveConfig({ dandisetId: "000123" }).embargoed).toBeUndefined();
+  });
 });
 
 describe("configProblems", () => {

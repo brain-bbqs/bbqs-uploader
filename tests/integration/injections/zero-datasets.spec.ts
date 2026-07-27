@@ -27,5 +27,15 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.locator("#dandiset-id")).toBeHidden();
       await expect(page.locator("#view-dataset-link")).toBeHidden();
     });
+
+    // "&embargoed=false" only affects the fake datasets it generates; with zero of them there's
+    // nothing to flag as blocked, so this must look identical to plain "?test&num_datasets=0".
+    test("ignores &embargoed=false when there are no datasets to flag", async ({ page }) => {
+      await page.goto("/?test&num_datasets=0&embargoed=false");
+
+      await expect(page.locator("#dandiset-message")).toBeVisible();
+      await expect(page.locator("#dandiset-embargo-error")).toBeHidden();
+      await expect(page.locator("#upload-all-btn")).toBeHidden();
+    });
   });
 }

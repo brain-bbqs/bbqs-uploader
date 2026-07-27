@@ -16,6 +16,7 @@ export function getElements() {
     dandisetMessage: required<HTMLParagraphElement>("dandiset-message"),
     dandisetSingle: required<HTMLParagraphElement>("dandiset-single"),
     dandisetSingleText: required<HTMLSpanElement>("dandiset-single-text"),
+    dandisetEmbargoError: required<HTMLParagraphElement>("dandiset-embargo-error"),
     progressSummary: required<HTMLDivElement>("progress-summary"),
     progressHashFill: required<HTMLDivElement>("progress-hash-fill"),
     progressHashPct: required<HTMLSpanElement>("progress-hash-pct"),

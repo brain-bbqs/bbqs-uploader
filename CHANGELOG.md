@@ -1,10 +1,21 @@
 # Changelog
 
-## 1.0.1
+## 1.0.2
 
 #### 🚀 Enhancement
 
 - Hid the dropzone card once files are queued, instead of leaving it visible above the file list alongside the progress bars ([#53](https://github.com/brain-bbqs/bbqs-uploader/pull/53))
+
+## 1.0.1
+
+#### 🐛 Bug Fix
+
+- Blocked uploads to a dandiset that is not embargoed, instead of allowing direct uploads to any dandiset the user owns. The dataset picker now tracks each incoming dandiset's embargo status, showing a single error card below the dataset dropdown/name and disabling the "Upload" button (with a "not-allowed" cursor on hover and a greyed-out look) when the selected dandiset isn't embargoed, instead of surfacing the same message on every file row ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+- Fixed the Dataset card's dropdown/name shrinking to a narrower column whenever the new embargo error card was also visible below it, a side effect of that section's grid using multiple auto-fit columns instead of one ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+
+#### 🚀 Enhancement
+
+- Moved the dandiset ID to the front of each dropdown option (e.g. `(000123) Incoming: Lab Name`) instead of trailing the title in parentheses, and added a `?test&num_datasets=N&embargoed=false` live test injection (documented in `docs/README.md`, including the `num_datasets=0` case where it's a no-op) for previewing the upload-blocked state ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
 
 ## 1.0.0
 

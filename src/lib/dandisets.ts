@@ -4,10 +4,12 @@ import { apiFetch } from "./api";
 export interface IncomingDandiset {
   identifier: string;
   title: string;
+  embargoed: boolean;
 }
 
 interface DandisetListItem {
   identifier: string;
+  embargo_status?: string;
   draft_version?: { name?: string };
   most_recent_published_version?: { name?: string };
 }
@@ -29,6 +31,7 @@ export async function listIncomingDandisets(cfg: UploaderConfig): Promise<Incomi
     .map((d) => ({
       identifier: d.identifier,
       title: d.most_recent_published_version?.name ?? d.draft_version?.name ?? "",
+      embargoed: d.embargo_status === "EMBARGOED",
     }))
     .filter((d) => d.title.startsWith(INCOMING_PREFIX))
     .sort((a, b) => a.title.localeCompare(b.title));
