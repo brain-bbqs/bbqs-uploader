@@ -4,7 +4,7 @@
 
 #### 🚀 Enhancement
 
-- Added transfer speed tracking: each "Upload" batch now posts a `transfer-manifest.json` snapshot to a hidden `sourcedata/raw/.transfer/` directory, recording per-file checksum and upload throughput (in MB/s) plus a session summary, using the same checksum/upload pipeline as any other asset ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
+- Added transfer speed tracking: each "Upload" batch now posts a timestamped `transfer-<timestamp>.json` snapshot to a hidden `sourcedata/raw/.transfer/` directory, recording per-file checksum and upload throughput (in MB/s) plus a session summary, using the same checksum/upload pipeline as any other asset ([#54](https://github.com/brain-bbqs/bbqs-uploader/pull/54))
 
 ## 1.0.2
 
