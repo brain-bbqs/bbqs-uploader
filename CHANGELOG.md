@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0
+
+#### 🚀 Enhancement
+
+- Restyled the "View dataset" link in the Dataset card heading as a filled "View on EMBER" button, matching the archive's flame-red accent instead of a plain underlined text link ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Renamed the footer's "Clear scan cache" button to "Clear checksum cache" (and its confirmation text to "Checksum cache cleared"), matching the digest it actually clears ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Normalized the bottom-left footer text (version link, separator dots, "What's New", "Clear checksum cache") to a single font size and bolded it, instead of three slightly different sizes at normal weight ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+
+#### 🏠 Internal
+
+- Pointed the PR preview bot's posted links and the live test injection links in `docs/README.md` at the new `upload.brain-bbqs.org` custom domain instead of the old `brain-bbqs.github.io/bbqs-uploader` GitHub Pages URL, now that #49 configured a custom domain for the whole Pages site ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Dropped the `www.` prefix from the custom domain in `public/CNAME`: `www.upload.brain-bbqs.org` doesn't resolve, only the bare `upload.brain-bbqs.org` does ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+
 ## 0.1.14
 
 #### 🚀 Enhancement
