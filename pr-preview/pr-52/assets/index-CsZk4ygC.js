@@ -19,7 +19,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🐛 Bug Fix
 
-- Blocked uploads to a dandiset that is not embargoed, instead of allowing direct uploads to any dandiset the user owns. The dataset picker now tracks each incoming dandiset's embargo status, showing a single error card in the Dataset section and disabling the "Upload" button when the selected dandiset isn't embargoed, instead of surfacing the same message on every file row ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+- Blocked uploads to a dandiset that is not embargoed, instead of allowing direct uploads to any dandiset the user owns. The dataset picker now tracks each incoming dandiset's embargo status, showing a single error card below the dataset dropdown/name and disabling the "Upload" button when the selected dandiset isn't embargoed, instead of surfacing the same message on every file row ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
 
 ## 1.0.0
 
