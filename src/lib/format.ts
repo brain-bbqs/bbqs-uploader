@@ -30,6 +30,8 @@ export function initialsFrom(name: string): string {
  * "~3 minutes", "~1 hour 5 minutes". Rounds more coarsely as the estimate grows, so the readout
  * stays calm instead of twitching on every tick. Returns "—" when no estimate is possible.
  */
+const ETA_MAX_HOURS = 12;
+
 export function friendlyEta(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "—";
   if (totalSeconds < 10) return "a few seconds";
@@ -38,6 +40,7 @@ export function friendlyEta(totalSeconds: number): string {
   const minutes = Math.round(totalSeconds / 60);
   if (minutes < 60) return `~${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
   const hours = Math.floor(minutes / 60);
+  if (hours >= ETA_MAX_HOURS) return `> ${ETA_MAX_HOURS} hours`;
   const remMinutes = minutes % 60;
   const hoursPart = `~${hours} ${hours === 1 ? "hour" : "hours"}`;
   return remMinutes ? `${hoursPart} ${remMinutes} ${remMinutes === 1 ? "minute" : "minutes"}` : hoursPart;

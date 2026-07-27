@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4
+
+#### 🐛 Bug Fix
+
+- Fixed the upload progress bar's speed/time-left estimate getting skewed when "Upload" is pressed before every file has finished scanning: a few small files finishing their scan and starting to transfer while larger files are still mid-scan no longer reads as a stall in the rate tracker ([#55](https://github.com/brain-bbqs/bbqs-uploader/pull/55))
+- Capped the displayed "time left" estimate at "> 12 hours" instead of showing an ever-growing hour count ([#55](https://github.com/brain-bbqs/bbqs-uploader/pull/55))
+
 ## 1.0.3
 
 #### 🚀 Enhancement

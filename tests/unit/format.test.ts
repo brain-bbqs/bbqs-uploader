@@ -44,6 +44,12 @@ describe("friendlyEta", () => {
     expect(friendlyEta(2 * 3600)).toBe("~2 hours");
   });
 
+  it("caps very large estimates instead of displaying an unbounded hour count", () => {
+    expect(friendlyEta(12 * 3600)).toBe("> 12 hours");
+    expect(friendlyEta(30 * 3600)).toBe("> 12 hours");
+    expect(friendlyEta(11 * 3600)).toBe("~11 hours");
+  });
+
   it("falls back to a placeholder for non-finite or negative input", () => {
     expect(friendlyEta(NaN)).toBe("—");
     expect(friendlyEta(Infinity)).toBe("—");
