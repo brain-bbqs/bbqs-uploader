@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import schema from "../../src/schemas/transfer-manifest.schema.json";
+import schema from "../../src/schemas/transfer-report.v1.schema.json";
 import {
-  TRANSFER_MANIFEST_SCHEMA_VERSION,
-  type TransferManifest,
+  TRANSFER_REPORT_SCHEMA_VERSION,
+  type TransferReport,
   type FileTransferStats,
-} from "../../src/lib/transfer-manifest";
+} from "../../src/lib/transfer-report";
 
 // Not a full JSON Schema validator (the project has no ajv/etc. dependency for that); this just
 // keeps the schema's key lists from silently drifting out of sync with the TS interfaces it
@@ -23,8 +23,8 @@ const fileStats: FileTransferStats = {
   status: "cancelled",
 };
 
-const manifest: TransferManifest = {
-  schemaVersion: TRANSFER_MANIFEST_SCHEMA_VERSION,
+const report: TransferReport = {
+  schemaVersion: TRANSFER_REPORT_SCHEMA_VERSION,
   dandisetId: "000123",
   sessionStartedAt: "2026-07-27T18:00:00.000Z",
   updatedAt: "2026-07-27T18:04:12.000Z",
@@ -39,14 +39,14 @@ const manifest: TransferManifest = {
   files: [fileStats],
 };
 
-describe("transfer-manifest.schema.json", () => {
-  it("declares the same top-level keys as TransferManifest", () => {
-    expectKeysMatch(manifest, schema as { required?: string[]; properties: Record<string, unknown> });
+describe("transfer-report.v1.schema.json", () => {
+  it("declares the same top-level keys as TransferReport", () => {
+    expectKeysMatch(report, schema as { required?: string[]; properties: Record<string, unknown> });
   });
 
-  it("declares the same keys as TransferManifest['summary']", () => {
+  it("declares the same keys as TransferReport['summary']", () => {
     expectKeysMatch(
-      manifest.summary,
+      report.summary,
       schema.properties.summary as { required?: string[]; properties: Record<string, unknown> },
     );
   });
@@ -66,7 +66,7 @@ describe("transfer-manifest.schema.json", () => {
   });
 
   it("pins schemaVersion to the same value the schema declares", () => {
-    expect(TRANSFER_MANIFEST_SCHEMA_VERSION).toBe(schema.properties.schemaVersion.const);
+    expect(TRANSFER_REPORT_SCHEMA_VERSION).toBe(schema.properties.schemaVersion.const);
   });
 
   it("enumerates every real status value", () => {

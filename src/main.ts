@@ -4,11 +4,11 @@ import { initDropzone } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
 import {
-  uploadTransferManifest,
-  TRANSFER_MANIFEST_SCHEMA_VERSION,
-  type TransferManifest,
+  uploadTransferReport,
+  TRANSFER_REPORT_SCHEMA_VERSION,
+  type TransferReport,
   type FileTransferStats,
-} from "./lib/transfer-manifest";
+} from "./lib/transfer-report";
 import { renderIdentity } from "./ui/connection";
 import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT } from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
@@ -57,9 +57,9 @@ function updateCancelAllVisibility(): void {
 // Hashing starts the moment a file is dropped, not when "Upload" is clicked.
 const hashJobs = new Map<File, HashJob>();
 
-// Per-file checksum/upload timing, snapshotted into a transfer-manifest.json asset (see
-// uploadTransferManifest) after each "Upload" batch finishes. Persists across multiple
-// Upload clicks in the same session, same as the cumulative byte counters below.
+// Per-file checksum/upload timing, snapshotted into a transfer-<timestamp>.json report asset
+// (see uploadTransferReport) after each "Upload" batch finishes. Persists across multiple Upload
+// clicks in the same session, same as the cumulative byte counters below.
 const fileStats = new Map<File, FileTransferStats>();
 let sessionStartedAt: string | null = null;
 
@@ -108,7 +108,7 @@ function registerHashJob(
       } else {
         row.hideBadge();
       }
-      // The manifest's checksum field stays null (its initial value) when not a single chunk was
+      // The report's checksum field stays null (its initial value) when not a single chunk was
       // hashed before settling; a partial scan still records the rate it managed up to that point.
       const stats = fileStats.get(file);
       const bytesDone = lastHashBytes.get(file) ?? 0;
@@ -823,8 +823,8 @@ async function startUpload(): Promise<void> {
   // Mock mode has no real API to post to; skip it the same way the rest of the mock path never
   // touches the network.
   if (!mockMode) {
-    const manifest: TransferManifest = {
-      schemaVersion: TRANSFER_MANIFEST_SCHEMA_VERSION,
+    const report: TransferReport = {
+      schemaVersion: TRANSFER_REPORT_SCHEMA_VERSION,
       dandisetId: cfg.dandisetId,
       sessionStartedAt: sessionStartedAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -839,9 +839,9 @@ async function startUpload(): Promise<void> {
       files: Array.from(fileStats.values()),
     };
     try {
-      await uploadTransferManifest(cfg, manifest);
+      await uploadTransferReport(cfg, report);
     } catch (e) {
-      console.warn("Failed to upload transfer manifest:", e);
+      console.warn("Failed to upload transfer report:", e);
     }
   }
 }

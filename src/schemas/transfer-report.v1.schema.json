@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://upload.brain-bbqs.org/schemas/transfer-manifest.schema.json",
-  "title": "BBQS uploader transfer manifest",
-  "description": "One JSON packet per \"Upload\" batch, posted to sourcedata/raw/.transfer/transfer-<timestamp>.json (see src/lib/transfer-manifest.ts). Records per-file checksum/upload throughput and a session summary.",
+  "$id": "https://upload.brain-bbqs.org/schemas/transfer-report.v1.schema.json",
+  "title": "BBQS uploader transfer report",
+  "description": "One JSON packet per \"Upload\" batch, posted to sourcedata/raw/.transfer/transfer-<timestamp>.json (see src/lib/transfer-report.ts). A performance record of that batch's per-file checksum/upload throughput and a session summary, not a manifest of what was uploaded (DANDI's own asset listing already covers that).",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "dandisetId", "sessionStartedAt", "updatedAt", "summary", "files"],
   "properties": {
     "schemaVersion": {
       "const": "1.0.0",
-      "description": "Semver of this schema, bumped whenever the manifest shape changes, so a reader can tell historical instances apart. Not tied to the uploader app's own package.json version."
+      "description": "Semver of this schema, bumped whenever the report shape changes, so a reader can tell historical instances apart. Not tied to the uploader app's own package.json version. The filename/$id's \"v1\" only moves on a breaking (major) bump."
     },
     "dandisetId": {
       "type": "string",
@@ -23,7 +23,7 @@
     "updatedAt": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO 8601 timestamp this manifest was generated; also the value the manifest's own filename is keyed on."
+      "description": "ISO 8601 timestamp this report was generated; also the value the report's own filename is keyed on."
     },
     "summary": {
       "type": "object",
@@ -38,12 +38,12 @@
         "hashMBps": {
           "type": "number",
           "minimum": 0,
-          "description": "Checksum throughput (decimal MB/s) at manifest generation time."
+          "description": "Checksum throughput (decimal MB/s) at report generation time."
         },
         "uploadMBps": {
           "type": "number",
           "minimum": 0,
-          "description": "Upload throughput (decimal MB/s) at manifest generation time."
+          "description": "Upload throughput (decimal MB/s) at report generation time."
         },
         "filesTotal": { "type": "integer", "minimum": 0 },
         "filesDone": {

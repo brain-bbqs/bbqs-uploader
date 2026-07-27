@@ -3,7 +3,7 @@ import type { UploadOutcome } from "../ui/processFile";
 import { planParts, hashPart, combineDigests } from "./etag";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "./upload-pipeline";
 
-// The shape below must stay in sync with src/schemas/transfer-manifest.schema.json, kept
+// The shape below must stay in sync with src/schemas/transfer-report.v1.schema.json, kept
 // alongside as an external, language-agnostic contract for anything reading these files back out
 // of sourcedata/raw/.transfer/ (this TS interface has no runtime presence in the uploaded JSON).
 
@@ -12,10 +12,9 @@ import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "./upload-pi
 // intentionally-hidden ".transfer" directory into a plain "transfer" one. This path is fully
 // under our control, not derived from a dropped file, so it skips that sanitization entirely.
 //
-// The filename is keyed on the manifest's completion timestamp rather than a fixed name, so each
-// "Upload" batch writes its own file instead of every batch overwriting the same
-// transfer-manifest.json.
-function manifestPath(updatedAt: string): string {
+// The filename is keyed on the report's completion timestamp rather than a fixed name, so each
+// "Upload" batch writes its own file instead of every batch overwriting the same one.
+function reportPath(updatedAt: string): string {
   return `sourcedata/raw/.transfer/transfer-${updatedAt.replace(/[:.]/g, "-")}.json`;
 }
 
@@ -31,13 +30,13 @@ export interface FileTransferStats {
   status: UploadOutcome | "pending";
 }
 
-// Bump whenever TransferManifest's shape changes, and update the schema's matching `const`
-// alongside it, so a reader can tell historical manifest instances apart. Not tied to the
-// uploader app's own package.json version.
-export const TRANSFER_MANIFEST_SCHEMA_VERSION = "1.0.0";
+// Bump on any breaking shape change, and update the schema's matching `const` (and its `.v1.`
+// filename/`$id`, once the bump is a major one) alongside it, so a reader can tell historical
+// report instances apart. Not tied to the uploader app's own package.json version.
+export const TRANSFER_REPORT_SCHEMA_VERSION = "1.0.0";
 
-export interface TransferManifest {
-  schemaVersion: typeof TRANSFER_MANIFEST_SCHEMA_VERSION;
+export interface TransferReport {
+  schemaVersion: typeof TRANSFER_REPORT_SCHEMA_VERSION;
   dandisetId: string;
   sessionStartedAt: string;
   updatedAt: string;
@@ -55,15 +54,16 @@ export interface TransferManifest {
 /**
  * Uploads a JSON snapshot of this session's transfer stats to a timestamped hidden path (one
  * file per "Upload" batch), using the same checksum/multipart-upload pipeline as any other asset
- * — it's just a small in-memory file instead of a dropped one.
+ * — it's just a small in-memory file instead of a dropped one. It's a performance record, not a
+ * manifest of what was uploaded (DANDI's own asset listing already covers that).
  */
-export async function uploadTransferManifest(
+export async function uploadTransferReport(
   cfg: UploaderConfig,
-  manifest: TransferManifest,
+  report: TransferReport,
   signal?: AbortSignal,
 ): Promise<void> {
-  const path = manifestPath(manifest.updatedAt);
-  const file = new File([JSON.stringify(manifest, null, 2)], path.split("/").pop()!, {
+  const path = reportPath(report.updatedAt);
+  const file = new File([JSON.stringify(report, null, 2)], path.split("/").pop()!, {
     type: "application/json",
   });
   const parts = planParts(file.size);
