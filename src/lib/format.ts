@@ -1,3 +1,8 @@
+/** Decimal (1 MB = 1,000,000 B) megabytes-per-second, matching typical network-speed convention. */
+export function bytesPerSecToMBps(bytesPerSec: number): number {
+  return Math.round((bytesPerSec / 1_000_000) * 100) / 100;
+}
+
 export function humanSize(bytes: number): string {
   const units = ["B", "KB", "MB", "GB", "TB"];
   let i = 0;
