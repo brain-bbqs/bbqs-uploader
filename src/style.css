@@ -183,7 +183,7 @@ code {
 
 .card-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
@@ -665,8 +665,27 @@ button.primary {
   margin-top: 1rem;
 }
 .view-dataset-link {
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
   font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--ember-red);
+  border: 1px solid var(--ember-red);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+}
+.view-dataset-link:hover {
+  background: var(--ember-red-hover);
+  border-color: var(--ember-red-hover);
+}
+.view-dataset-link:focus-visible {
+  outline: 2px solid var(--ember-red);
+  outline-offset: 1px;
 }
 
 .reset-all-btn {

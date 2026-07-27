@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+#### 🚀 Enhancement
+
+- Restyled the "View dataset" link in the Dataset card heading as a filled "View on EMBER" button, matching the archive's flame-red accent instead of a plain underlined text link
+- Renamed the footer's "Clear scan cache" button to "Clear checksum cache" (and its confirmation text to "Checksum cache cleared"), matching the digest it actually clears
+
 ## 0.1.13
 
 #### 🏠 Internal

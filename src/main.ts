@@ -553,7 +553,7 @@ function setDandisetPlaceholder(text: string): void {
 }
 
 // With only one incoming dataset there's nothing to choose between, so show its name as plain
-// text instead of a single-option dropdown (the card heading's "View dataset" link covers the
+// text instead of a single-option dropdown (the card heading's "View on EMBER" button covers the
 // way out to the archive).
 function showDandisetSingle(dataset: IncomingDandiset): void {
   showDandisetView("single");
@@ -839,7 +839,7 @@ els.clearScanCacheBtn.addEventListener("click", () => {
   void checksumCache.clear();
   const original = els.clearScanCacheBtn.textContent;
   els.clearScanCacheBtn.disabled = true;
-  els.clearScanCacheBtn.textContent = "Scan cache cleared";
+  els.clearScanCacheBtn.textContent = "Checksum cache cleared";
   window.setTimeout(() => {
     els.clearScanCacheBtn.disabled = false;
     els.clearScanCacheBtn.textContent = original;
