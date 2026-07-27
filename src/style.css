@@ -278,6 +278,8 @@ button.primary {
 }
 
 .dandiset-embargo-error {
+  /* Spans the full row instead of sitting beside the dropdown in .grid's auto-fit columns. */
+  grid-column: 1 / -1;
   margin: 0.75rem 0 0;
   padding: 0.75rem 1rem;
   border-radius: 8px;
