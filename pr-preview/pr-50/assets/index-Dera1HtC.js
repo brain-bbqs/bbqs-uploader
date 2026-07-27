@@ -25,7 +25,8 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🏠 Internal
 
-- Pointed the PR preview bot's posted links and the live test injection links in \`docs/README.md\` at the new \`www.upload.brain-bbqs.org\` custom domain instead of the old \`brain-bbqs.github.io/bbqs-uploader\` GitHub Pages URL, now that #49 configured a custom domain for the whole Pages site ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Pointed the PR preview bot's posted links and the live test injection links in \`docs/README.md\` at the new \`upload.brain-bbqs.org\` custom domain instead of the old \`brain-bbqs.github.io/bbqs-uploader\` GitHub Pages URL, now that #49 configured a custom domain for the whole Pages site ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
+- Dropped the \`www.\` prefix from the custom domain in \`public/CNAME\`: \`www.upload.brain-bbqs.org\` doesn't resolve, only the bare \`upload.brain-bbqs.org\` does ([#50](https://github.com/brain-bbqs/bbqs-uploader/pull/50))
 
 ## 0.1.14
 
