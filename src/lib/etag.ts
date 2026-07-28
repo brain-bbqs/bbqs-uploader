@@ -77,6 +77,6 @@ export async function hashPart(
 /** Folds the concatenated per-part digests (16 bytes per part, in part order) into the final etag. */
 export function combineDigests(partDigests: Uint8Array, partCount: number): string {
   const finalSpark = new SparkMD5.ArrayBuffer();
-  finalSpark.append(partDigests.buffer as ArrayBuffer);
+  finalSpark.append(partDigests.buffer);
   return `${finalSpark.end()}-${partCount}`;
 }
