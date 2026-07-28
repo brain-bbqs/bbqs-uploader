@@ -122,9 +122,9 @@ describe("uploadPartWithRetry", () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(
-      uploadPartWithRetry("https://s3.example/part-1", blob, () => {}, controller.signal),
-    ).rejects.toThrow(/cancelled/i);
+    await expect(uploadPartWithRetry("https://s3.example/part-1", blob, () => {}, controller.signal)).rejects.toThrow(
+      /cancelled/i,
+    );
     expect(FakeXHR.sent).toHaveLength(0);
   });
 

@@ -13,9 +13,7 @@ describe("ApiError", () => {
 
 describe("friendlyError", () => {
   it("translates a 401 into a sign-in prompt", () => {
-    expect(friendlyError(new ApiError("GET /x failed", 401))).toBe(
-      "Authentication failed: please sign in again.",
-    );
+    expect(friendlyError(new ApiError("GET /x failed", 401))).toBe("Authentication failed: please sign in again.");
   });
 
   it("translates a 403 into a permissions message", () => {
@@ -31,9 +29,7 @@ describe("friendlyError", () => {
   });
 
   it("passes through other ApiError statuses unchanged", () => {
-    expect(friendlyError(new ApiError("POST /y failed with HTTP 500", 500))).toBe(
-      "POST /y failed with HTTP 500",
-    );
+    expect(friendlyError(new ApiError("POST /y failed with HTTP 500", 500))).toBe("POST /y failed with HTTP 500");
   });
 
   it("uses the message of a plain Error", () => {

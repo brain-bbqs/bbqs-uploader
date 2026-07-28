@@ -49,13 +49,7 @@ describe("uploadTransferReport", () => {
 
     const expectedPath = "sourcedata/raw/.transfer/transfer-2026-01-02T03-04-05-678Z.json";
     expect(findExistingAssetMock).toHaveBeenCalledWith(cfg, expectedPath);
-    expect(createOrReplaceAssetMock).toHaveBeenCalledWith(
-      cfg,
-      expectedPath,
-      "blob-1",
-      null,
-      "application/json",
-    );
+    expect(createOrReplaceAssetMock).toHaveBeenCalledWith(cfg, expectedPath, "blob-1", null, "application/json");
 
     // The uploaded file is the pretty-printed report itself, named after the path's last segment.
     const [, file, etag, parts] = uploadBlobMock.mock.calls[0];

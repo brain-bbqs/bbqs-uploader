@@ -108,9 +108,7 @@ describe("uploadBlob", () => {
       upload_id: "u1",
       parts: [{ part_number: 1, size: 7, upload_url: "https://s3.example/p1" }],
     });
-    await expect(uploadBlob(cfg, file, etag, parts, () => {})).rejects.toThrow(
-      /Part 1 size mismatch/,
-    );
+    await expect(uploadBlob(cfg, file, etag, parts, () => {})).rejects.toThrow(/Part 1 size mismatch/);
   });
 
   it("surfaces an S3 CompleteMultipartUpload rejection even under HTTP 200", async () => {

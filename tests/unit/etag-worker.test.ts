@@ -42,9 +42,7 @@ class FakeWorker {
     if (next.done) return false;
     const [requestId, { file, part }] = next.value;
     this.pending.delete(requestId);
-    const digest = await hashPart(file, part, (bytesDone) =>
-      this.emit({ type: "progress", requestId, bytesDone }),
-    );
+    const digest = await hashPart(file, part, (bytesDone) => this.emit({ type: "progress", requestId, bytesDone }));
     this.emit({ type: "done", requestId, digest });
     return true;
   }
@@ -155,9 +153,7 @@ describe("createHashPool", () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(pool.hash(makeFile(10), makeParts([10]), () => {}, controller.signal)).rejects.toThrow(
-      /cancelled/i,
-    );
+    await expect(pool.hash(makeFile(10), makeParts([10]), () => {}, controller.signal)).rejects.toThrow(/cancelled/i);
     expect(FakeWorker.instances).toHaveLength(0);
   });
 

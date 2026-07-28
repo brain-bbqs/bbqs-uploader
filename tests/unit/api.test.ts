@@ -116,8 +116,7 @@ describe("diagnoseCors", () => {
       "fetch",
       vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
         const headers = (init?.headers ?? {}) as Record<string, string>;
-        const passes =
-          init?.method === "POST" ? opts.post : headers.Authorization ? opts.preflighted : opts.simple;
+        const passes = init?.method === "POST" ? opts.post : headers.Authorization ? opts.preflighted : opts.simple;
         if (!passes) return Promise.reject(new TypeError("Failed to fetch"));
         return Promise.resolve({ status: 200 });
       }),
