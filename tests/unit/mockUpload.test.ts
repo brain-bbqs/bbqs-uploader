@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { generateMockDroppedFiles, MOCK_FILE_MAX_SIZE, MOCK_FILE_MIN_SIZE } from "../../src/lib/mockUpload";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  generateMockDroppedFiles,
+  mockPhaseDurationMs,
+  simulateProgress,
+  MOCK_FILE_MAX_SIZE,
+  MOCK_FILE_MIN_SIZE,
+} from "../../src/lib/mockUpload";
 
 describe("generateMockDroppedFiles", () => {
   it("returns exactly `count` entries", () => {
@@ -40,5 +46,80 @@ describe("generateMockDroppedFiles", () => {
   it("nests at least some files under a folder path", () => {
     const entries = generateMockDroppedFiles(50);
     expect(entries.some((e) => e.relativePath !== "")).toBe(true);
+  });
+});
+
+describe("mockPhaseDurationMs", () => {
+  it("never animates faster than the minimum, even for tiny files", () => {
+    expect(mockPhaseDurationMs(1)).toBe(600);
+    expect(mockPhaseDurationMs(1024 * 1024)).toBe(600);
+  });
+
+  it("caps the animation length so even a 100 GB fake file finishes in seconds", () => {
+    expect(mockPhaseDurationMs(MOCK_FILE_MAX_SIZE)).toBe(3000);
+  });
+
+  it("grows with the logarithm of the size in between", () => {
+    const small = mockPhaseDurationMs(64 * 1024 * 1024);
+    const large = mockPhaseDurationMs(1024 * 1024 * 1024);
+    expect(small).toBeGreaterThan(600);
+    expect(large).toBeGreaterThan(small);
+    expect(large).toBeLessThan(3000);
+    // Doubling the size adds a fixed 200ms step (log2 scaling).
+    expect(mockPhaseDurationMs(128 * 1024 * 1024) - small).toBeCloseTo(200, 5);
+  });
+});
+
+describe("simulateProgress", () => {
+  // Node has no requestAnimationFrame; a timer-based stand-in drives the ticks.
+  function stubFrames(): void {
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 1));
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("ticks monotonically up to exactly totalBytes, then resolves", async () => {
+    stubFrames();
+    const reported: number[] = [];
+
+    await simulateProgress(1000, 30, new AbortController().signal, (b) => reported.push(b));
+
+    expect(reported[reported.length - 1]).toBe(1000);
+    expect(reported.every((b, i) => i === 0 || b >= reported[i - 1])).toBe(true);
+  });
+
+  it("rejects with an AbortError immediately when the signal is already aborted", async () => {
+    stubFrames();
+    const controller = new AbortController();
+    controller.abort();
+    const onProgress = vi.fn();
+
+    const err = await simulateProgress(1000, 30, controller.signal, onProgress).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DOMException);
+    expect((err as DOMException).name).toBe("AbortError");
+    expect(onProgress).not.toHaveBeenCalled();
+  });
+
+  it("stops mid-animation and rejects with an AbortError when cancelled", async () => {
+    stubFrames();
+    const controller = new AbortController();
+    const reported: number[] = [];
+
+    const promise = simulateProgress(1000, 60_000, controller.signal, (b) => reported.push(b));
+    const settled = promise.catch((e: unknown) => e);
+    await new Promise((r) => setTimeout(r, 10));
+    controller.abort();
+    const ticksAtAbort = reported.length;
+    await new Promise((r) => setTimeout(r, 10));
+
+    const err = await settled;
+    expect(err).toBeInstanceOf(DOMException);
+    expect((err as DOMException).name).toBe("AbortError");
+    // The animation genuinely stopped: no further ticks after the abort.
+    expect(reported.length).toBe(ticksAtAbort);
+    expect(reported[reported.length - 1] ?? 0).toBeLessThan(1000);
   });
 });

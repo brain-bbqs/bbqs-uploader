@@ -93,7 +93,9 @@ describe("hashPart / combineDigests", () => {
     expect(chunkBytes[chunkBytes.length - 1]).toBe(size);
   });
 
-  it("matches computeDandiEtag when parts are hashed independently and out of order", async () => {
+  // Hashing ~134 MB of MD5 in JS can exceed the default 5s test timeout on slow CI
+  // containers, so this test carries its own generous one.
+  it("matches computeDandiEtag when parts are hashed independently and out of order", { timeout: 60_000 }, async () => {
     const size = 64 * MB + 3 * MB;
     const bytes = new Uint8Array(size);
     for (let i = 0; i < size; i += 4096) bytes[i] = (i / 4096) % 256;

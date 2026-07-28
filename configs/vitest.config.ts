@@ -18,10 +18,10 @@ export default defineConfig({
       // these as coverage of src/ui and src/main.ts improves; they are not a
       // target, only a floor.
       thresholds: {
-        statements: 30,
-        branches: 25,
-        functions: 34,
-        lines: 30,
+        statements: 60,
+        branches: 57,
+        functions: 63,
+        lines: 60,
       },
     },
   },
