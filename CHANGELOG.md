@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.7
+
+#### 🏠 Internal
+
+- Roughly doubled unit test coverage (statements 31% to 64%): new suites for `api.ts` (including all four `diagnoseCors` verdicts), `s3-upload.ts` (retry/backoff, abort, missing-ETag), `upload-pipeline.ts` (409 blob reuse, part mismatches, pagination), `transfer-report.ts`, `errors.ts`, the `etag-worker.ts` hash pool (round-robin, cache hits, stale-record verification, cancellation) and its worker script, plus the `elements`, `fileRow`, `connection`, `dropzone`, and `processFile` UI modules; also covered the previously untested halves of `settings.ts` and `mockUpload.ts` ([#60](https://github.com/brain-bbqs/bbqs-uploader/pull/60))
+- Raised the coverage ratchet thresholds to match (statements 60, branches 57, functions 63, lines 60); `src/main.ts` remains the one uncovered file ([#60](https://github.com/brain-bbqs/bbqs-uploader/pull/60))
+- Gave the 67 MB out-of-order etag oracle test an explicit 60s timeout so it cannot flake on slow CI containers ([#60](https://github.com/brain-bbqs/bbqs-uploader/pull/60))
+
 ## 1.0.6
 
 #### 🏠 Internal

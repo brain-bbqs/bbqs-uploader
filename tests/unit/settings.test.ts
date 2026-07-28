@@ -1,6 +1,15 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
-import { configProblems, resolveConfig, loadStoredTheme, saveStoredTheme, THEME_KEY } from "../../src/lib/settings";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  configProblems,
+  resolveConfig,
+  loadStoredTheme,
+  saveStoredTheme,
+  loadStoredSettings,
+  saveStoredSettings,
+  STORAGE_KEY,
+  THEME_KEY,
+} from "../../src/lib/settings";
 
 describe("resolveConfig", () => {
   it("resolves the EMBER-DANDI API/web URLs and the dandiset id", () => {
@@ -81,5 +90,37 @@ describe("theme preference storage", () => {
   it("ignores a corrupted stored value", () => {
     localStorage.setItem(THEME_KEY, "sepia");
     expect(loadStoredTheme()).toBe(null);
+  });
+});
+
+describe("settings storage", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("returns null when nothing has been stored", () => {
+    expect(loadStoredSettings()).toBe(null);
+  });
+
+  it("round-trips stored settings", () => {
+    const settings = {
+      dandisetId: "000123",
+      oauth: { accessToken: "a", refreshToken: "r", expiresAt: 123456 },
+    };
+    saveStoredSettings(settings);
+    expect(loadStoredSettings()).toEqual(settings);
+  });
+
+  it("clears the stored record when saving null (sign-out)", () => {
+    saveStoredSettings({ dandisetId: "000123" });
+    saveStoredSettings(null);
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(null);
+    expect(loadStoredSettings()).toBe(null);
+  });
+
+  it("treats corrupted stored JSON as absent instead of crashing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    localStorage.setItem(STORAGE_KEY, "{not json");
+    expect(loadStoredSettings()).toBe(null);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
