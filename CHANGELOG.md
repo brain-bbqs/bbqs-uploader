@@ -11,7 +11,6 @@
 - Added ESLint and typescript-eslint as pinned devDependencies with an `npm run lint` script ([#57](https://github.com/brain-bbqs/bbqs-uploader/pull/57))
 - Converted the pre-commit `eslint` hook from an isolated mirrors-eslint environment to a local hook that runs the repo's own eslint from `node_modules`, so pre-commit and `npm run lint` share one environment; type-aware rules need the app's dependency types, which an isolated hook environment cannot see (TypeScript ignores `NODE_PATH`), and its run had pushed a wrong auto-fix. pre-commit.ci skips the hook (it cannot run `npm ci`); the `npm run lint` CI step enforces linting ([#57](https://github.com/brain-bbqs/bbqs-uploader/pull/57))
 - Added optional Stryker mutation testing (`npm run test:mutation`, config at `configs/stryker.config.json`); not a CI gate since it is slow, and mutation score, not raw coverage, is the real signal of test quality ([#57](https://github.com/brain-bbqs/bbqs-uploader/pull/57))
-- Documented the quality tiers in a README "Testing & Coverage" section ([#57](https://github.com/brain-bbqs/bbqs-uploader/pull/57))
 
 ## 1.0.5
 
