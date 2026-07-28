@@ -529,14 +529,12 @@ function loadSettings(): void {
   const s = loadStoredSettings();
   if (s) {
     if (s.dandisetId) storedDandisetId = s.dandisetId;
-    if (s.oauth) oauthTokens = s.oauth;
   }
 }
 
 function saveSettings(): void {
   saveStoredSettings({
     dandisetId: els.dandisetId.value.trim(),
-    oauth: oauthTokens ?? undefined,
   });
 }
 
