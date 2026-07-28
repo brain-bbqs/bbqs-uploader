@@ -11,8 +11,6 @@ Quality gates, from fastest to deepest (this repo is developed heavily with AI a
 3. **Unit tests + coverage**: `npm run test:coverage` (Vitest with v8 coverage and threshold floors; `lcov` output is uploaded to [Codecov](https://about.codecov.io/) in CI, where the patch status requires new/changed code to be covered).
 4. **Mutation testing (optional)**: `npm run test:mutation` (Stryker). Slow, so it is not a CI gate; run it locally when touching `src/lib/`. Mutation score, not raw coverage, is the real signal of test quality.
 
-CI installs with `npm ci`, so keep `package-lock.json` in sync with `package.json` to avoid local-vs-CI drift in test and coverage results.
-
 ---
 
 Built &amp; maintained by the [Center for Open Neuroscience](https://centerforopenneuroscience.org).

@@ -1,5 +1,12 @@
 ci:
   autoupdate_schedule: quarterly
+  # eslint is type-aware and needs the app's node_modules for correct type
+  # information; pre-commit.ci has no npm install step, so its run sees
+  # different types and produces wrong results/auto-fixes. Local pre-commit
+  # runs (where node_modules exists) and the `npm run lint` CI step still
+  # enforce the hook.
+  skip:
+    - eslint
 
 default_install_hook_types:
   - pre-commit

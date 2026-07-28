@@ -1,5 +1,4 @@
-# Single Codecov config (replaces the former .github/.codecov.yml; Codecov
-# only honors one file, and root placement takes precedence).
+# Allowed placement and naming from https://docs.codecov.com/docs/codecov-yaml#can-i-name-the-file-codecovyml
 # The project status is informational while unit coverage of the DOM-heavy
 # entry point (src/main.ts, src/ui/) is still being built up; the patch status
 # is enforced so new or changed code must arrive with tests.
