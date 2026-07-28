@@ -1,10 +1,8 @@
 ci:
   autoupdate_schedule: quarterly
-  # eslint is type-aware and needs the app's node_modules for correct type
-  # information; pre-commit.ci has no npm install step, so its run sees
-  # different types and produces wrong results/auto-fixes. Local pre-commit
-  # runs (where node_modules exists) and the `npm run lint` CI step still
-  # enforce the hook.
+  # The eslint hook below runs the repo's own eslint out of node_modules, which
+  # pre-commit.ci cannot install (no network at hook runtime); the `npm run lint`
+  # step in the Test workflow enforces linting in CI instead.
   skip:
     - eslint
 
@@ -27,18 +25,18 @@ repos:
         additional_dependencies:
           - prettier@3.9.5
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.39.1
+  - repo: local
     hooks:
       - id: eslint
+        name: eslint
+        # Runs the repo's own eslint (the exact package set and config `npm run lint`
+        # uses), not an isolated hook environment: type-aware rules need the app's
+        # node_modules for real type information, and TypeScript does not honor the
+        # NODE_PATH an isolated environment would rely on. Requires `npm ci` first.
+        entry: npx --no -- eslint --fix --config configs/eslint.config.cjs
+        language: system
         types: [file]
         files: \.(js|cjs|mjs|ts|tsx)$
-        args: [--fix, --config, configs/eslint.config.cjs]
-        additional_dependencies:
-          - eslint@9.39.5
-          - "@eslint/js@9.39.5"
-          - typescript-eslint@8.64.0
-          - typescript@5.9.3
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1

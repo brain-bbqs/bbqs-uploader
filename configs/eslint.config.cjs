@@ -1,7 +1,6 @@
-// CommonJS on purpose: eslint also runs via the pre-commit hook in its own isolated
-// environment (see .pre-commit-config.yaml), where these packages are only reachable
-// through the NODE_PATH pre-commit sets — which require() honors but ESM import does
-// not. The same packages are pinned in devDependencies so `npm run lint` matches.
+// Loaded by `npm run lint` and by the pre-commit eslint hook, which runs the repo's
+// own eslint from node_modules (see .pre-commit-config.yaml) so both share one
+// environment. CommonJS (.cjs) so require() can load it despite "type": "module".
 const eslint = require("@eslint/js");
 const tseslint = require("typescript-eslint");
 const path = require("node:path");
