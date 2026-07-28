@@ -66,7 +66,7 @@ export async function hashPart(
     onChunk(read);
   }
   // end(true) yields the raw 16-byte digest as a binary string
-  const raw = spark.end(true) as unknown as string;
+  const raw = spark.end(true);
   const digest = new Uint8Array(16);
   for (let i = 0; i < 16; i++) {
     digest[i] = raw.charCodeAt(i) & 0xff;

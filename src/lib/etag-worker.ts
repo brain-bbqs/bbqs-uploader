@@ -123,7 +123,7 @@ export function createHashPool(size: number, cache?: ChecksumCache): HashPool {
     }
   }
 
-  function settle(job: HashJobState, error: unknown | null): void {
+  function settle(job: HashJobState, error: unknown): void {
     job.settled = true;
     // Drop the job's unclaimed parts and its round-robin slot.
     job.nextQueued = job.queue.length;
@@ -188,35 +188,8 @@ export function createHashPool(size: number, cache?: ChecksumCache): HashPool {
     }
     inFlight.delete(msg.requestId);
     if (!job.settled) {
-      if (
-        msg.type === "done" &&
-        job.verify &&
-        part === job.verify.part &&
-        !digestsEqual(msg.digest, job.verify.expected)
-      ) {
-        // Stale cache hit (same path+name+size+mtime, different content). Drop the record and
-        // hash the whole file from scratch, keeping the one freshly hashed part.
-        job.verify = undefined;
-        if (cache && job.cacheKey) {
-          void cache.discard(job.cacheKey);
-          cache.putPart(job.cacheKey, job.parts, part.number, msg.digest);
-        }
-        job.partDigests.fill(0);
-        job.partDigests.set(msg.digest, (part.number - 1) * 16);
-        job.partsDone = 1;
-        job.bytesDone = part.size;
-        job.queue = job.parts.filter((p) => p !== part);
-        job.nextQueued = 0;
-        job.onProgress(job.bytesDone / job.file.size);
-        if (job.partsDone === job.parts.length) settle(job, null); // single-part file: fresh digest is complete
-      } else if (msg.type === "done") {
-        job.verify = undefined;
-        job.partDigests.set(msg.digest, (part.number - 1) * 16);
-        if (cache && job.cacheKey) cache.putPart(job.cacheKey, job.parts, part.number, msg.digest);
-        job.bytesDone += part.size - entry.lastBytes;
-        job.onProgress(job.bytesDone / job.file.size);
-        job.partsDone++;
-        if (job.partsDone === job.parts.length) settle(job, null);
+      if (msg.type === "done") {
+        onPartDone(job, part, entry.lastBytes, msg.digest);
       } else if (msg.type === "error") {
         settle(job, new Error(msg.message));
       }
@@ -224,6 +197,34 @@ export function createHashPool(size: number, cache?: ChecksumCache): HashPool {
     }
     idle.push(worker);
     pump();
+  }
+
+  function onPartDone(job: HashJobState, part: FilePart, lastBytes: number, digest: Uint8Array): void {
+    if (job.verify && part === job.verify.part && !digestsEqual(digest, job.verify.expected)) {
+      // Stale cache hit (same path+name+size+mtime, different content). Drop the record and
+      // hash the whole file from scratch, keeping the one freshly hashed part.
+      job.verify = undefined;
+      if (cache && job.cacheKey) {
+        void cache.discard(job.cacheKey);
+        cache.putPart(job.cacheKey, job.parts, part.number, digest);
+      }
+      job.partDigests.fill(0);
+      job.partDigests.set(digest, (part.number - 1) * 16);
+      job.partsDone = 1;
+      job.bytesDone = part.size;
+      job.queue = job.parts.filter((p) => p !== part);
+      job.nextQueued = 0;
+      job.onProgress(job.bytesDone / job.file.size);
+      if (job.partsDone === job.parts.length) settle(job, null); // single-part file: fresh digest is complete
+      return;
+    }
+    job.verify = undefined;
+    job.partDigests.set(digest, (part.number - 1) * 16);
+    if (cache && job.cacheKey) cache.putPart(job.cacheKey, job.parts, part.number, digest);
+    job.bytesDone += part.size - lastBytes;
+    job.onProgress(job.bytesDone / job.file.size);
+    job.partsDone++;
+    if (job.partsDone === job.parts.length) settle(job, null);
   }
 
   return {

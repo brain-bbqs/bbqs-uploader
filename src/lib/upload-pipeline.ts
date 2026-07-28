@@ -66,7 +66,7 @@ export async function uploadBlob(
     onProgress(Math.min(sent / file.size, 0.999));
   };
   await runQueue(serverParts, PARALLEL_PARTS, async (sp, i) => {
-    const local = parts[sp.part_number - 1];
+    const local = parts.at(sp.part_number - 1);
     if (!local || local.size !== sp.size) {
       throw new Error(`Part ${sp.part_number} size mismatch between client and server.`);
     }

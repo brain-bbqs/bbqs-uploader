@@ -388,16 +388,15 @@ function renderPhaseBar(
   chipEls.pct.textContent = `${pct}%`;
   setChipValue(chipEls.done, humanSize(phaseDoneBytes), `of ${humanSize(totalBytes)}`);
   chipEls.rate.textContent = rate > 0 ? `${humanSize(rate)}/s` : "—";
-  chipEls.eta.textContent = finished
-    ? "done"
-    : stopped
-      ? "—"
-      : rate <= 0
-        ? "—"
-        : warmingUp
-          ? "estimating…"
-          : friendlyEta(remaining / rate);
+  chipEls.eta.textContent = etaText(finished, stopped, warmingUp, rate, remaining);
   setChipValue(chipEls.files, String(phaseDoneFiles), `of ${totalFiles}`);
+}
+
+function etaText(finished: boolean, stopped: boolean, warmingUp: boolean, rate: number, remaining: number): string {
+  if (finished) return "done";
+  if (stopped || rate <= 0) return "—";
+  if (warmingUp) return "estimating…";
+  return friendlyEta(remaining / rate);
 }
 
 function updateProgressSummary(): void {
@@ -941,7 +940,9 @@ if (callbackTokens) {
   saveSettings();
 }
 renderAuthUI();
-initDropzone(els, addFiles);
+initDropzone(els, (entries) => {
+  void addFiles(entries);
+});
 const mockUploadCount = readTestMockUploadCount();
 if (mockUploadCount !== null) {
   mockMode = true;

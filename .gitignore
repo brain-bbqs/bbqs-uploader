@@ -5,6 +5,10 @@ playwright-report/
 coverage/
 storybook-static/
 
+# Stryker mutation-testing workdir and reports (see configs/stryker.config.json)
+.stryker-tmp/
+reports/
+
 # Device-specific hidden files (OS-generated, not project config)
 .DS_Store
 ._*

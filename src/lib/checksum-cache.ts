@@ -82,7 +82,7 @@ interface PendingParts {
 function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
   });
 }
 
@@ -144,7 +144,7 @@ export function openChecksumCache(options: ChecksumCacheOptions = {}): ChecksumC
         void seedTotalBytes(db);
         resolve(db);
       };
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
     return dbPromise;
   }
@@ -185,7 +185,7 @@ export function openChecksumCache(options: ChecksumCacheOptions = {}): ChecksumC
         const byLastUsed = tx.objectStore(STORE).index(LAST_USED_INDEX);
         await new Promise<void>((resolve, reject) => {
           const cursorRequest = byLastUsed.openCursor();
-          cursorRequest.onerror = () => reject(cursorRequest.error);
+          cursorRequest.onerror = () => reject(cursorRequest.error ?? new Error("IndexedDB cursor failed"));
           cursorRequest.onsuccess = () => {
             const cursor = cursorRequest.result;
             if (!cursor || totalBytes <= maxBytes) {

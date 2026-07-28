@@ -8,7 +8,7 @@ const config: StorybookConfig = {
     name: "@storybook/html-vite",
     options: {},
   },
-  async viteFinal(config) {
+  viteFinal(config) {
     config.define = {
       ...config.define,
       __APP_VERSION__: JSON.stringify(resolveAppVersion()),

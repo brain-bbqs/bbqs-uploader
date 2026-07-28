@@ -87,8 +87,11 @@ async function walkEntry(entry: FileSystemEntryLike, relativeDir: string, out: D
 }
 
 async function collectDroppedFiles(dataTransfer: DataTransfer): Promise<DroppedFile[]> {
-  const items = Array.from(dataTransfer.items || []);
+  const items = Array.from(dataTransfer.items);
   const entries = items
+    // The DOM types declare webkitGetAsEntry unconditionally, but older browsers genuinely
+    // lack it and the flat-files fallback below depends on this returning null there.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     .map((item) => (item.kind === "file" ? (item.webkitGetAsEntry?.() as FileSystemEntryLike | null) : null))
     .filter((e): e is FileSystemEntryLike => !!e);
   if (entries.length) {
@@ -99,7 +102,7 @@ async function collectDroppedFiles(dataTransfer: DataTransfer): Promise<DroppedF
     return out;
   }
   // Fallback for browsers without webkitGetAsEntry support: flat files only.
-  return Array.from(dataTransfer.files || []).map((file) => ({ file, relativePath: "" }));
+  return Array.from(dataTransfer.files).map((file) => ({ file, relativePath: "" }));
 }
 
 function filesFromFileList(fileList: FileList): DroppedFile[] {

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-core.json",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "configs/vitest.config.ts"
+  },
+  "mutate": ["src/**/*.ts"],
+  "reporters": ["html", "clear-text", "progress"],
+  "tempDirName": ".stryker-tmp",
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json"
+}

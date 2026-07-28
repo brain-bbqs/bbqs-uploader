@@ -1,0 +1,35 @@
+# Single Codecov config (replaces the former .github/.codecov.yml; Codecov
+# only honors one file, and root placement takes precedence).
+# The project status is informational while unit coverage of the DOM-heavy
+# entry point (src/main.ts, src/ui/) is still being built up; the patch status
+# is enforced so new or changed code must arrive with tests.
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        informational: true
+    patch:
+      default:
+        target: 75%
+        informational: false
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: once
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+ignore:
+  - "tests/**"
+  - "stories/**"
+  - "src/data/**"
+  - "configs/**"
+  - "dist/**"
+  - "storybook-static/**"
