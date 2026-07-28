@@ -1,4 +1,4 @@
-name: Quality
+name: Lint
 
 on:
   pull_request:
@@ -13,7 +13,7 @@ jobs:
   # Deterministic quality gates, ordered fastest-fail-first. Uses npm ci so the
   # dependency tree (and therefore coverage numbers) exactly matches a local
   # run against the same package-lock.json.
-  quality:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
