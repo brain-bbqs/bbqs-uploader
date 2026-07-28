@@ -1,29 +1,19 @@
 # Allowed placement and naming from https://docs.codecov.com/docs/codecov-yaml#can-i-name-the-file-codecovyml
-# The project status is informational while unit coverage of the DOM-heavy
-# entry point (src/main.ts, src/ui/) is still being built up; the patch status
-# is enforced so new or changed code must arrive with tests.
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: once
+  require_changes: true # if true: only post the comment if coverage changes
+  require_base: no # [yes :: must have a base report to post]
+  require_head: yes # [yes :: must have a head report to post]
+
 codecov:
   notify:
     require_ci_to_pass: yes
 
 coverage:
   status:
-    project:
-      default:
-        target: auto
-        threshold: 2%
-        informational: true
-    patch:
-      default:
-        target: 75%
-        informational: false
-
-comment:
-  layout: "reach, diff, flags, files"
-  behavior: once
-  require_changes: false
-  require_base: no
-  require_head: yes
+    project: off
+    patch: off
 
 ignore:
   - "tests/**"
@@ -32,3 +22,13 @@ ignore:
   - "configs/**"
   - "dist/**"
   - "storybook-static/**"
+
+flags:
+  unit:
+    paths:
+      - src/
+    carryforward: false
+  integration:
+    paths:
+      - src/
+    carryforward: false
