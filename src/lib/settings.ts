@@ -42,7 +42,7 @@ export function saveStoredSettings(settings: StoredSettings | null): void {
     localStorage.removeItem(STORAGE_KEY);
     return;
   }
-  const { oauth: _oauth, ...safeSettings } = settings;
+  const safeSettings: StoredSettings = { dandisetId: settings.dandisetId };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(safeSettings));
 }
 

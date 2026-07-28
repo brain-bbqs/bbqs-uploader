@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7
+
+#### 🐛 Bug Fix
+
+- Stopped persisting OAuth tokens to `localStorage`: `saveStoredSettings` now only writes `dandisetId`, and `loadSettings` no longer restores `oauthTokens` from stored settings, addressing a CodeQL clear-text-storage-of-sensitive-data alert ([#58](https://github.com/brain-bbqs/bbqs-uploader/pull/58))
+
 ## 1.0.6
 
 #### 🏠 Internal
