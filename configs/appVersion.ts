@@ -9,6 +9,8 @@ export function resolveAppVersion(): string {
   if (process.env.CHROMATIC_STATIC_VERSION) {
     return CHROMATIC_PLACEHOLDER_VERSION;
   }
-  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8")) as {
+    version: string;
+  };
   return pkg.version;
 }

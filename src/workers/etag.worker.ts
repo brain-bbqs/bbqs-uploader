@@ -15,8 +15,11 @@ const cancelledIds = new Set<number>();
 
 class HashCancelled extends Error {}
 
-ctx.onmessage = async (e) => {
-  const msg = e.data;
+ctx.onmessage = (e) => {
+  void handleRequest(e.data);
+};
+
+async function handleRequest(msg: HashWorkerRequest): Promise<void> {
   if (msg.type === "cancel") {
     cancelledIds.add(msg.requestId);
     return;
@@ -36,4 +39,4 @@ ctx.onmessage = async (e) => {
     }
     ctx.postMessage({ type: "error", requestId, message: err instanceof Error ? err.message : String(err) });
   }
-};
+}

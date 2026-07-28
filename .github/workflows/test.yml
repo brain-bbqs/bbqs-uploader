@@ -10,7 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  # Playwright integration tests run separately from the Quality workflow so a
+  # slow or flaky browser run never blocks the quality gates or coverage upload.
+  integration:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,18 +26,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit tests with coverage
-        run: npm run test:coverage
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
 
       - name: Get installed Playwright version
         id: playwright-version

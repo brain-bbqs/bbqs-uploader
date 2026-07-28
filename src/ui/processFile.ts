@@ -102,19 +102,23 @@ export async function uploadFile(
       return "cancelled";
     }
     onUploadProgress?.(file.size);
-    row.setBadge("Error", "err");
-    let msg = friendlyError(e);
-    if (e instanceof ApiError && e.status === 0) {
-      try {
-        msg += ` ${await diagnoseCors(cfg)}`;
-      } catch {
-        /* diagnosis is best-effort */
-      }
-    }
-    row.setStatus(msg, "err");
-    console.error(e);
+    await reportUploadError(e, row, cfg);
     return "error";
   } finally {
     activeUploads.delete(abort);
   }
+}
+
+async function reportUploadError(e: unknown, row: FileRow, cfg: UploaderConfig): Promise<void> {
+  row.setBadge("Error", "err");
+  let msg = friendlyError(e);
+  if (e instanceof ApiError && e.status === 0) {
+    try {
+      msg += ` ${await diagnoseCors(cfg)}`;
+    } catch {
+      /* diagnosis is best-effort */
+    }
+  }
+  row.setStatus(msg, "err");
+  console.error(e);
 }
