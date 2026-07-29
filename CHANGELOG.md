@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0.7
+## 1.0.8
+
+#### 🚀 Enhancement
+
+- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips requiring the user to confirm their data is de-identified and covered by their institution's IRB approval, with the drag-and-drop area hidden and the upload button disabled until they click "I confirm"; each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
 
 #### 🏠 Internal
 
@@ -60,7 +64,7 @@
 
 #### 🚀 Enhancement
 
-- Moved the dandiset ID to the front of each dropdown option (e.g. `(000123) Incoming: Lab Name`) instead of trailing the title in parentheses, and added a `?test&num_datasets=N&embargoed=false` live test injection (documented in `docs/README.md`, including the `num_datasets=0` case where it's a no-op) for previewing the upload-blocked state ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
+- Moved the dandiset ID to the front of each dropdown option (e.g. `(000123) Incoming: Lab Name`) instead of trailing the title in parentheses ([#52](https://github.com/brain-bbqs/bbqs-uploader/pull/52))
 
 ## 1.0.0
 
@@ -99,10 +103,6 @@
 
 - Hitting "Cancel" no longer leaves the scanning/uploading summary bars' speed and time-left estimates climbing without bound: the rate tracker kept resampling a stalled byte count every tick once a cancelled phase stopped making progress, decaying the smoothed speed toward 0 and sending the "time left" estimate toward infinity. The summary bars now freeze in place (at whatever percentage cancellation actually landed on) instead of continuing to grow the estimate, or (for a cancellation specifically, as opposed to a real per-file error) jumping straight to 100%/"done" ([#45](https://github.com/brain-bbqs/bbqs-uploader/pull/45))
 
-#### 🏠 Internal
-
-- Added a regression test for the cancel-freeze fix above: `?test&freeze_scan` pins a scan at 0% real progress, so cancelling it and seeing the summary bar jump to 100%/"done" can only be the bug reappearing ([#45](https://github.com/brain-bbqs/bbqs-uploader/pull/45))
-
 ## 0.1.10
 
 #### 🚀 Enhancement
@@ -129,12 +129,6 @@
 - The "Sign in with EMBER" button no longer flashes on refresh for an already-signed-in visitor; a pre-paint script in `index.html` now hides it before first paint when stored OAuth tokens are found, matching the existing theme-flash fix ([#42](https://github.com/brain-bbqs/bbqs-uploader/pull/42))
 - Fixed a layout jump that the button fix above exposed: the theme toggle used to shift sideways once the signed-in avatar popped in after the sign-in button was hidden, since the header's `oauth-row` is right-aligned. The avatar's (still-empty) slot is now reserved before first paint too, alongside the button ([#42](https://github.com/brain-bbqs/bbqs-uploader/pull/42))
 
-## 0.1.7
-
-#### 🏠 Internal
-
-- Fixed the flaky Chromatic "file queued" snapshot: the real scan of the test's tiny file finished in milliseconds, racing the end-of-test capture between the mid-scan and scan-finished appearances. A new `?test&freeze_scan` live test injection pins every dropped file at its just-started scanning state (badge, Cancel button, 0% figures; "Cancel all" still works), and the snapshot test now uses it plus asserts the pinned state before capture ([#40](https://github.com/brain-bbqs/bbqs-uploader/pull/40))
-
 ## 0.1.6
 
 #### 🐛 Bug Fix
@@ -152,10 +146,6 @@
 - Dropping a folder containing an empty (0-byte) file no longer breaks the batch: planning the upload parts for such a file used to throw synchronously mid-scan, silently aborting the rest of that drop so every subsequent file, and the expand-depth slider, never appeared ([#38](https://github.com/brain-bbqs/bbqs-uploader/pull/38))
 
 ## 0.1.4
-
-#### 🐛 Bug Fix
-
-- Dandiset id resolution now rejects digit runs preceded by a hyphen, so the negative fake identifiers used by the `?test&num_datasets=N` injection (e.g. `-000001`) can no longer resolve to a plausible real dandiset id ([#36](https://github.com/brain-bbqs/bbqs-uploader/pull/36))
 
 #### 🏠 Internal
 
@@ -176,13 +166,6 @@
 #### 🚀 Enhancement
 
 - The dropzone prompt now ends with explicit "files" and "folder" browse links: clicking "folder" opens the browser's folder picker (recursive, same as dragging a folder onto the box), while "files" and clicks anywhere else on the box open the plain file picker as before. Folders no longer have to be dragged in to be selected ([#33](https://github.com/brain-bbqs/bbqs-uploader/pull/33))
-
-## 0.1.0
-
-#### 🚀 Enhancement
-
-- Added two live test injections for previewing states that are otherwise hard to reach on demand: `?test&mock_upload=N` queues a random nested batch of `N` fake files (10 MB-100 GB each) and animates the Scanning/Uploading bars against them without touching the network, and `?test&signed_out` forces the signed-out UI (header, Dataset card, upload blocking) regardless of the real sign-in state. Neither touches `localStorage` or real sign-in state, so both are safe to try at any time ([#31](https://github.com/brain-bbqs/bbqs-uploader/pull/31))
-- Added isolated Storybook stories (`stories/injections/`) and Playwright coverage (`tests/integration/injections/`) for both injections, each in light and dark mode ([#31](https://github.com/brain-bbqs/bbqs-uploader/pull/31))
 
 ## 0.0.20
 
@@ -265,11 +248,6 @@
 - The dataset picker's status messages (signed out, loading, no datasets, error) are now shown as plain text instead of a disabled dropdown option ([#20](https://github.com/brain-bbqs/bbqs-uploader/pull/20))
 - Cropped the BBQS header logo to a circle and made it 25% larger ([#20](https://github.com/brain-bbqs/bbqs-uploader/pull/20))
 - Tightened up copy: added periods to the dropzone prompt and the sign-in message ([#20](https://github.com/brain-bbqs/bbqs-uploader/pull/20))
-
-#### 🏠 Internal
-
-- Added a `?test&num_datasets=N` URL override that fills the dataset picker with fake "Incoming: Test dataset" entries under negative identifiers (e.g. `-000001`, so they're never mistaken for real dandisets), including `N=0` for the no-datasets-found state, so any dataset-picker state can be previewed without a real account; `?test` alone (without `num_datasets`) is a no-op ([#20](https://github.com/brain-bbqs/bbqs-uploader/pull/20))
-- Fixed the `?test` override clearing the header avatar/username for an already signed-in user, since it now leaves real sign-in state untouched and only fakes the dataset list ([#20](https://github.com/brain-bbqs/bbqs-uploader/pull/20))
 
 ## 0.0.11
 

@@ -18,6 +18,7 @@ import { runQueue } from "./lib/queue";
 import { loadStoredSettings, saveStoredSettings, resolveConfig, saveStoredTheme } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
+import { containsHumanSubjects, fetchDraftMetadata } from "./lib/humanSubjects";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
 import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { DroppedFile } from "./lib/fileTree";
@@ -515,6 +516,13 @@ let storedDandisetId = "";
 // The dandiset picker's current option list, kept around so currentConfig() can look up the
 // selected dandiset's embargo status without a second API round-trip.
 let currentDatasets: IncomingDandiset[] = [];
+// Whether the currently selected dataset's draft description carries the human-subjects marker
+// phrase, and the dandiset ids the user already confirmed this session, so flipping between
+// datasets in the dropdown doesn't demand re-confirming one already confirmed. The counter
+// guards the metadata fetch so a slow response can't apply to a newer selection.
+let humanSubjectsRequired = false;
+const confirmedHumanSubjects = new Set<string>();
+let humanSubjectsRefreshSeq = 0;
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
 // "?test&signed_out" forces every auth-dependent render to behave as if oauthTokens were null,
@@ -554,18 +562,21 @@ function isSignedIn(): boolean {
 }
 
 // The upload card (dropzone, progress bars, file list, ...) is only worth showing while signed
-// in; a signed-out visitor with nothing queued would otherwise see an empty bordered box with
-// nothing in it. The one exception is a file queue that survives a mid-session sign-out (nothing
-// clears `fileList` on sign-out) — that state still needs the card to show the resulting "Blocked
-// / Not signed in" rows, just without the dropzone itself (see renderAuthUI) offering to add more.
+// in with the selected dataset's human-subjects warning (if any) confirmed; otherwise, with
+// nothing queued, it would just be an empty bordered box (the dropzone inside is hidden in those
+// same states — see updateDropzoneVisibility). The one exception is a non-empty file queue,
+// which survives a mid-session sign-out or a switch to an unconfirmed dataset — that state still
+// needs the card to show its rows, just without the dropzone offering to add more.
 function updateUploadCardVisibility(): void {
-  els.uploadCard.hidden = !isSignedIn() && els.fileList.children.length === 0;
+  els.uploadCard.hidden = (!isSignedIn() || humanSubjectsUnconfirmed()) && els.fileList.children.length === 0;
 }
 
 // The dropzone is only useful before anything has been queued; once files are selected it just
-// takes up space above the file list, so it's hidden as soon as the queue is non-empty.
+// takes up space above the file list, so it's hidden as soon as the queue is non-empty. It's
+// also withheld while the selected dataset's human-subjects warning awaits its "I confirm", so
+// nothing can even be staged before the warning is acknowledged.
 function updateDropzoneVisibility(): void {
-  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0;
+  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0 || humanSubjectsUnconfirmed();
 }
 
 function renderAuthUI(): void {
@@ -597,16 +608,81 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
   els.dandisetMessage.hidden = view !== "message";
   els.dandisetSingle.hidden = view !== "single";
   els.dandisetId.hidden = view !== "dropdown";
-  updateEmbargoError();
+  updateUploadGate();
+}
+
+// True while the selected dataset holds human-subjects data the user hasn't confirmed
+// de-identification/IRB coverage for yet.
+function humanSubjectsUnconfirmed(): boolean {
+  return humanSubjectsRequired && !confirmedHumanSubjects.has(els.dandisetId.value);
+}
+
+// True while the selected dataset must not be uploaded to: either it isn't embargoed, or its
+// human-subjects warning hasn't been confirmed yet.
+function uploadBlocked(): boolean {
+  return currentConfig().embargoed === false || humanSubjectsUnconfirmed();
 }
 
 // Shows a single error card in the Dataset section (rather than repeating the same message on
 // every file row) when the currently selected dandiset is not embargoed, and disables the upload
-// button so a blocked batch can't even be started.
-function updateEmbargoError(): void {
-  const blocked = currentConfig().embargoed === false;
-  els.dandisetEmbargoError.hidden = !blocked;
-  els.uploadAllBtn.disabled = blocked;
+// button while any gate (embargo, unconfirmed human-subjects data) blocks the batch from even
+// being started.
+function updateUploadGate(): void {
+  els.dandisetEmbargoError.hidden = currentConfig().embargoed !== false;
+  els.uploadAllBtn.disabled = uploadBlocked();
+}
+
+// Reflects the human-subjects state onto the warning banner (below the speed tips): hidden for
+// ordinary datasets, the full scary warning with its "I confirm" button for an unconfirmed
+// human-subjects dataset, or a slimmed "confirmed" notice once confirmed this session.
+function renderHumanSubjectsBanner(): void {
+  const confirmed = confirmedHumanSubjects.has(els.dandisetId.value);
+  els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !els.dandisetId.value;
+  els.humanSubjectsUnconfirmed.hidden = confirmed;
+  els.humanSubjectsConfirmed.hidden = !confirmed;
+  updateUploadGate();
+  updateDropzoneVisibility();
+  updateUploadCardVisibility();
+}
+
+// Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
+// dataset as containing human-subjects data, so the warning banner and its confirm flow can be
+// previewed without a real flagged dandiset — see docs/README.md.
+function readTestHumanSubjectsOverride(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has("test") && params.has("human_subjects");
+}
+
+// Re-resolves whether the newly selected dataset needs the human-subjects gate by fetching its
+// draft metadata and looking for the marker phrase in the description. While the fetch is in
+// flight the banner is hidden and the gate open; if the fetch fails the gate deliberately stays
+// open too (the marker is a best-effort convention, and blocking every upload on a transient
+// metadata hiccup would be worse), with a console warning left behind.
+async function refreshHumanSubjectsGate(): Promise<void> {
+  const seq = ++humanSubjectsRefreshSeq;
+  humanSubjectsRequired = false;
+  renderHumanSubjectsBanner();
+  // Fake "?test&num_datasets=N" datasets have no real draft to fetch. Detected via the select's
+  // raw value: resolveConfig() deliberately blanks their negative identifiers out of
+  // currentConfig(), so cfg.dandisetId can never carry the "-" marker.
+  if (els.dandisetId.value.startsWith("-")) {
+    if (readTestHumanSubjectsOverride()) {
+      humanSubjectsRequired = true;
+      renderHumanSubjectsBanner();
+    }
+    return;
+  }
+  const cfg = currentConfig();
+  if (!cfg.dandisetId || !isSignedIn()) return;
+  try {
+    const metadata = await fetchDraftMetadata(cfg);
+    if (seq !== humanSubjectsRefreshSeq) return;
+    humanSubjectsRequired = containsHumanSubjects(metadata);
+  } catch (e) {
+    if (seq !== humanSubjectsRefreshSeq) return;
+    console.warn("Could not check the selected dataset's metadata for human-subjects data:", e);
+  }
+  renderHumanSubjectsBanner();
 }
 
 function setDandisetPlaceholder(text: string): void {
@@ -684,6 +760,7 @@ async function refreshDandisetOptions(): Promise<void> {
   if (forceSignedOut) {
     setDandisetPlaceholder("Please sign in to see your incoming datasets.");
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   const testDatasets = readTestDatasetOverride();
@@ -696,11 +773,13 @@ async function refreshDandisetOptions(): Promise<void> {
     }
     applyDatasetList(testDatasets);
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   if (!oauthTokens) {
     setDandisetPlaceholder("Please sign in to see your incoming datasets.");
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   await ensureFreshOAuth();
@@ -714,6 +793,7 @@ async function refreshDandisetOptions(): Promise<void> {
   }
   saveSettings();
   updateViewDatasetLink();
+  void refreshHumanSubjectsGate();
 }
 
 function updateViewDatasetLink(): void {
@@ -772,9 +852,9 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
 }
 
 async function startUpload(): Promise<void> {
-  // The upload button is disabled while the selected dandiset isn't embargoed (see
-  // updateEmbargoError), so this only matters if startUpload is somehow triggered anyway.
-  if (currentConfig().embargoed === false) return;
+  // The upload button is disabled while any gate blocks the batch (see updateUploadGate), so
+  // this only matters if startUpload is somehow triggered anyway.
+  if (uploadBlocked()) return;
   await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
@@ -949,8 +1029,13 @@ if (mockUploadCount !== null) {
   void addFiles(generateMockDroppedFiles(mockUploadCount));
 }
 els.dandisetId.addEventListener("change", () => {
-  updateEmbargoError();
+  updateUploadGate();
+  void refreshHumanSubjectsGate();
   runConnectionCheck();
+});
+els.humanSubjectsConfirmBtn.addEventListener("click", () => {
+  confirmedHumanSubjects.add(els.dandisetId.value);
+  renderHumanSubjectsBanner();
 });
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
