@@ -29,7 +29,7 @@ test.describe("human subjects warning banner", () => {
     await expect(page.locator("#upload-all-btn")).toBeEnabled();
   });
 
-  test("blocks uploads until an IRB number is entered and confirmed, then records it", async ({ page }) => {
+  test("blocks uploads until confirmed; entering an IRB number records it on confirm", async ({ page }) => {
     await mockDraftMetadata(page, {
       name: "Incoming: Test Lab",
       description: "Careful, this one CONTAINS HUMAN SUBJECTS data.",
@@ -40,11 +40,6 @@ test.describe("human subjects warning banner", () => {
     await expect(banner).toBeVisible();
     await expect(banner).toContainText("de-identified");
     await expect(banner).toContainText("IRB approval");
-    await expect(page.locator("#upload-all-btn")).toBeDisabled();
-
-    // Confirming without an IRB number is rejected and keeps uploads blocked.
-    await page.locator("#human-subjects-confirm-btn").click();
-    await expect(page.locator("#human-subjects-error")).toBeVisible();
     await expect(page.locator("#upload-all-btn")).toBeDisabled();
 
     const putRequest = page.waitForRequest((req) => req.url() === DRAFT_URL && req.method() === "PUT");
@@ -58,6 +53,30 @@ test.describe("human subjects warning banner", () => {
     await expect(page.locator("#human-subjects-confirmed")).toContainText("STUDY00001234");
     await expect(page.locator("#human-subjects-unconfirmed")).toBeHidden();
     await expect(page.locator("#upload-all-btn")).toBeEnabled();
+  });
+
+  test("the IRB number is optional: a bare 'I confirm' unlocks uploads without a metadata write", async ({ page }) => {
+    let putSeen = false;
+    await page.route(DRAFT_URL, (route) => {
+      if (route.request().method() === "PUT") {
+        putSeen = true;
+        return route.fulfill({ json: {} });
+      }
+      return route.fulfill({
+        json: { name: "Incoming: Test Lab", description: "Careful, this one CONTAINS HUMAN SUBJECTS data." },
+      });
+    });
+    await page.goto("/");
+
+    await expect(page.locator("#human-subjects-banner")).toBeVisible();
+    await expect(page.locator("#upload-all-btn")).toBeDisabled();
+
+    await page.locator("#human-subjects-confirm-btn").click();
+
+    await expect(page.locator("#human-subjects-confirmed")).toContainText("Confirmed");
+    await expect(page.locator("#human-subjects-unconfirmed")).toBeHidden();
+    await expect(page.locator("#upload-all-btn")).toBeEnabled();
+    expect(putSeen).toBe(false);
   });
 
   test("prefills an IRB number already recorded in the metadata and skips re-saving it", async ({ page }) => {

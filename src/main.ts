@@ -642,7 +642,7 @@ function renderHumanSubjectsBanner(): void {
   els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !id;
   els.humanSubjectsUnconfirmed.hidden = confirmedIrb !== undefined;
   els.humanSubjectsConfirmed.hidden = confirmedIrb === undefined;
-  if (confirmedIrb !== undefined) {
+  if (confirmedIrb) {
     const code = document.createElement("code");
     code.textContent = confirmedIrb;
     els.humanSubjectsConfirmed.replaceChildren(
@@ -650,6 +650,9 @@ function renderHumanSubjectsBanner(): void {
       code,
       ", recorded in the Dandiset metadata. Uploads are enabled.",
     );
+  } else if (confirmedIrb !== undefined) {
+    els.humanSubjectsConfirmed.textContent =
+      "✓ Confirmed: data is de-identified and covered by your institution's IRB approval. Uploads are enabled.";
   } else {
     // (Re)selecting a dataset resets the field to whatever IRB number its metadata already
     // carries, so an approval recorded earlier only needs the confirm click, not retyping.
@@ -702,23 +705,17 @@ async function refreshHumanSubjectsGate(): Promise<void> {
   renderHumanSubjectsBanner();
 }
 
-// The "I confirm" click: requires an IRB number, records it in the draft's metadata (unless it's
-// already there), and only then unlocks uploads for this dataset.
+// The "I confirm" click alone unlocks uploads for this dataset; an IRB number, when entered
+// (or prefilled from the metadata), is recorded in the draft's metadata unless already there.
 async function confirmHumanSubjects(): Promise<void> {
   const id = els.dandisetId.value;
   const irb = els.irbNumberInput.value.trim();
-  if (!irb) {
-    els.humanSubjectsError.textContent = "Please enter your IRB approval number to confirm.";
-    els.humanSubjectsError.hidden = false;
-    els.irbNumberInput.focus();
-    return;
-  }
   els.humanSubjectsError.hidden = true;
   els.humanSubjectsConfirmBtn.disabled = true;
   els.humanSubjectsConfirmBtn.textContent = "Saving…";
   try {
-    // Fake test datasets have no real draft to write to; everything else records the number.
-    if (!id.startsWith("-")) {
+    // Nothing to record without a number; fake test datasets have no real draft to write to.
+    if (irb && !id.startsWith("-")) {
       await ensureFreshOAuth();
       draftMetadata = await saveIrbNumber(currentConfig(), draftMetadata ?? {}, irb);
     }
