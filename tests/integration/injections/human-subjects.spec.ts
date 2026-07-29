@@ -85,3 +85,40 @@ test.describe("human subjects warning banner", () => {
     expect(putSeen).toBe(false);
   });
 });
+
+// Exercises the "?test&num_datasets=N&human_subjects" live test injection documented in
+// docs/README.md: fake datasets (negative identifiers, no real draft to fetch or write to) show
+// the same banner and confirm flow, entirely off the network and even while signed out.
+test.describe("?test&num_datasets=N&human_subjects injection", () => {
+  test.beforeEach(async ({ page }) => {
+    await seedTheme(page, "light");
+  });
+
+  test("shows the banner for a fake dataset and confirms without any API calls", async ({ page }) => {
+    let apiCalled = false;
+    await page.route(`${API}/**`, (route) => {
+      apiCalled = true;
+      return route.fulfill({ status: 500, body: "" });
+    });
+    await page.goto("/?test&num_datasets=1&human_subjects");
+
+    await expect(page.locator("#dandiset-single")).toBeVisible();
+    await expect(page.locator("#human-subjects-banner")).toBeVisible();
+    await expect(page.locator("#upload-all-btn")).toBeDisabled();
+
+    await page.locator("#irb-number-input").fill("STUDY00001234");
+    await page.locator("#human-subjects-confirm-btn").click();
+
+    await expect(page.locator("#human-subjects-confirmed")).toContainText("STUDY00001234");
+    await expect(page.locator("#upload-all-btn")).toBeEnabled();
+    expect(apiCalled).toBe(false);
+  });
+
+  test("without the flag, fake datasets show no banner", async ({ page }) => {
+    await page.goto("/?test&num_datasets=1");
+
+    await expect(page.locator("#dandiset-single")).toBeVisible();
+    await expect(page.locator("#human-subjects-banner")).toBeHidden();
+    await expect(page.locator("#upload-all-btn")).toBeEnabled();
+  });
+});

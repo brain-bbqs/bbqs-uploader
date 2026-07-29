@@ -677,10 +677,10 @@ async function refreshHumanSubjectsGate(): Promise<void> {
   humanSubjectsRequired = false;
   draftMetadata = null;
   renderHumanSubjectsBanner();
-  const cfg = currentConfig();
-  if (!cfg.dandisetId) return;
-  // Fake "?test&num_datasets=N" datasets (negative identifiers) have no real draft to fetch.
-  if (cfg.dandisetId.startsWith("-")) {
+  // Fake "?test&num_datasets=N" datasets have no real draft to fetch. Detected via the select's
+  // raw value: resolveConfig() deliberately blanks their negative identifiers out of
+  // currentConfig(), so cfg.dandisetId can never carry the "-" marker.
+  if (els.dandisetId.value.startsWith("-")) {
     if (readTestHumanSubjectsOverride()) {
       draftMetadata = { description: `A test dataset which ${HUMAN_SUBJECTS_PHRASE}.` };
       humanSubjectsRequired = true;
@@ -688,7 +688,8 @@ async function refreshHumanSubjectsGate(): Promise<void> {
     }
     return;
   }
-  if (!isSignedIn()) return;
+  const cfg = currentConfig();
+  if (!cfg.dandisetId || !isSignedIn()) return;
   try {
     const metadata = await fetchDraftMetadata(cfg);
     if (seq !== humanSubjectsRefreshSeq) return;
