@@ -203,6 +203,31 @@
         </ul>
       </div>
 
+      <div id="human-subjects-banner" class="human-subjects-banner" role="alert" hidden>
+        <p class="human-subjects-heading">⚠️ This dataset CONTAINS HUMAN SUBJECTS data</p>
+        <div id="human-subjects-unconfirmed">
+          <p class="human-subjects-body">
+            Uploads to this dataset are disabled until you confirm both of the following:
+          </p>
+          <ul class="human-subjects-body">
+            <li>
+              Every file you upload has been properly <strong>de-identified</strong>: no names, faces, voices, dates of
+              birth, or any other personally identifiable information beyond what your approval explicitly permits.
+            </li>
+            <li>Collection and sharing of this data is covered by your institution's <strong>IRB approval</strong>.</li>
+          </ul>
+          <div class="human-subjects-controls">
+            <label class="human-subjects-irb-label" for="irb-number-input">
+              IRB approval number
+              <input id="irb-number-input" type="text" placeholder="e.g. STUDY00001234" autocomplete="off" />
+            </label>
+            <button type="button" id="human-subjects-confirm-btn" class="human-subjects-confirm-btn">I confirm</button>
+          </div>
+          <p id="human-subjects-error" class="human-subjects-error" hidden></p>
+        </div>
+        <p id="human-subjects-confirmed" class="human-subjects-confirmed" hidden></p>
+      </div>
+
       <section class="card" id="config-card">
         <div class="card-heading">
           <h2>Dataset</h2>

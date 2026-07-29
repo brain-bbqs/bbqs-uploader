@@ -18,6 +18,14 @@ import { runQueue } from "./lib/queue";
 import { loadStoredSettings, saveStoredSettings, resolveConfig, saveStoredTheme } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
+import {
+  HUMAN_SUBJECTS_PHRASE,
+  containsHumanSubjects,
+  existingIrbNumber,
+  fetchDraftMetadata,
+  saveIrbNumber,
+  type DraftVersionMetadata,
+} from "./lib/humanSubjects";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
 import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { DroppedFile } from "./lib/fileTree";
@@ -515,6 +523,15 @@ let storedDandisetId = "";
 // The dandiset picker's current option list, kept around so currentConfig() can look up the
 // selected dandiset's embargo status without a second API round-trip.
 let currentDatasets: IncomingDandiset[] = [];
+// Whether the currently selected dataset's draft description carries the human-subjects marker
+// phrase, and (per dandiset id) the IRB number the user confirmed with this session, so flipping
+// between datasets in the dropdown doesn't demand re-confirming one already confirmed.
+let humanSubjectsRequired = false;
+const confirmedHumanSubjects = new Map<string, string>();
+// The selected dataset's draft metadata, kept so the IRB confirmation can update it without
+// re-fetching, and bumped-counter guarded so a slow fetch can't apply to a newer selection.
+let draftMetadata: DraftVersionMetadata | null = null;
+let humanSubjectsRefreshSeq = 0;
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
 // "?test&signed_out" forces every auth-dependent render to behave as if oauthTokens were null,
@@ -597,16 +614,124 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
   els.dandisetMessage.hidden = view !== "message";
   els.dandisetSingle.hidden = view !== "single";
   els.dandisetId.hidden = view !== "dropdown";
-  updateEmbargoError();
+  updateUploadGate();
+}
+
+// True while the selected dataset must not be uploaded to: either it isn't embargoed, or it
+// holds human-subjects data the user hasn't confirmed de-identification/IRB coverage for yet.
+function uploadBlocked(): boolean {
+  if (currentConfig().embargoed === false) return true;
+  return humanSubjectsRequired && !confirmedHumanSubjects.has(els.dandisetId.value);
 }
 
 // Shows a single error card in the Dataset section (rather than repeating the same message on
 // every file row) when the currently selected dandiset is not embargoed, and disables the upload
-// button so a blocked batch can't even be started.
-function updateEmbargoError(): void {
-  const blocked = currentConfig().embargoed === false;
-  els.dandisetEmbargoError.hidden = !blocked;
-  els.uploadAllBtn.disabled = blocked;
+// button while any gate (embargo, unconfirmed human-subjects data) blocks the batch from even
+// being started.
+function updateUploadGate(): void {
+  els.dandisetEmbargoError.hidden = currentConfig().embargoed !== false;
+  els.uploadAllBtn.disabled = uploadBlocked();
+}
+
+// Reflects the human-subjects state onto the warning banner (below the speed tips): hidden for
+// ordinary datasets, the full scary confirm form for an unconfirmed human-subjects dataset, or a
+// slimmed "confirmed" notice once the user has confirmed this dataset this session.
+function renderHumanSubjectsBanner(): void {
+  const id = els.dandisetId.value;
+  const confirmedIrb = humanSubjectsRequired ? confirmedHumanSubjects.get(id) : undefined;
+  els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !id;
+  els.humanSubjectsUnconfirmed.hidden = confirmedIrb !== undefined;
+  els.humanSubjectsConfirmed.hidden = confirmedIrb === undefined;
+  if (confirmedIrb !== undefined) {
+    const code = document.createElement("code");
+    code.textContent = confirmedIrb;
+    els.humanSubjectsConfirmed.replaceChildren(
+      "✓ Confirmed: data is de-identified and covered by IRB approval ",
+      code,
+      ", recorded in the Dandiset metadata. Uploads are enabled.",
+    );
+  } else {
+    // (Re)selecting a dataset resets the field to whatever IRB number its metadata already
+    // carries, so an approval recorded earlier only needs the confirm click, not retyping.
+    els.irbNumberInput.value = existingIrbNumber(draftMetadata);
+    els.humanSubjectsError.hidden = true;
+  }
+  updateUploadGate();
+}
+
+// Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
+// dataset as containing human-subjects data, so the warning banner and its confirm flow can be
+// previewed without a real flagged dandiset — see docs/README.md.
+function readTestHumanSubjectsOverride(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.has("test") && params.has("human_subjects");
+}
+
+// Re-resolves whether the newly selected dataset needs the human-subjects gate by fetching its
+// draft metadata and looking for the marker phrase in the description. While the fetch is in
+// flight the banner is hidden and the gate open; if the fetch fails the gate deliberately stays
+// open too (the marker is a best-effort convention, and blocking every upload on a transient
+// metadata hiccup would be worse), with a console warning left behind.
+async function refreshHumanSubjectsGate(): Promise<void> {
+  const seq = ++humanSubjectsRefreshSeq;
+  humanSubjectsRequired = false;
+  draftMetadata = null;
+  renderHumanSubjectsBanner();
+  const cfg = currentConfig();
+  if (!cfg.dandisetId) return;
+  // Fake "?test&num_datasets=N" datasets (negative identifiers) have no real draft to fetch.
+  if (cfg.dandisetId.startsWith("-")) {
+    if (readTestHumanSubjectsOverride()) {
+      draftMetadata = { description: `A test dataset which ${HUMAN_SUBJECTS_PHRASE}.` };
+      humanSubjectsRequired = true;
+      renderHumanSubjectsBanner();
+    }
+    return;
+  }
+  if (!isSignedIn()) return;
+  try {
+    const metadata = await fetchDraftMetadata(cfg);
+    if (seq !== humanSubjectsRefreshSeq) return;
+    draftMetadata = metadata;
+    humanSubjectsRequired = containsHumanSubjects(metadata);
+  } catch (e) {
+    if (seq !== humanSubjectsRefreshSeq) return;
+    console.warn("Could not check the selected dataset's metadata for human-subjects data:", e);
+  }
+  renderHumanSubjectsBanner();
+}
+
+// The "I confirm" click: requires an IRB number, records it in the draft's metadata (unless it's
+// already there), and only then unlocks uploads for this dataset.
+async function confirmHumanSubjects(): Promise<void> {
+  const id = els.dandisetId.value;
+  const irb = els.irbNumberInput.value.trim();
+  if (!irb) {
+    els.humanSubjectsError.textContent = "Please enter your IRB approval number to confirm.";
+    els.humanSubjectsError.hidden = false;
+    els.irbNumberInput.focus();
+    return;
+  }
+  els.humanSubjectsError.hidden = true;
+  els.humanSubjectsConfirmBtn.disabled = true;
+  els.humanSubjectsConfirmBtn.textContent = "Saving…";
+  try {
+    // Fake test datasets have no real draft to write to; everything else records the number.
+    if (!id.startsWith("-")) {
+      await ensureFreshOAuth();
+      draftMetadata = await saveIrbNumber(currentConfig(), draftMetadata ?? {}, irb);
+    }
+    confirmedHumanSubjects.set(id, irb);
+    renderHumanSubjectsBanner();
+  } catch (e) {
+    els.humanSubjectsError.textContent = `Could not record the IRB number in the Dandiset metadata: ${
+      e instanceof Error ? e.message : String(e)
+    }`;
+    els.humanSubjectsError.hidden = false;
+  } finally {
+    els.humanSubjectsConfirmBtn.disabled = false;
+    els.humanSubjectsConfirmBtn.textContent = "I confirm";
+  }
 }
 
 function setDandisetPlaceholder(text: string): void {
@@ -684,6 +809,7 @@ async function refreshDandisetOptions(): Promise<void> {
   if (forceSignedOut) {
     setDandisetPlaceholder("Please sign in to see your incoming datasets.");
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   const testDatasets = readTestDatasetOverride();
@@ -696,11 +822,13 @@ async function refreshDandisetOptions(): Promise<void> {
     }
     applyDatasetList(testDatasets);
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   if (!oauthTokens) {
     setDandisetPlaceholder("Please sign in to see your incoming datasets.");
     updateViewDatasetLink();
+    void refreshHumanSubjectsGate();
     return;
   }
   await ensureFreshOAuth();
@@ -714,6 +842,7 @@ async function refreshDandisetOptions(): Promise<void> {
   }
   saveSettings();
   updateViewDatasetLink();
+  void refreshHumanSubjectsGate();
 }
 
 function updateViewDatasetLink(): void {
@@ -772,9 +901,9 @@ async function addFiles(entries: DroppedFile[]): Promise<void> {
 }
 
 async function startUpload(): Promise<void> {
-  // The upload button is disabled while the selected dandiset isn't embargoed (see
-  // updateEmbargoError), so this only matters if startUpload is somehow triggered anyway.
-  if (currentConfig().embargoed === false) return;
+  // The upload button is disabled while any gate blocks the batch (see updateUploadGate), so
+  // this only matters if startUpload is somehow triggered anyway.
+  if (uploadBlocked()) return;
   await ensureFreshOAuth();
   const batch = pending.splice(0, pending.length);
   updateUploadBar();
@@ -949,9 +1078,11 @@ if (mockUploadCount !== null) {
   void addFiles(generateMockDroppedFiles(mockUploadCount));
 }
 els.dandisetId.addEventListener("change", () => {
-  updateEmbargoError();
+  updateUploadGate();
+  void refreshHumanSubjectsGate();
   runConnectionCheck();
 });
+els.humanSubjectsConfirmBtn.addEventListener("click", () => void confirmHumanSubjects());
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
 els.oauthSignoutBtn.addEventListener("click", () => {

@@ -39,4 +39,10 @@ export async function seedSignedIn(
       },
     }),
   );
+  // The human-subjects gate fetches the selected draft's metadata on every (re)selection; a
+  // benign default keeps unrelated tests off the network. Tests exercising the gate override
+  // this by registering their own route for the same URL after this call.
+  await page.route(`${API}/dandisets/${identifier}/versions/draft/`, (route: Route) =>
+    route.fulfill({ json: { name: title, description: "A test dataset." } }),
+  );
 }

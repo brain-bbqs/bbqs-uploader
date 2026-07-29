@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.0.7
+## 1.0.8
+
+#### 🚀 Enhancement
+
+- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips and the upload button is disabled until the user enters their IRB approval number and clicks "I confirm"; the number is recorded in the Dandiset metadata as a dandischema `EthicsApproval` entry (prefilled, and not re-written, if one is already recorded there), and each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
+- Added a `?test&num_datasets=N&human_subjects` live test injection for previewing the warning banner and its confirm flow without a real flagged dandiset (documented in `docs/README.md`) ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
 
 #### 🏠 Internal
 
