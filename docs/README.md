@@ -24,7 +24,7 @@ Sign-in state is untouched and nothing is written to `localStorage`, so all of t
 
 `num_datasets` fakes are embargoed (uploadable) by default; add `&embargoed=false` to preview the blocked state instead, on either `num_datasets=1` (single dataset text) or `num_datasets=2`+ (dropdown).
 
-Adding `&human_subjects` to any `num_datasets` injection marks every fake dataset as containing human-subjects data (in real usage: the draft's description containing the exact phrase `CONTAINS HUMAN SUBJECTS`), so the red warning banner appears below the speed tips and the upload button stays disabled until "I confirm" is clicked. An IRB number can optionally be entered alongside; fake datasets skip the metadata write that a real confirmation with a number performs.
+Adding `&human_subjects` to any `num_datasets` injection marks every fake dataset as containing human-subjects data (in real usage: the draft's description containing the exact phrase `CONTAINS HUMAN SUBJECTS`), so the red warning banner appears below the speed tips and the upload button stays disabled until "I confirm" is clicked.
 
 `mock_upload=N` queues `N` fake files (10 MB-100 GB each) nested randomly across folders and animates the Scanning bar immediately, then the Uploading bar once you click "Upload".
 No bytes are read, hashed, or sent anywhere.

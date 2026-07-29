@@ -18,14 +18,7 @@ import { runQueue } from "./lib/queue";
 import { loadStoredSettings, saveStoredSettings, resolveConfig, saveStoredTheme } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
-import {
-  HUMAN_SUBJECTS_PHRASE,
-  containsHumanSubjects,
-  existingIrbNumber,
-  fetchDraftMetadata,
-  saveIrbNumber,
-  type DraftVersionMetadata,
-} from "./lib/humanSubjects";
+import { containsHumanSubjects, fetchDraftMetadata } from "./lib/humanSubjects";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
 import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { DroppedFile } from "./lib/fileTree";
@@ -524,13 +517,11 @@ let storedDandisetId = "";
 // selected dandiset's embargo status without a second API round-trip.
 let currentDatasets: IncomingDandiset[] = [];
 // Whether the currently selected dataset's draft description carries the human-subjects marker
-// phrase, and (per dandiset id) the IRB number the user confirmed with this session, so flipping
-// between datasets in the dropdown doesn't demand re-confirming one already confirmed.
+// phrase, and the dandiset ids the user already confirmed this session, so flipping between
+// datasets in the dropdown doesn't demand re-confirming one already confirmed. The counter
+// guards the metadata fetch so a slow response can't apply to a newer selection.
 let humanSubjectsRequired = false;
-const confirmedHumanSubjects = new Map<string, string>();
-// The selected dataset's draft metadata, kept so the IRB confirmation can update it without
-// re-fetching, and bumped-counter guarded so a slow fetch can't apply to a newer selection.
-let draftMetadata: DraftVersionMetadata | null = null;
+const confirmedHumanSubjects = new Set<string>();
 let humanSubjectsRefreshSeq = 0;
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
@@ -634,31 +625,13 @@ function updateUploadGate(): void {
 }
 
 // Reflects the human-subjects state onto the warning banner (below the speed tips): hidden for
-// ordinary datasets, the full scary confirm form for an unconfirmed human-subjects dataset, or a
-// slimmed "confirmed" notice once the user has confirmed this dataset this session.
+// ordinary datasets, the full scary warning with its "I confirm" button for an unconfirmed
+// human-subjects dataset, or a slimmed "confirmed" notice once confirmed this session.
 function renderHumanSubjectsBanner(): void {
-  const id = els.dandisetId.value;
-  const confirmedIrb = humanSubjectsRequired ? confirmedHumanSubjects.get(id) : undefined;
-  els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !id;
-  els.humanSubjectsUnconfirmed.hidden = confirmedIrb !== undefined;
-  els.humanSubjectsConfirmed.hidden = confirmedIrb === undefined;
-  if (confirmedIrb) {
-    const code = document.createElement("code");
-    code.textContent = confirmedIrb;
-    els.humanSubjectsConfirmed.replaceChildren(
-      "✓ Confirmed: data is de-identified and covered by IRB approval ",
-      code,
-      ", recorded in the Dandiset metadata. Uploads are enabled.",
-    );
-  } else if (confirmedIrb !== undefined) {
-    els.humanSubjectsConfirmed.textContent =
-      "✓ Confirmed: data is de-identified and covered by your institution's IRB approval. Uploads are enabled.";
-  } else {
-    // (Re)selecting a dataset resets the field to whatever IRB number its metadata already
-    // carries, so an approval recorded earlier only needs the confirm click, not retyping.
-    els.irbNumberInput.value = existingIrbNumber(draftMetadata);
-    els.humanSubjectsError.hidden = true;
-  }
+  const confirmed = confirmedHumanSubjects.has(els.dandisetId.value);
+  els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !els.dandisetId.value;
+  els.humanSubjectsUnconfirmed.hidden = confirmed;
+  els.humanSubjectsConfirmed.hidden = !confirmed;
   updateUploadGate();
 }
 
@@ -678,14 +651,12 @@ function readTestHumanSubjectsOverride(): boolean {
 async function refreshHumanSubjectsGate(): Promise<void> {
   const seq = ++humanSubjectsRefreshSeq;
   humanSubjectsRequired = false;
-  draftMetadata = null;
   renderHumanSubjectsBanner();
   // Fake "?test&num_datasets=N" datasets have no real draft to fetch. Detected via the select's
   // raw value: resolveConfig() deliberately blanks their negative identifiers out of
   // currentConfig(), so cfg.dandisetId can never carry the "-" marker.
   if (els.dandisetId.value.startsWith("-")) {
     if (readTestHumanSubjectsOverride()) {
-      draftMetadata = { description: `A test dataset which ${HUMAN_SUBJECTS_PHRASE}.` };
       humanSubjectsRequired = true;
       renderHumanSubjectsBanner();
     }
@@ -696,40 +667,12 @@ async function refreshHumanSubjectsGate(): Promise<void> {
   try {
     const metadata = await fetchDraftMetadata(cfg);
     if (seq !== humanSubjectsRefreshSeq) return;
-    draftMetadata = metadata;
     humanSubjectsRequired = containsHumanSubjects(metadata);
   } catch (e) {
     if (seq !== humanSubjectsRefreshSeq) return;
     console.warn("Could not check the selected dataset's metadata for human-subjects data:", e);
   }
   renderHumanSubjectsBanner();
-}
-
-// The "I confirm" click alone unlocks uploads for this dataset; an IRB number, when entered
-// (or prefilled from the metadata), is recorded in the draft's metadata unless already there.
-async function confirmHumanSubjects(): Promise<void> {
-  const id = els.dandisetId.value;
-  const irb = els.irbNumberInput.value.trim();
-  els.humanSubjectsError.hidden = true;
-  els.humanSubjectsConfirmBtn.disabled = true;
-  els.humanSubjectsConfirmBtn.textContent = "Saving…";
-  try {
-    // Nothing to record without a number; fake test datasets have no real draft to write to.
-    if (irb && !id.startsWith("-")) {
-      await ensureFreshOAuth();
-      draftMetadata = await saveIrbNumber(currentConfig(), draftMetadata ?? {}, irb);
-    }
-    confirmedHumanSubjects.set(id, irb);
-    renderHumanSubjectsBanner();
-  } catch (e) {
-    els.humanSubjectsError.textContent = `Could not record the IRB number in the Dandiset metadata: ${
-      e instanceof Error ? e.message : String(e)
-    }`;
-    els.humanSubjectsError.hidden = false;
-  } finally {
-    els.humanSubjectsConfirmBtn.disabled = false;
-    els.humanSubjectsConfirmBtn.textContent = "I confirm";
-  }
 }
 
 function setDandisetPlaceholder(text: string): void {
@@ -1080,7 +1023,10 @@ els.dandisetId.addEventListener("change", () => {
   void refreshHumanSubjectsGate();
   runConnectionCheck();
 });
-els.humanSubjectsConfirmBtn.addEventListener("click", () => void confirmHumanSubjects());
+els.humanSubjectsConfirmBtn.addEventListener("click", () => {
+  confirmedHumanSubjects.add(els.dandisetId.value);
+  renderHumanSubjectsBanner();
+});
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
 els.oauthSigninBtn.addEventListener("click", () => void startLogin());
 els.oauthSignoutBtn.addEventListener("click", () => {

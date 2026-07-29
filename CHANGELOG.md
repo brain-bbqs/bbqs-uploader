@@ -4,7 +4,7 @@
 
 #### 🚀 Enhancement
 
-- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips and the upload button is disabled until the user clicks "I confirm"; an optionally entered IRB approval number is recorded in the Dandiset metadata as a dandischema `EthicsApproval` entry (prefilled, and not re-written, if one is already recorded there), and each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
+- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips requiring the user to confirm their data is de-identified and covered by their institution's IRB approval, and the upload button is disabled until they click "I confirm"; each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
 
 #### 🏠 Internal
 

@@ -324,36 +324,11 @@ ul.human-subjects-body {
   margin-top: 0.75rem;
 }
 
-.human-subjects-irb-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.human-subjects-irb-label input {
-  font: inherit;
-  padding: 0.45rem 0.65rem;
-  border: 1px solid var(--err);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text);
-  min-width: 16rem;
-}
-
 .human-subjects-confirm-btn {
   background: var(--err);
   border-color: var(--err);
   color: #fff;
   font-weight: 700;
-}
-
-.human-subjects-error {
-  margin: 0.5rem 0 0;
-  color: var(--err);
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
 .human-subjects-confirmed {
