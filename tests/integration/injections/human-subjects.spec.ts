@@ -37,12 +37,15 @@ test.describe("human subjects warning banner", () => {
     await expect(banner).toContainText("de-identified");
     await expect(banner).toContainText("IRB approval");
     await expect(page.locator("#upload-all-btn")).toBeDisabled();
+    // Even the dropzone is withheld until confirmation, so nothing can be staged early.
+    await expect(page.locator("#dropzone")).toBeHidden();
 
     await page.locator("#human-subjects-confirm-btn").click();
 
     await expect(page.locator("#human-subjects-confirmed")).toContainText("Confirmed");
     await expect(page.locator("#human-subjects-unconfirmed")).toBeHidden();
     await expect(page.locator("#upload-all-btn")).toBeEnabled();
+    await expect(page.locator("#dropzone")).toBeVisible();
   });
 });
 

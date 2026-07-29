@@ -4,7 +4,7 @@
 
 #### 🚀 Enhancement
 
-- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips requiring the user to confirm their data is de-identified and covered by their institution's IRB approval, and the upload button is disabled until they click "I confirm"; each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
+- Added a human-subjects compliance gate: when the selected dataset's draft description contains the phrase `CONTAINS HUMAN SUBJECTS`, a red warning banner appears below the speed tips requiring the user to confirm their data is de-identified and covered by their institution's IRB approval, with the drag-and-drop area hidden and the upload button disabled until they click "I confirm"; each dataset only needs confirming once per session ([#61](https://github.com/brain-bbqs/bbqs-uploader/pull/61))
 
 #### 🏠 Internal
 

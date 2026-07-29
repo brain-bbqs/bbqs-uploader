@@ -571,9 +571,11 @@ function updateUploadCardVisibility(): void {
 }
 
 // The dropzone is only useful before anything has been queued; once files are selected it just
-// takes up space above the file list, so it's hidden as soon as the queue is non-empty.
+// takes up space above the file list, so it's hidden as soon as the queue is non-empty. It's
+// also withheld while the selected dataset's human-subjects warning awaits its "I confirm", so
+// nothing can even be staged before the warning is acknowledged.
 function updateDropzoneVisibility(): void {
-  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0;
+  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0 || humanSubjectsUnconfirmed();
 }
 
 function renderAuthUI(): void {
@@ -608,11 +610,16 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
   updateUploadGate();
 }
 
-// True while the selected dataset must not be uploaded to: either it isn't embargoed, or it
-// holds human-subjects data the user hasn't confirmed de-identification/IRB coverage for yet.
-function uploadBlocked(): boolean {
-  if (currentConfig().embargoed === false) return true;
+// True while the selected dataset holds human-subjects data the user hasn't confirmed
+// de-identification/IRB coverage for yet.
+function humanSubjectsUnconfirmed(): boolean {
   return humanSubjectsRequired && !confirmedHumanSubjects.has(els.dandisetId.value);
+}
+
+// True while the selected dataset must not be uploaded to: either it isn't embargoed, or its
+// human-subjects warning hasn't been confirmed yet.
+function uploadBlocked(): boolean {
+  return currentConfig().embargoed === false || humanSubjectsUnconfirmed();
 }
 
 // Shows a single error card in the Dataset section (rather than repeating the same message on
@@ -633,6 +640,7 @@ function renderHumanSubjectsBanner(): void {
   els.humanSubjectsUnconfirmed.hidden = confirmed;
   els.humanSubjectsConfirmed.hidden = !confirmed;
   updateUploadGate();
+  updateDropzoneVisibility();
 }
 
 // Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
