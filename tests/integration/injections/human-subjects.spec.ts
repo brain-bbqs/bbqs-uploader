@@ -37,14 +37,28 @@ test.describe("human subjects warning banner", () => {
     await expect(banner).toContainText("de-identified");
     await expect(banner).toContainText("IRB approval");
     await expect(page.locator("#upload-all-btn")).toBeDisabled();
-    // Even the dropzone is withheld until confirmation, so nothing can be staged early.
-    await expect(page.locator("#dropzone")).toBeHidden();
+    // The whole upload card is withheld until confirmation (not just the dropzone inside it,
+    // which would leave an empty bordered box), so nothing can be staged early.
+    await expect(page.locator("#upload-card")).toBeHidden();
 
     await page.locator("#human-subjects-confirm-btn").click();
 
     await expect(page.locator("#human-subjects-confirmed")).toContainText("Confirmed");
     await expect(page.locator("#human-subjects-unconfirmed")).toBeHidden();
     await expect(page.locator("#upload-all-btn")).toBeEnabled();
+    await expect(page.locator("#upload-card")).toBeVisible();
+    await expect(page.locator("#dropzone")).toBeVisible();
+  });
+
+  test("the injection hides the upload card for a signed-in user too, until confirmed", async ({ page }) => {
+    await page.goto("/?test&num_datasets=1&human_subjects");
+
+    await expect(page.locator("#human-subjects-banner")).toBeVisible();
+    await expect(page.locator("#upload-card")).toBeHidden();
+
+    await page.locator("#human-subjects-confirm-btn").click();
+
+    await expect(page.locator("#upload-card")).toBeVisible();
     await expect(page.locator("#dropzone")).toBeVisible();
   });
 });

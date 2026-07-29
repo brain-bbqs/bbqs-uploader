@@ -562,12 +562,13 @@ function isSignedIn(): boolean {
 }
 
 // The upload card (dropzone, progress bars, file list, ...) is only worth showing while signed
-// in; a signed-out visitor with nothing queued would otherwise see an empty bordered box with
-// nothing in it. The one exception is a file queue that survives a mid-session sign-out (nothing
-// clears `fileList` on sign-out) — that state still needs the card to show the resulting "Blocked
-// / Not signed in" rows, just without the dropzone itself (see renderAuthUI) offering to add more.
+// in with the selected dataset's human-subjects warning (if any) confirmed; otherwise, with
+// nothing queued, it would just be an empty bordered box (the dropzone inside is hidden in those
+// same states — see updateDropzoneVisibility). The one exception is a non-empty file queue,
+// which survives a mid-session sign-out or a switch to an unconfirmed dataset — that state still
+// needs the card to show its rows, just without the dropzone offering to add more.
 function updateUploadCardVisibility(): void {
-  els.uploadCard.hidden = !isSignedIn() && els.fileList.children.length === 0;
+  els.uploadCard.hidden = (!isSignedIn() || humanSubjectsUnconfirmed()) && els.fileList.children.length === 0;
 }
 
 // The dropzone is only useful before anything has been queued; once files are selected it just
@@ -641,6 +642,7 @@ function renderHumanSubjectsBanner(): void {
   els.humanSubjectsConfirmed.hidden = !confirmed;
   updateUploadGate();
   updateDropzoneVisibility();
+  updateUploadCardVisibility();
 }
 
 // Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
