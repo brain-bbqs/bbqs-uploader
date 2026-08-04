@@ -45,4 +45,13 @@ export async function seedSignedIn(
   await page.route(`${API}/dandisets/${identifier}/versions/draft/`, (route: Route) =>
     route.fulfill({ json: { name: title, description: "A test dataset." } }),
   );
+  // The "already on EMBER" check lists existing sourcedata/raw/ assets once files are staged; an
+  // empty listing keeps unrelated tests off the network. Matched against the listing request's
+  // exact URL (not a "?path=*" glob) so it can't shadow the per-path existing-asset lookups
+  // other helpers and tests mock — this route is registered last and would otherwise win.
+  await page.route(
+    `${API}/dandisets/${identifier}/versions/draft/assets/` +
+      `?path=sourcedata%2Fraw%2F&metadata=false&order=path&page_size=1000`,
+    (route: Route) => route.fulfill({ json: { results: [], next: null } }),
+  );
 }

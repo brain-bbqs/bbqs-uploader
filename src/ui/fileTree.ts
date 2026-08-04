@@ -13,18 +13,33 @@ export function yieldToMain(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+/** The per-folder controls a rendered directory row exposes for selection wiring. */
+export interface DirRowEls {
+  checkbox: HTMLInputElement;
+  sizeEl: HTMLSpanElement;
+}
+
+export interface RenderedFileTree {
+  /** For each dropped file, the `<ul>` it was placed under, to append a matching file row to. */
+  targets: Map<File, HTMLUListElement>;
+  /** Each rendered directory's checkbox and size label, keyed by its slash-joined folder path. */
+  dirs: Map<string, DirRowEls>;
+}
+
 /**
- * Renders a nested directory tree into `root` and returns, for each dropped file, the
- * `<ul>` it was placed under so callers can append a matching file row there. Every directory
- * row is always shown (expanded, with its own name/count/size); which *file* rows are visible
- * is decided separately by `setRevealCount`, which the caller should run once it has appended
- * its file rows.
+ * Renders a nested directory tree into `root`. Every directory row is always shown (expanded,
+ * with its own tri-state include checkbox, name, and size); which *file* rows are visible is
+ * decided separately by `setRevealCount`, which the caller should run once it has appended its
+ * file rows. `onDirCheckbox` fires when a folder's checkbox is toggled — keeping the checkbox's
+ * tri-state and the size label in step with the selection is the caller's job (via `dirs`).
  */
 export async function renderFileTree(
   root: HTMLUListElement,
   entries: DroppedFile[],
-): Promise<Map<File, HTMLUListElement>> {
+  onDirCheckbox?: (dirPath: string, checked: boolean) => void,
+): Promise<RenderedFileTree> {
   const targets = new Map<File, HTMLUListElement>();
+  const dirs = new Map<string, DirRowEls>();
   let processed = 0;
 
   async function renderNode(node: TreeNode, container: HTMLUListElement): Promise<void> {
@@ -35,11 +50,14 @@ export async function renderFileTree(
       const li = document.createElement("li");
       li.className = "dir-item";
       li.innerHTML = `
-        <button type="button" class="dir-toggle" aria-expanded="true">
-          <span class="dir-chevron" aria-hidden="true">▸</span>
-          <span class="dir-name"></span>
-          <span class="dir-size">${humanSize(size)}</span>
-        </button>
+        <div class="dir-row">
+          <input type="checkbox" class="select-check" checked />
+          <button type="button" class="dir-toggle" aria-expanded="true">
+            <span class="dir-chevron" aria-hidden="true">▸</span>
+            <span class="dir-name"></span>
+            <span class="dir-size">${humanSize(size)}</span>
+          </button>
+        </div>
         <ul class="dir-children"></ul>
       `;
       li.querySelector(".dir-name")!.textContent = `${child.name}/`;
@@ -50,6 +68,10 @@ export async function renderFileTree(
         childUl.hidden = nowHidden;
         toggle.setAttribute("aria-expanded", String(!nowHidden));
       });
+      const checkbox = li.querySelector<HTMLInputElement>(".select-check")!;
+      checkbox.setAttribute("aria-label", `Include everything in ${child.path}/`);
+      checkbox.addEventListener("change", () => onDirCheckbox?.(child.path, checkbox.checked));
+      dirs.set(child.path, { checkbox, sizeEl: li.querySelector<HTMLSpanElement>(".dir-size")! });
 
       container.appendChild(li);
       if (++processed % RENDER_CHUNK_SIZE === 0) await yieldToMain();
@@ -59,7 +81,7 @@ export async function renderFileTree(
   }
 
   await renderNode(buildTree(entries), root);
-  return targets;
+  return { targets, dirs };
 }
 
 /**

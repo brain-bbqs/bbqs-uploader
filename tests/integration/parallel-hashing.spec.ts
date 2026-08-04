@@ -28,12 +28,12 @@ test("hashes concurrently-uploading files on separate workers, not the main thre
     { name: "c.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(6 * 1024 * 1024) },
   ]);
 
-  // Hashing starts the moment files are dropped, before "Upload" is ever clicked.
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (18 MB)");
+  await page.locator("#upload-all-btn").click();
+
+  // Hashing starts when "Upload" is clicked, fanning the batch out across pool workers.
   await expect(page.locator("[data-role='badge']").first()).toBeVisible({ timeout: 5000 });
   await expect.poll(() => workerUrls.length, { timeout: 5000 }).toBeGreaterThan(1);
-
-  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files");
-  await page.locator("#upload-all-btn").click();
 });
 
 test("fans a single multi-part file out across workers and cancels hashing via Cancel all", async ({ page }) => {
@@ -53,6 +53,7 @@ test("fans a single multi-part file out across workers and cancels hashing via C
   writeFileSync(bigPath, Buffer.alloc(64 * 1024 * 1024 + 10));
 
   await dropFile(page, bigPath);
+  await page.locator("#upload-all-btn").click();
 
   const badge = page.locator("[data-role='badge']").first();
   await expect(badge).toHaveText("Scanning", { timeout: 10000 });

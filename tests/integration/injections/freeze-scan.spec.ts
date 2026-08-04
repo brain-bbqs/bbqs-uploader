@@ -2,14 +2,16 @@ import { test, expect } from "@playwright/test";
 import { dropFile } from "../helpers/drop";
 import { seedSignedIn } from "../helpers/auth";
 
-// Exercises the "?test&freeze_scan" live test injection documented in docs/README.md: a dropped
-// file's scan must hang at its just-started state (a real scan of a tiny file finishes in
-// milliseconds), while "Cancel all" still settles the frozen job as cancelled.
+// Exercises the "?test&freeze_scan" live test injection documented in docs/README.md: a staged
+// file's scan (which starts when "Upload" is clicked) must hang at its just-started state (a real
+// scan of a tiny file finishes in milliseconds), while "Cancel all" still settles the frozen job
+// as cancelled.
 test.describe("?test&freeze_scan", () => {
-  test("pins a dropped file mid-scan indefinitely", async ({ page }) => {
+  test("pins an uploading file mid-scan indefinitely", async ({ page }) => {
     await seedSignedIn(page);
     await page.goto("/?test&freeze_scan");
     await dropFile(page, { name: "clip.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(32) });
+    await page.locator("#upload-all-btn").click();
 
     const row = page.locator("#file-list .file-item").first();
     await expect(row.locator('[data-role="badge"]')).toHaveText("Scanning");
@@ -27,6 +29,7 @@ test.describe("?test&freeze_scan", () => {
     await seedSignedIn(page);
     await page.goto("/?test&freeze_scan");
     await dropFile(page, { name: "clip.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(32) });
+    await page.locator("#upload-all-btn").click();
 
     const row = page.locator("#file-list .file-item").first();
     await expect(row.locator('[data-role="badge"]')).toHaveText("Scanning");
@@ -44,6 +47,7 @@ test.describe("?test&freeze_scan", () => {
     await seedSignedIn(page);
     await page.goto("/?test&freeze_scan");
     await dropFile(page, { name: "clip.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(32) });
+    await page.locator("#upload-all-btn").click();
 
     const row = page.locator("#file-list .file-item").first();
     await expect(row.locator('[data-role="badge"]')).toHaveText("Scanning");

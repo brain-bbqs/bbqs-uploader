@@ -327,25 +327,29 @@
         </div>
         <div id="dropzone">
           <div class="dz-inner">
-            <div class="dz-icon">
-              <span>🎥</span>
-              <span>🔬</span>
-              <span>📄</span>
-            </div>
+            <div class="dz-icon"><span>📁</span></div>
             <p>
-              Drop your research contents here, or click to browse
-              <button type="button" id="browse-files-btn" class="dz-browse">files</button>
-              or select an entire
-              <button type="button" id="browse-folder-btn" class="dz-browse">folder</button>.
+              Drop your dataset folder here, or
+              <button type="button" id="browse-folder-btn" class="dz-browse">browse for a folder</button>.
             </p>
+            <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
+            <p id="dropzone-reject" class="dz-reject" hidden></p>
           </div>
-          <input type="file" id="file-input" multiple hidden />
           <input type="file" id="folder-input" webkitdirectory multiple hidden />
         </div>
-        <div id="upload-bar" class="upload-bar" hidden>
-          <button type="button" id="upload-all-btn" class="primary">Upload</button>
-          <button type="button" id="cancel-all-btn" hidden>Cancel</button>
-          <button type="button" id="reset-all-btn" class="reset-all-btn">Reset</button>
+        <div id="folder-summary" class="folder-summary" hidden>
+          <span aria-hidden="true">📁</span>
+          <span id="folder-summary-name" class="folder-summary-name"></span>
+          <span id="folder-summary-stats" class="folder-summary-stats"></span>
+          <button type="button" id="change-folder-btn">Change folder</button>
+        </div>
+        <div id="remote-banner" class="remote-banner" hidden>
+          <span id="remote-banner-icon" aria-hidden="true"></span>
+          <div>
+            <div id="remote-banner-title" class="remote-banner-title"></div>
+            <div id="remote-banner-body" class="remote-banner-body"></div>
+          </div>
+          <button type="button" id="remote-recheck-btn" hidden>Re-check</button>
         </div>
         <div id="dest-root" class="dest-root" hidden>
           <code>sourcedata/raw/</code>
@@ -357,7 +361,32 @@
             </span>
           </span>
         </div>
+        <div id="selection-bar" hidden>
+          <div class="select-toolbar">
+            <span id="selection-summary" class="select-toolbar-summary"></span>
+            <span class="select-toolbar-actions">
+              <button type="button" id="select-all-btn" class="mini-btn">Select all</button>
+              <button type="button" id="select-none-btn" class="mini-btn">Select none</button>
+            </span>
+          </div>
+          <div class="ignore-chip-row">
+            <span>Ignoring:</span>
+            <span id="ignore-chips"></span>
+            <input
+              id="ignore-pattern-input"
+              class="ignore-pattern-input"
+              placeholder="Add pattern, e.g. *.tmp or scratch/"
+              aria-label="Add ignore pattern"
+            />
+            <button type="button" id="ignore-pattern-add" class="mini-btn">Add</button>
+          </div>
+        </div>
         <ul id="file-list"></ul>
+        <div id="upload-bar" class="upload-bar" hidden>
+          <button type="button" id="upload-all-btn" class="primary">Upload</button>
+          <button type="button" id="cancel-all-btn" hidden>Cancel</button>
+          <button type="button" id="reset-all-btn" class="reset-all-btn">Reset</button>
+        </div>
       </section>
     </main>
 

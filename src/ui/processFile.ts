@@ -21,11 +21,12 @@ export function queueFileRow(
   container: HTMLUListElement,
   file: File,
   relativePath: string,
+  withCheckbox = false,
 ): { row: FileRow; path: string } {
   const id = `file-${fileCounter++}`;
   const prefix = ["sourcedata", "raw", ...relativePath.split("/").filter(Boolean)].join("/");
   const path = sanitizePath(prefix, sanitizeFilename(file.name));
-  const row = createFileRow(container, file, id, path);
+  const row = createFileRow(container, file, id, path, withCheckbox);
   return { row, path };
 }
 

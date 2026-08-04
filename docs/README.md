@@ -4,18 +4,19 @@
 
 `npm test` runs unit tests, `npm run test:integration` runs Playwright. Paste one of these into the address bar:
 
-| URL                                    | What it should look like                                                | Try it                                                                     |
-| -------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `?test&num_datasets=0`                 | No-datasets-found message                                               | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0)                 |
-| `?test&num_datasets=1`                 | Single dataset, shown as plain text with an archive link                | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1)                 |
-| `?test&num_datasets=2`                 | Dropdown with 2 fake datasets                                           | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2)                 |
-| `?test&num_datasets=0&embargoed=false` | Same no-datasets-found message; `embargoed` is ignored with no dataset  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0&embargoed=false) |
-| `?test&num_datasets=1&embargoed=false` | Single dataset that isn't embargoed: error card, upload button disabled | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&embargoed=false) |
-| `?test&num_datasets=2&embargoed=false` | Dropdown of 2 fake datasets, neither embargoed: same error card/disable | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2&embargoed=false) |
-| `?test&num_datasets=1&human_subjects`  | Single dataset flagged as human subjects: warning banner, upload gated  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&human_subjects)  |
-| `?test&mock_upload=25`                 | A nested batch of 25 fake files, scanning then uploading                | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25)                 |
-| `?test&signed_out`                     | The page as a signed-out visitor sees it, regardless of your real state | [Open](https://upload.brain-bbqs.org/?test&signed_out)                     |
-| `?test&freeze_scan`                    | Every dropped file hangs mid-scan (badge, Cancel button, 0% figures)    | [Open](https://upload.brain-bbqs.org/?test&freeze_scan)                    |
+| URL                                     | What it should look like                                                | Try it                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `?test&num_datasets=0`                  | No-datasets-found message                                               | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0)                  |
+| `?test&num_datasets=1`                  | Single dataset, shown as plain text with an archive link                | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1)                  |
+| `?test&num_datasets=2`                  | Dropdown with 2 fake datasets                                           | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2)                  |
+| `?test&num_datasets=0&embargoed=false`  | Same no-datasets-found message; `embargoed` is ignored with no dataset  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0&embargoed=false)  |
+| `?test&num_datasets=1&embargoed=false`  | Single dataset that isn't embargoed: error card, upload button disabled | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&embargoed=false)  |
+| `?test&num_datasets=2&embargoed=false`  | Dropdown of 2 fake datasets, neither embargoed: same error card/disable | [Open](https://upload.brain-bbqs.org/?test&num_datasets=2&embargoed=false)  |
+| `?test&num_datasets=1&human_subjects`   | Single dataset flagged as human subjects: warning banner, upload gated  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&human_subjects)   |
+| `?test&mock_upload=25`                  | A nested batch of 25 fake files, scanning then uploading                | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25)                  |
+| `?test&mock_upload=25&remote_listing=8` | Same, with 8 files faked as already on the archive (one "Changed")      | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25&remote_listing=8) |
+| `?test&signed_out`                      | The page as a signed-out visitor sees it, regardless of your real state | [Open](https://upload.brain-bbqs.org/?test&signed_out)                      |
+| `?test&freeze_scan`                     | Every staged file hangs mid-scan once "Upload" is clicked               | [Open](https://upload.brain-bbqs.org/?test&freeze_scan)                     |
 
 `?test` alone (without one of the above) is a no-op that never changes anything by itself.
 
@@ -26,13 +27,15 @@ Sign-in state is untouched and nothing is written to `localStorage`, so all of t
 
 Adding `&human_subjects` to any `num_datasets` injection marks every fake dataset as containing human-subjects data (in real usage: the draft's description containing the exact phrase `CONTAINS HUMAN SUBJECTS`), so the red warning banner appears below the speed tips, and the dropzone stays hidden and the upload button disabled until "I confirm" is clicked.
 
-`mock_upload=N` queues `N` fake files (10 MB-100 GB each) nested randomly across folders and animates the Scanning bar immediately, then the Uploading bar once you click "Upload".
+`mock_upload=N` stages `N` fake files (10 MB-100 GB each) nested randomly across folders, ready for the include/exclude tree; clicking "Upload" animates the Scanning bar and then the Uploading bar.
 No bytes are read, hashed, or sent anywhere.
 While it's active, every file (including a genuinely dropped one) runs through the same simulated timers, so don't combine this with a real upload.
 
+`remote_listing=N` fabricates the "already on EMBER" check instead of asking the archive: the first `N` staged files (by path) are reported as already uploaded, with the first of them at a different size so one row shows "Changed" (and stays selected for replacement) while the rest show "Uploaded" (and start deselected). `remote_listing=0` previews the nothing-uploaded-yet banner. It needs staged files to act on, so combine it with `mock_upload=N` (or a genuinely picked folder).
+
 `signed_out` forces every auth-dependent render (the header's sign-in control, the Dataset card, upload blocking) to behave as if signed out, without ever touching `oauthTokens` or `localStorage`, so it also works while genuinely signed in.
 
-`freeze_scan` gives every dropped file a scan that never finishes: the "Scanning" badge, Cancel button, and 0% summary figures hold still indefinitely (a real scan of a small file finishes in milliseconds, too fast to look at or screenshot). "Cancel all" still cancels the frozen scans. The Chromatic file-queued snapshot uses this to capture the mid-scan state deterministically.
+`freeze_scan` gives every staged file a scan that never finishes once "Upload" is clicked (scanning starts at "Upload", not on drop): the "Scanning" badge, Cancel button, and 0% summary figures hold still indefinitely (a real scan of a small file finishes in milliseconds, too fast to look at or screenshot). "Cancel all" still cancels the frozen scans. The Chromatic file-queued snapshot uses this to capture the mid-scan state deterministically.
 
 ## Expected console noise when re-uploading
 

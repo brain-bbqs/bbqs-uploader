@@ -1,11 +1,20 @@
 # File management redesign: prototype notes
 
+> **Status: implemented.** The design below shipped in the same PR that carried these
+> prototypes. Decisions taken on the open questions at the bottom: the base folder's own name is
+> stripped from destination paths (contents land directly under `sourcedata/raw/`), one base
+> folder at a time, ignore patterns do not persist yet, already-uploaded files default to
+> deselected, hashing starts at "Upload" for the selected files only, and "Changed" detection is
+> size-only for now. One refinement over the prototypes: an empty archive listing shows no
+> per-row badges at all (badging every row "New" on a fresh dataset is noise). The production
+> selection model lives in `src/lib/selection.ts`, the archive listing client in
+> `src/lib/remote-listing.ts`, and the UI wiring in `src/main.ts`.
+
 Prototypes for the post-user-testing redesign of file selection. They live in
 `stories/prototypes/` and render under the **Prototypes/** section of Storybook
-(`npm run storybook`). All of them are story-only: no production code in `src/`
-has been touched, everything is fake data, and the interactive logic
-(`selectionTree.ts`) is a throwaway that would be rebuilt on top of
-`src/ui/fileTree.ts` with a retained model if the design lands.
+(`npm run storybook`). All of them are story-only: everything is fake data, and the interactive
+logic (`selectionTree.ts`) was a throwaway that the production version (a retained model on top
+of `src/ui/fileTree.ts`) replaced.
 
 ## What changed and why
 

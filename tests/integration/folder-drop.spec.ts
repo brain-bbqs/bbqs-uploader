@@ -18,9 +18,13 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await page.locator("#folder-input").setInputFiles(dir);
 
   // Only a.txt should surface — the .git/config file and top-level .noannex must be filtered out.
+  // The picked base folder's own name is stripped: its contents land directly under
+  // sourcedata/raw/, and the folder itself is named in the summary row instead.
   const row = page.locator("#file-list .file-item").first();
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
-  await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);
+  await expect(row).toHaveAttribute("title", "sourcedata/raw/session1/a.txt");
+  await expect(page.locator("#folder-summary-name")).toHaveText(dirName);
+  await expect(page.locator("#folder-summary-stats")).toContainText("1 file");
 
   // The slider now ranges over the total number of dropped files (1 here), and defaults to
   // revealing everything since 1 is within the default reveal count (30). The ruler's quarter
@@ -83,19 +87,19 @@ test("a folder containing an empty file still reveals every other file and the e
   await expect(page.locator("#expand-depth")).toHaveAttribute("max", "6");
 });
 
-test("the dropzone browse links open the file and folder pickers respectively", async ({ page }) => {
+test("the dropzone and its browse link both open the folder picker", async ({ page }) => {
   await seedSignedIn(page);
   await page.goto("/");
-
-  const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.locator("#browse-files-btn").click();
-  const fileChooser = await fileChooserPromise;
-  expect(await fileChooser.element().getAttribute("id")).toBe("file-input");
 
   const folderChooserPromise = page.waitForEvent("filechooser");
   await page.locator("#browse-folder-btn").click();
   const folderChooser = await folderChooserPromise;
   expect(await folderChooser.element().getAttribute("id")).toBe("folder-input");
+
+  const dropzoneChooserPromise = page.waitForEvent("filechooser");
+  await page.locator("#dropzone").click();
+  const dropzoneChooser = await dropzoneChooserPromise;
+  expect(await dropzoneChooser.element().getAttribute("id")).toBe("folder-input");
 });
 
 test("a folder with more than 30 files reveals the first 30 and truncates the rest with a placeholder", async ({

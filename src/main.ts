@@ -1,7 +1,9 @@
 import "./style.css";
 import { getElements } from "./ui/elements";
-import { initDropzone } from "./ui/dropzone";
+import { initDropzone, type AcceptedFolder } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
+import { createSelectionModel, type SelectionFile } from "./lib/selection";
+import { listRemoteFiles } from "./lib/remote-listing";
 import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
 import {
   uploadTransferReport,
@@ -10,7 +12,7 @@ import {
   type FileTransferStats,
 } from "./lib/transfer-report";
 import { renderIdentity } from "./ui/connection";
-import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT } from "./ui/fileTree";
+import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT, type DirRowEls } from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
@@ -21,7 +23,6 @@ import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
 import { containsHumanSubjects, fetchDraftMetadata } from "./lib/humanSubjects";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
 import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
-import type { DroppedFile } from "./lib/fileTree";
 import type { FileRow } from "./ui/fileRow";
 import { renderChangelogHtml, countChangelogVersions } from "./lib/changelog";
 import changelog from "../CHANGELOG.md?raw";
@@ -41,7 +42,17 @@ const hashPool = createHashPool(FILE_CONCURRENCY, checksumCache);
 const els = getElements();
 const activeUploads = new Set<AbortController>();
 const activeHashes = new Set<AbortController>();
-const pending: { file: File; row: FileRow; path: string }[] = [];
+// Which of the added files are included for upload (checkboxes, ignore patterns, and the diff
+// against what's already on the archive). "Upload" consumes the currently selected files as a
+// batch; anything left deselected can still be selected and uploaded in a later batch.
+const selection = createSelectionModel();
+const rowByFile = new Map<File, FileRow>();
+// Each rendered folder row's checkbox + size label, for tri-state/rollup refreshes.
+const dirEls = new Map<string, DirRowEls>();
+// Files added to the tree this session (drives the reveal slider's range); distinct from
+// totalFiles below, which only counts files handed to an upload batch and feeds the progress
+// summary now that hashing starts at "Upload" rather than on drop.
+let addedFiles = 0;
 let uploadBatchActive = false;
 // Counts files past their own hash job (i.e. actually transferring bytes right now), as opposed
 // to `uploadBatchActive`, which is true for the whole batch from the moment "Upload" is clicked.
@@ -57,12 +68,13 @@ let activeUploadTransfers = 0;
 let mockMode = false;
 
 // "Cancel all" is offered whenever there's background work to stop: an upload batch in progress,
-// or files still hashing (which starts on drop, before "Upload" is ever clicked).
+// or files still hashing.
 function updateCancelAllVisibility(): void {
   els.cancelAllBtn.hidden = !uploadBatchActive && activeHashes.size === 0;
 }
 
-// Hashing starts the moment a file is dropped, not when "Upload" is clicked.
+// Hashing starts when "Upload" is clicked, for the selected files only — scanning a large folder
+// the user intends to mostly exclude shouldn't cost hours of disk reads up front.
 const hashJobs = new Map<File, HashJob>();
 
 // Per-file checksum/upload timing, snapshotted into a transfer-<timestamp>.json report asset
@@ -447,7 +459,7 @@ const EXPAND_MINOR_TICKS = 20;
 const EXPAND_LABEL_STOPS = 4;
 
 function updateExpandDepthRange(): void {
-  els.expandDepthInput.max = String(totalFiles);
+  els.expandDepthInput.max = String(addedFiles);
   const ruler: HTMLSpanElement[] = [];
   for (let i = 0; i <= EXPAND_MINOR_TICKS; i++) {
     const tick = document.createElement("span");
@@ -458,12 +470,12 @@ function updateExpandDepthRange(): void {
   // Deduped so a small drop doesn't repeat the same rounded number; each label sits at the track
   // position its value actually maps to.
   const values = new Set(
-    Array.from({ length: EXPAND_LABEL_STOPS + 1 }, (_, i) => Math.round((i * totalFiles) / EXPAND_LABEL_STOPS)),
+    Array.from({ length: EXPAND_LABEL_STOPS + 1 }, (_, i) => Math.round((i * addedFiles) / EXPAND_LABEL_STOPS)),
   );
   for (const v of values) {
     const label = document.createElement("span");
     label.className = "tick-label";
-    label.style.left = totalFiles > 0 ? `${(v / totalFiles) * 100}%` : "0%";
+    label.style.left = addedFiles > 0 ? `${(v / addedFiles) * 100}%` : "0%";
     label.textContent = String(v);
     ruler.push(label);
   }
@@ -807,48 +819,257 @@ function updateViewDatasetLink(): void {
 }
 
 function updateUploadBar(): void {
+  const s = selection.summary();
   els.uploadBar.hidden = els.fileList.children.length === 0;
-  els.uploadAllBtn.hidden = pending.length === 0;
-  els.uploadAllBtn.textContent = `Upload ${pending.length} file${pending.length === 1 ? "" : "s"}`;
+  els.uploadAllBtn.hidden = s.selectedFiles === 0;
+  els.uploadAllBtn.textContent = `Upload ${s.selectedFiles} file${s.selectedFiles === 1 ? "" : "s"} (${humanSize(s.selectedBytes)})`;
 }
 
-// How many files to queue (create a row + start hashing) per animation frame. Doing this for an
-// entire large folder in one synchronous loop would block the browser from painting until it's
-// done, on top of the tree render itself.
+// Reflects one file's selection state onto its row: checkbox, dimming, and the badge/status pair
+// describing how it compares to the archive. Consumed rows are left alone — from the moment a
+// file joins an upload batch, the scanning/uploading pipeline owns its badge and status.
+function applyRowAppearance(f: SelectionFile): void {
+  const row = rowByFile.get(f.file);
+  if (!row?.checkbox) return;
+  if (f.consumed) {
+    row.checkbox.disabled = true;
+    row.el.classList.remove("deselected", "ignored");
+    return;
+  }
+  if (f.ignoredBy !== null) {
+    row.el.classList.add("deselected", "ignored");
+    row.checkbox.checked = false;
+    row.checkbox.disabled = true;
+    row.checkbox.title = `Excluded by ignore pattern "${f.ignoredBy}"`;
+    row.setBadge("Ignored", "mute");
+    row.setStatus("");
+    return;
+  }
+  row.checkbox.disabled = false;
+  row.checkbox.title = "";
+  row.checkbox.checked = f.checked;
+  row.el.classList.toggle("deselected", !f.checked);
+  row.el.classList.remove("ignored");
+  if (f.remote === "uploaded") {
+    row.setBadge("Uploaded", "ok");
+    row.setStatus(f.checked ? "will replace" : "already on EMBER", f.checked ? "warn" : "");
+  } else if (f.remote === "changed") {
+    row.setBadge("Changed", "warn");
+    row.setStatus(f.checked ? "will replace" : "differs on EMBER", f.checked ? "warn" : "");
+  } else if (selection.hasRemote()) {
+    row.setBadge("New", "upload");
+    row.setStatus("");
+  } else {
+    row.hideBadge();
+    row.setStatus("");
+  }
+}
+
+// Refreshes everything derived from the selection: folder tri-states and size rollups, the
+// summary line, and the Upload button's live count.
+function refreshSelectionUI(): void {
+  const aggregates = selection.dirAggregates();
+  for (const [dirPath, dir] of dirEls) {
+    const agg = aggregates.get(dirPath);
+    if (!agg) continue;
+    dir.checkbox.checked = agg.selectable > 0 && agg.selected === agg.selectable;
+    dir.checkbox.indeterminate = agg.selected > 0 && agg.selected < agg.selectable;
+    dir.checkbox.disabled = agg.selectable === 0;
+    dir.sizeEl.textContent =
+      agg.selectable === 0
+        ? humanSize(agg.allBytes)
+        : agg.selected === agg.selectable
+          ? humanSize(agg.selectableBytes)
+          : `${humanSize(agg.selectedBytes)} of ${humanSize(agg.selectableBytes)}`;
+  }
+  const s = selection.summary();
+  const filesStrong = document.createElement("strong");
+  filesStrong.textContent = `${s.selectedFiles} of ${s.totalFiles} file${s.totalFiles === 1 ? "" : "s"}`;
+  const bytesStrong = document.createElement("strong");
+  bytesStrong.textContent = humanSize(s.selectedBytes);
+  els.selectionSummary.replaceChildren(filesStrong, " selected, ", bytesStrong, ` of ${humanSize(s.totalBytes)}`);
+  updateUploadBar();
+  updateUploadGate();
+}
+
+function refreshAllRows(): void {
+  for (const f of selection.files()) applyRowAppearance(f);
+}
+
+function renderIgnoreChips(): void {
+  els.ignoreChips.replaceChildren(
+    ...selection.patterns().map((pattern) => {
+      const chip = document.createElement("span");
+      chip.className = "ignore-chip";
+      const text = document.createElement("span");
+      text.textContent = pattern;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "✕";
+      remove.setAttribute("aria-label", `Stop ignoring ${pattern}`);
+      remove.addEventListener("click", () => {
+        setIgnorePatterns(selection.patterns().filter((p) => p !== pattern));
+      });
+      chip.append(text, remove);
+      return chip;
+    }),
+  );
+}
+
+function setIgnorePatterns(patterns: string[]): void {
+  selection.setPatterns(patterns);
+  renderIgnoreChips();
+  refreshAllRows();
+  refreshSelectionUI();
+}
+
+function addIgnorePatternFromInput(): void {
+  const value = els.ignorePatternInput.value.trim();
+  if (!value || selection.patterns().includes(value)) return;
+  els.ignorePatternInput.value = "";
+  setIgnorePatterns([...selection.patterns(), value]);
+}
+
+// ---- "Already on EMBER" check -------------------------------------------------------------
+// Fetched once files are staged (and re-fetched on dataset switch or "Re-check"): what already
+// exists under sourcedata/raw/ in the selected dataset's draft, folded into the tree as
+// Uploaded/Changed/New badges, with already-uploaded files deselected.
+
+let remoteCheckSeq = 0;
+
+type RemoteBannerState = { kind: "checking" } | { kind: "checked"; files: number; bytes: number } | { kind: "failed" };
+
+function renderRemoteBanner(state: RemoteBannerState | null): void {
+  els.remoteBanner.hidden = state === null;
+  if (!state) return;
+  els.remoteBanner.classList.toggle("checked", state.kind === "checked");
+  els.remoteBanner.classList.toggle("failed", state.kind === "failed");
+  els.remoteRecheckBtn.hidden = state.kind === "checking";
+  if (state.kind === "checking") {
+    els.remoteBannerIcon.className = "remote-banner-spinner";
+    els.remoteBannerIcon.textContent = "";
+    els.remoteBannerTitle.textContent = "Checking EMBER…";
+    els.remoteBannerBody.innerHTML = "Listing what is already under <code>sourcedata/raw/</code> in this dataset.";
+  } else if (state.kind === "failed") {
+    els.remoteBannerIcon.className = "";
+    els.remoteBannerIcon.textContent = "⚠️";
+    els.remoteBannerTitle.textContent = "Couldn't check what's already on EMBER";
+    els.remoteBannerBody.textContent = "Everything below is treated as new; re-check to try again.";
+  } else if (state.files === 0) {
+    els.remoteBannerIcon.className = "";
+    els.remoteBannerIcon.textContent = "☁️";
+    els.remoteBannerTitle.textContent = "Nothing uploaded yet";
+    els.remoteBannerBody.innerHTML = "<code>sourcedata/raw/</code> is empty in this dataset, so everything is new.";
+  } else {
+    els.remoteBannerIcon.className = "";
+    els.remoteBannerIcon.textContent = "☁️";
+    els.remoteBannerTitle.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
+    els.remoteBannerBody.innerHTML =
+      "Matching files under <code>sourcedata/raw/</code> are deselected below; re-check one to replace its uploaded copy.";
+  }
+}
+
+// Debug-only escape hatch for previewing the "already on EMBER" diff without a real dataset:
+// "?test&remote_listing=N" fabricates a listing that marks the first N staged files (by path) as
+// already uploaded, with the first of them reporting a different size so one row shows
+// "Changed" — see docs/README.md.
+function readTestRemoteListingCount(): number | null {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("remote_listing");
+  if (!params.has("test") || raw === null) return null;
+  const count = Math.floor(Number(raw) || 0);
+  return count >= 0 ? count : null;
+}
+
+function applyRemoteListing(listing: Map<string, number>): void {
+  selection.applyRemote(listing);
+  refreshAllRows();
+  refreshSelectionUI();
+  let bytes = 0;
+  for (const size of listing.values()) bytes += size;
+  renderRemoteBanner({ kind: "checked", files: listing.size, bytes });
+}
+
+async function refreshRemoteListing(): Promise<void> {
+  if (selection.files().length === 0) return;
+  const seq = ++remoteCheckSeq;
+  const testCount = readTestRemoteListingCount();
+  if (testCount !== null) {
+    const paths = selection
+      .files()
+      .map((f) => ({ path: f.path, size: f.file.size }))
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .slice(0, testCount);
+    applyRemoteListing(new Map(paths.map((p, i) => [p.path, i === 0 ? p.size + 1 : p.size])));
+    return;
+  }
+  const cfg = currentConfig();
+  if (!isSignedIn() || !cfg.dandisetId) {
+    renderRemoteBanner(null);
+    return;
+  }
+  renderRemoteBanner({ kind: "checking" });
+  try {
+    await ensureFreshOAuth();
+    const listing = await listRemoteFiles(currentConfig());
+    if (seq !== remoteCheckSeq) return;
+    applyRemoteListing(listing);
+  } catch (e) {
+    if (seq !== remoteCheckSeq) return;
+    console.warn("Could not list the dataset's existing sourcedata/raw/ contents:", e);
+    renderRemoteBanner({ kind: "failed" });
+  }
+}
+
+// How many files to queue (create a row + register selection state) per animation frame. Doing
+// this for an entire large folder in one synchronous loop would block the browser from painting
+// until it's done, on top of the tree render itself.
 const ADD_FILES_CHUNK_SIZE = 200;
 
-async function addFiles(entries: DroppedFile[]): Promise<void> {
-  const isFirstBatch = totalFiles === 0;
-  if (isFirstBatch) sessionStartedAt = new Date().toISOString();
-  totalFiles += entries.length;
+async function addFiles(folder: AcceptedFolder): Promise<void> {
+  const entries = folder.entries;
+  const isFirstBatch = addedFiles === 0;
+  addedFiles += entries.length;
   updateExpandDepthRange();
   if (isFirstBatch) {
-    els.expandDepthInput.value = String(Math.min(DEFAULT_REVEAL_COUNT, totalFiles));
+    els.expandDepthInput.value = String(Math.min(DEFAULT_REVEAL_COUNT, addedFiles));
     updateExpandBubble();
   }
 
-  const targets = await renderFileTree(els.fileList, entries);
+  const rendered = await renderFileTree(els.fileList, entries, (dirPath, checked) => {
+    for (const f of selection.setSubtreeChecked(dirPath, checked)) applyRowAppearance(f);
+    refreshSelectionUI();
+  });
+  for (const [dirPath, dir] of rendered.dirs) dirEls.set(dirPath, dir);
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
-    const container = targets.get(entry.file) ?? els.fileList;
-    const { row, path } = queueFileRow(container, entry.file, entry.relativePath);
+    const container = rendered.targets.get(entry.file) ?? els.fileList;
+    const { row, path } = queueFileRow(container, entry.file, entry.relativePath, true);
     // Rows start hidden; the reveal pass below decides which ones the slider's budget covers.
     row.el.hidden = true;
-    pending.push({ file: entry.file, row, path });
-    fileStats.set(entry.file, { path, sizeBytes: entry.file.size, checksum: null, upload: null, status: "pending" });
-    totalBytes += entry.file.size;
-    startHashing(entry.file, row, entry.relativePath);
+    rowByFile.set(entry.file, row);
+    const selected = selection.add(entry.file, entry.relativePath, path);
+    row.checkbox?.addEventListener("change", () => {
+      selection.setChecked(entry.file, row.checkbox!.checked);
+      applyRowAppearance(selected);
+      refreshSelectionUI();
+    });
+    applyRowAppearance(selected);
     if ((i + 1) % ADD_FILES_CHUNK_SIZE === 0) await yieldToMain();
   }
   setRevealCount(els.fileList, Number(els.expandDepthInput.value));
 
-  const hasFiles = els.fileList.children.length > 0;
-  els.destRoot.hidden = !hasFiles;
-  els.progressSummary.hidden = !hasFiles;
+  const totalStagedBytes = selection.summary().totalBytes;
+  els.folderSummaryName.textContent = folder.folderName || "Selected folder";
+  els.folderSummaryStats.textContent = `${addedFiles} file${addedFiles === 1 ? "" : "s"}, ${humanSize(totalStagedBytes)}`;
+  els.folderSummary.hidden = els.fileList.children.length === 0;
+  els.destRoot.hidden = els.fileList.children.length === 0;
+  els.selectionBar.hidden = els.fileList.children.length === 0;
+  renderIgnoreChips();
   updateDropzoneVisibility();
   updateUploadCardVisibility();
-  updateProgressSummary();
-  updateUploadBar();
+  refreshSelectionUI();
+  void refreshRemoteListing();
 }
 
 async function startUpload(): Promise<void> {
@@ -856,10 +1077,37 @@ async function startUpload(): Promise<void> {
   // this only matters if startUpload is somehow triggered anyway.
   if (uploadBlocked()) return;
   await ensureFreshOAuth();
-  const batch = pending.splice(0, pending.length);
-  updateUploadBar();
+  const selectedBatch = selection.consumeSelected();
+  if (!selectedBatch.length) return;
+  if (sessionStartedAt === null) sessionStartedAt = new Date().toISOString();
+  // Captured now because a Reset clicked mid-batch nulls the module-level field; the report at
+  // the end of this batch should still carry the value this batch actually started with.
+  const batchSessionStartedAt = sessionStartedAt;
+  const batch: { file: File; row: FileRow; path: string }[] = [];
+  for (const f of selectedBatch) {
+    const row = rowByFile.get(f.file);
+    if (!row) continue;
+    applyRowAppearance(f);
+    row.setStatus("");
+    fileStats.set(f.file, {
+      path: f.path,
+      sizeBytes: f.file.size,
+      checksum: null,
+      upload: null,
+      status: "pending",
+    });
+    totalFiles++;
+    totalBytes += f.file.size;
+    // Hashing for the whole batch starts here, up front: the hash pool bounds concurrency
+    // itself, and the per-file upload queue below awaits each file's own job.
+    startHashing(f.file, row, f.relativePath);
+    batch.push({ file: f.file, row, path: f.path });
+  }
+  els.progressSummary.hidden = false;
+  refreshSelectionUI();
   uploadBatchActive = true;
   updateCancelAllVisibility();
+  updateProgressSummary();
   const cfg = currentConfig();
 
   await runQueue(batch, FILE_CONCURRENCY, async ({ file, row, path }) => {
@@ -925,7 +1173,7 @@ async function startUpload(): Promise<void> {
     const report: TransferReport = {
       schemaVersion: TRANSFER_REPORT_SCHEMA_VERSION,
       dandisetId: cfg.dandisetId,
-      sessionStartedAt: sessionStartedAt ?? new Date().toISOString(),
+      sessionStartedAt: batchSessionStartedAt,
       updatedAt: new Date().toISOString(),
       summary: {
         totalBytes,
@@ -951,14 +1199,24 @@ async function startUpload(): Promise<void> {
 function resetUploader(): void {
   for (const controller of activeHashes) controller.abort();
   for (const controller of activeUploads) controller.abort();
-  pending.length = 0;
   hashJobs.clear();
   lastHashBytes.clear();
   lastUploadBytes.clear();
   fileStats.clear();
+  selection.clear();
+  rowByFile.clear();
+  dirEls.clear();
+  remoteCheckSeq++; // discard any in-flight listing so it can't apply to the next folder
   sessionStartedAt = null;
   els.fileList.replaceChildren();
+  els.folderSummary.hidden = true;
+  els.selectionBar.hidden = true;
+  els.ignorePatternInput.value = "";
+  renderIgnoreChips();
+  renderRemoteBanner(null);
+  els.dropzoneReject.hidden = true;
 
+  addedFiles = 0;
   totalFiles = 0;
   totalBytes = 0;
   hashDoneBytes = 0;
@@ -1020,18 +1278,40 @@ if (callbackTokens) {
   saveSettings();
 }
 renderAuthUI();
-initDropzone(els, (entries) => {
-  void addFiles(entries);
+initDropzone(els, (folder) => {
+  void addFiles(folder);
 });
 const mockUploadCount = readTestMockUploadCount();
 if (mockUploadCount !== null) {
   mockMode = true;
-  void addFiles(generateMockDroppedFiles(mockUploadCount));
+  void addFiles({ folderName: "mock-dataset", entries: generateMockDroppedFiles(mockUploadCount) });
 }
 els.dandisetId.addEventListener("change", () => {
   updateUploadGate();
   void refreshHumanSubjectsGate();
   runConnectionCheck();
+  // A different dataset holds different contents; the staged tree's diff must follow it.
+  void refreshRemoteListing();
+});
+els.changeFolderBtn.addEventListener("click", () => {
+  resetUploader();
+  els.folderInput.click();
+});
+els.remoteRecheckBtn.addEventListener("click", () => void refreshRemoteListing());
+els.selectAllBtn.addEventListener("click", () => {
+  for (const f of selection.setSubtreeChecked("", true)) applyRowAppearance(f);
+  refreshSelectionUI();
+});
+els.selectNoneBtn.addEventListener("click", () => {
+  for (const f of selection.setSubtreeChecked("", false)) applyRowAppearance(f);
+  refreshSelectionUI();
+});
+els.ignorePatternAddBtn.addEventListener("click", addIgnorePatternFromInput);
+els.ignorePatternInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addIgnorePatternFromInput();
+  }
 });
 els.humanSubjectsConfirmBtn.addEventListener("click", () => {
   confirmedHumanSubjects.add(els.dandisetId.value);

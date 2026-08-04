@@ -15,7 +15,7 @@ function toggleByName(root: HTMLUListElement, name: string): HTMLButtonElement {
 // Mirrors what main.ts does after renderFileTree: append one (initially hidden) file row per
 // entry into the <ul> the tree render assigned it.
 async function renderWithRows(root: HTMLUListElement, entries: DroppedFile[]): Promise<void> {
-  const targets = await renderFileTree(root, entries);
+  const { targets } = await renderFileTree(root, entries);
   for (const entry of entries) {
     const li = document.createElement("li");
     li.className = "file-item";
@@ -47,9 +47,27 @@ describe("renderFileTree", () => {
   it("places top-level (non-nested) files directly in the root list, no dir wrapper", async () => {
     const root = document.createElement("ul");
     const entries: DroppedFile[] = [{ file: fakeFile("a.txt"), relativePath: "" }];
-    const targets = await renderFileTree(root, entries);
+    const { targets } = await renderFileTree(root, entries);
     expect(targets.get(entries[0].file)).toBe(root);
     expect(root.querySelectorAll(".dir-item")).toHaveLength(0);
+  });
+
+  it("gives every folder row an include checkbox that reports its path on toggle", async () => {
+    const root = document.createElement("ul");
+    const toggled: [string, boolean][] = [];
+    const { dirs } = await renderFileTree(
+      root,
+      [{ file: fakeFile("deep.txt"), relativePath: "outer/inner" }],
+      (dirPath, checked) => toggled.push([dirPath, checked]),
+    );
+
+    expect(Array.from(dirs.keys()).sort()).toEqual(["outer", "outer/inner"]);
+    const inner = dirs.get("outer/inner")!;
+    expect(inner.checkbox.checked).toBe(true);
+    inner.checkbox.checked = false;
+    inner.checkbox.dispatchEvent(new Event("change"));
+    expect(toggled).toEqual([["outer/inner", false]]);
+    expect(inner.sizeEl.textContent).not.toBe("");
   });
 
   it("always renders folder rows expanded, no matter how many files they hold", async () => {

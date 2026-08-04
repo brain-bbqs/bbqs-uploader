@@ -382,6 +382,215 @@ ul.human-subjects-body {
   text-decoration: underline;
   cursor: pointer;
 }
+.dz-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.dz-reject {
+  margin: 0.85rem auto 0;
+  max-width: 26rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: var(--err-soft);
+  color: var(--err);
+  font-size: 0.85rem;
+}
+
+/* Compact summary of the accepted base folder, shown in the dropzone's place once one is picked. */
+.folder-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 0.9rem;
+}
+.folder-summary-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folder-summary-stats {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.folder-summary > button {
+  margin-left: auto;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Banner reporting what already exists under sourcedata/raw/ in the selected dataset. */
+.remote-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.remote-banner.checked {
+  background: var(--ok-soft);
+}
+.remote-banner.failed {
+  background: var(--warn-soft);
+}
+.remote-banner-title {
+  font-weight: 600;
+}
+.remote-banner-body {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.remote-banner > button {
+  margin-left: auto;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.remote-banner-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.15rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: remote-banner-spin 0.8s linear infinite;
+}
+@keyframes remote-banner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .remote-banner-spinner {
+    animation: none;
+  }
+}
+
+/* Selection summary + bulk actions + ignore-pattern chips above the file tree. */
+.select-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.select-toolbar-summary strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.select-toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+}
+.mini-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+}
+.ignore-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+/* The chips container is a plain span purely for element lookup; its chips lay out as flex
+   items of the row itself. */
+#ignore-chips {
+  display: contents;
+}
+.ignore-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.25rem 0.1rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+.ignore-chip > button {
+  border: none;
+  background: none;
+  padding: 0 0.25rem;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9em;
+  line-height: 1;
+}
+.ignore-chip > button:hover {
+  color: var(--err);
+}
+.ignore-pattern-input {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  min-width: 13rem;
+}
+.ignore-pattern-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Include checkboxes shared by folder and file rows. */
+.select-check {
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.select-check:disabled {
+  cursor: not-allowed;
+}
+/* Folder rows: the checkbox sits beside the existing full-width .dir-toggle button (a checkbox
+   can't live inside a <button>), so a flex wrapper recreates the one-line row. */
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-left: 0.3rem;
+}
+.dir-row > .dir-toggle {
+  flex: 1;
+  min-width: 0;
+}
+/* Deselected or pattern-ignored rows stay visible but recede. */
+.file-item.deselected > .file-name,
+.file-item.deselected > .file-size,
+.file-item.deselected > .file-status {
+  opacity: 0.45;
+}
+.file-item.ignored > .file-name {
+  font-style: italic;
+}
+/* Neutral badge for pattern-ignored files (the other badge kinds are all "activity" colors). */
+.badge.mute {
+  background: var(--border);
+  color: var(--muted);
+}
 
 .oauth-row {
   display: flex;

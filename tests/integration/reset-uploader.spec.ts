@@ -40,7 +40,7 @@ test("Reset mid-upload does not log an error and leaves the uploader empty", asy
     })),
   );
 
-  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 6 files");
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 6 files (192 B)");
   await page.locator("#upload-all-btn").click();
   await expect(page.locator("#cancel-all-btn")).toBeVisible();
 
@@ -59,5 +59,5 @@ test("Reset mid-upload does not log an error and leaves the uploader empty", asy
 
   // The uploader is still usable afterward: a fresh drop queues cleanly.
   await dropFile(page, { name: "after-reset.mp4", mimeType: "video/mp4", buffer: Buffer.alloc(32) });
-  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file");
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file (32 B)");
 });
