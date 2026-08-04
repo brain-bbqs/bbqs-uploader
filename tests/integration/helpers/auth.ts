@@ -3,6 +3,7 @@ import { STORAGE_KEY } from "../../../src/lib/settings";
 import { EMBER_INSTANCE } from "../../../src/lib/instances";
 
 export const API = EMBER_INSTANCE.api;
+const ADMIN_CHECK_BASE_URL = "https://uploader-codycbakerphd.pythonanywhere.com";
 
 /**
  * Seeds an already-signed-in OAuth session (localStorage) before the page's own script runs, and
@@ -44,6 +45,12 @@ export async function seedSignedIn(
   // this by registering their own route for the same URL after this call.
   await page.route(`${API}/dandisets/${identifier}/versions/draft/`, (route: Route) =>
     route.fulfill({ json: { name: title, description: "A test dataset." } }),
+  );
+  // The "Incoming: " picker only keeps dandisets the admin-check service reports as admin-owned;
+  // a benign default keeps unrelated tests off that check. Tests exercising it directly override
+  // this by registering their own route for the same URL after this call.
+  await page.route(`${ADMIN_CHECK_BASE_URL}/admin-owned/${identifier}`, (route: Route) =>
+    route.fulfill({ json: { adminOwned: true } }),
   );
   // The "already on EMBER" check lists existing sourcedata/raw/ assets once files are staged; an
   // empty listing keeps unrelated tests off the network. Matched against the listing request's
