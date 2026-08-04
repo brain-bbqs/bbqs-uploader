@@ -4,6 +4,7 @@ import { EMBER_INSTANCE } from "../../../src/lib/instances";
 import { seedTheme } from "../helpers/theme";
 
 const API = EMBER_INSTANCE.api;
+const ADMIN_CHECK_BASE_URL = "https://uploader-codycbakerphd.pythonanywhere.com";
 
 // With more than one incoming dataset the picker is a dropdown, and its options should always be
 // ranked by ascending integer dandiset id -- regardless of the order the archive's API returns
@@ -35,6 +36,11 @@ test.describe("dataset dropdown ordering", () => {
         },
       }),
     );
+    for (const identifier of ["000100", "000200", "000300"]) {
+      await page.route(`${ADMIN_CHECK_BASE_URL}/admin-owned/${identifier}`, (route) =>
+        route.fulfill({ json: { adminOwned: true } }),
+      );
+    }
   });
 
   test("ranks dropdown options by ascending integer id", async ({ page }) => {
