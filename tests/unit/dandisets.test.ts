@@ -19,8 +19,9 @@ function stubFetch(listResults: unknown[], adminOwnedByIdentifier: Record<string
       if (url.includes("/dandisets/?user=me")) {
         return { ok: true, json: async () => ({ results: listResults }) };
       }
-      const match = new RegExp(`^${ADMIN_CHECK_BASE_URL}/admin-owned/([^/]+)$`).exec(url);
-      const identifier = match?.[1] ?? "";
+      const identifier = url.startsWith(`${ADMIN_CHECK_BASE_URL}/admin-owned/`)
+        ? url.slice(`${ADMIN_CHECK_BASE_URL}/admin-owned/`.length)
+        : "";
       return { ok: true, json: async () => ({ adminOwned: adminOwnedByIdentifier[identifier] ?? false }) };
     }),
   );
