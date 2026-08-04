@@ -35,6 +35,11 @@ test.describe("dataset dropdown ordering", () => {
         },
       }),
     );
+    for (const identifier of ["000100", "000200", "000300"]) {
+      await page.route(`${API}/dandisets/${identifier}/users/`, (route) =>
+        route.fulfill({ json: [{ username: "rhingo" }] }),
+      );
+    }
   });
 
   test("ranks dropdown options by ascending integer id", async ({ page }) => {

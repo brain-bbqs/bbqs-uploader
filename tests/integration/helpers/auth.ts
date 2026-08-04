@@ -45,4 +45,10 @@ export async function seedSignedIn(
   await page.route(`${API}/dandisets/${identifier}/versions/draft/`, (route: Route) =>
     route.fulfill({ json: { name: title, description: "A test dataset." } }),
   );
+  // The "Incoming: " picker only keeps dandisets a BBQS/EMBER admin also owns; a benign
+  // admin-owned default keeps unrelated tests off that check. Tests exercising it directly
+  // override this by registering their own route for the same URL after this call.
+  await page.route(`${API}/dandisets/${identifier}/users/`, (route: Route) =>
+    route.fulfill({ json: [{ username: "rhingo" }] }),
+  );
 }
