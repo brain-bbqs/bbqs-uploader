@@ -45,6 +45,27 @@ Also keep an eye on:
   runtime dependency is something that could be compromised upstream and ship
   code that reads `localStorage`; don't add one without a reason.
 
+## The admin-owned dandiset check sends the live OAuth token to a third party
+
+`src/lib/dandisets.ts`'s `listIncomingDandisets` calls a companion service
+(not part of this repo, currently hosted on PythonAnywhere) to check whether
+a BBQS/EMBER admin co-owns an "Incoming: " dandiset, forwarding the
+signed-in user's live DANDI OAuth access token in the `Authorization`
+header on every load of the picker.
+
+This is a real, deliberate expansion of the trust boundary: previously the
+token only ever went to DANDI itself. Now it also goes to a third-party host
+this repo doesn't control. If that host is compromised, misconfigured, or
+just logs request headers by default, a live token capable of acting as the
+signed-in user leaks. Before pointing this at a different or newly-deployed
+instance of that service, confirm it does not log the `Authorization` header
+or the token it extracts from it, and that it's served over HTTPS.
+
+This is also not a hard access-control boundary even when working correctly:
+real upload authorization is still enforced entirely by DANDI's own dandiset
+ownership permissions. The service's `adminOwned` answer only curates what
+this app's picker shows; it grants no capability on its own.
+
 ## Google Analytics
 
 `index.html` loads GA (`gtag.js`, measurement ID `G-8W96QLN0W8`) gated behind
