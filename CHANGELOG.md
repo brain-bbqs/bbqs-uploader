@@ -4,7 +4,7 @@
 
 #### 🐛 Bug Fix
 
-- Fixed the "Incoming: " dataset picker treating any dandiset the signed-in user owns as a valid upload target: it now also requires that a BBQS/EMBER admin is a listed owner of that dandiset, checked via a companion admin-check service, so a DANDI user can no longer self-provision an "Incoming: " titled dataset to use this tool unsupervised. This is a soft workflow filter, not a hard security boundary, since real upload authorization is still enforced by DANDI's own ownership permissions ([#64](https://github.com/brain-bbqs/bbqs-uploader/pull/64))
+- Fixed the "Incoming: " dataset picker treating any dandiset the signed-in user owns as a valid upload target: it now also requires that a BBQS/EMBER admin is a listed owner of that dandiset, checked via a companion admin-check service, so a DANDI user can no longer self-provision an "Incoming: " titled dataset to use this tool unsupervised. This is a soft workflow filter, not a hard security boundary, since real upload authorization is still enforced by DANDI's own ownership permissions ([#65](https://github.com/brain-bbqs/bbqs-uploader/pull/65))
 
 ## 1.0.8
 

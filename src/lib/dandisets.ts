@@ -23,7 +23,7 @@ const INCOMING_PREFIX = "Incoming: ";
 /**
  * A small companion service (not part of this repo) that holds the real BBQS/EMBER admin roster
  * server-side and answers only "yes/no" per dandiset, so the roster itself never ships to the
- * browser. See https://github.com/brain-bbqs/bbqs-uploader/pull/64 for context on why this
+ * browser. See https://github.com/brain-bbqs/bbqs-uploader/pull/65 for context on why this
  * replaced an earlier client-side, hashed-username approach: hashing a small, semi-public
  * username space doesn't actually keep it confidential, only a server-side check does.
  */
