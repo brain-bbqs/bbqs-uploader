@@ -15,12 +15,6 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 `)){let e=r.trim();e&&(e.startsWith(`#### `)?(n&&=(t+=`</ul>`,!1),t+=`<h4>${Yt(e.slice(5))}</h4>`):e.startsWith(`- `)?(n||=(t+=`<ul>`,!0),t+=`<li>${Yt(e.slice(2))}</li>`):(n&&=(t+=`</ul>`,!1),t+=`<p>${Yt(e)}</p>`))}return n&&(t+=`</ul>`),t}function Zt(e){return e.split(/^## /m).length-1}function Qt(e,t=3){return e.split(/^## /m).slice(1,t+1).map(e=>{let t=e.indexOf(`
 `),n=(t===-1?e:e.slice(0,t)).trim(),r=t===-1?``:e.slice(t+1);return`<section class="changelog-version"><h3>${Jt(n)}</h3>${Xt(r)}</section>`}).join(``)}var $t=`# Changelog
 
-## 1.0.9
-
-#### 🐛 Bug Fix
-
-- Fixed the "Incoming: " dataset picker treating any dandiset the signed-in user owns as a valid upload target: it now also requires that a BBQS/EMBER admin is a listed owner of that dandiset, checked via a companion admin-check service, so a DANDI user can no longer self-provision an "Incoming: " titled dataset to use this tool unsupervised. This is a soft workflow filter, not a hard security boundary, since real upload authorization is still enforced by DANDI's own ownership permissions ([#65](https://github.com/brain-bbqs/bbqs-uploader/pull/65))
-
 ## 1.0.8
 
 #### 🚀 Enhancement
