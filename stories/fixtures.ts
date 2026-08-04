@@ -1,7 +1,7 @@
-// Deterministic fake data shared by the file-management redesign prototypes. Unlike
-// src/lib/mockUpload.ts's random generator, everything here is fixed so stories render
-// identically on every visit (and in visual snapshots).
-import type { DroppedFile } from "../../src/lib/fileTree";
+// Deterministic fake data shared by the file-selection stories. Unlike src/lib/mockUpload.ts's
+// random generator, everything here is fixed so stories render identically on every visit (and
+// in visual snapshots).
+import type { DroppedFile } from "../src/lib/fileTree";
 
 const KB = 1024;
 const MB = 1024 * KB;
@@ -44,27 +44,18 @@ export function localFolderFixture(): DroppedFile[] {
   }));
 }
 
-export interface RemoteFile {
-  /** Path relative to sourcedata/raw/, forward-slash joined, including the filename. */
-  path: string;
-  size: number;
-}
-
 /**
- * What the archive already holds under sourcedata/raw/: the first sub-01 session plus the
- * top-level metadata file, with one file (camera-side.mp4) whose size no longer matches the
- * local copy so the "Changed" state has something to show.
+ * What the archive already holds under sourcedata/raw/, keyed by full archive path (the shape
+ * src/lib/remote-listing.ts returns): the first sub-01 session plus the top-level metadata file,
+ * with one file (camera-side.mp4) whose size no longer matches the local copy so the "Changed"
+ * state has something to show.
  */
-export function remoteListingFixture(): RemoteFile[] {
-  return [
-    { path: "dataset_description.json", size: 2 * KB },
-    { path: "sub-01/ses-20250110/videos/camera-top.mp4", size: 48 * GB },
-    { path: "sub-01/ses-20250110/videos/camera-side.mp4", size: 44 * GB },
-    { path: "sub-01/ses-20250110/audio/mic-array.wav", size: 3 * GB + 200 * MB },
-    { path: "sub-01/ses-20250110/events.csv", size: 240 * KB },
-  ];
-}
-
-export function remoteListingAsMap(listing: RemoteFile[]): Map<string, number> {
-  return new Map(listing.map((f) => [f.path, f.size]));
+export function remoteListingFixture(): Map<string, number> {
+  return new Map([
+    ["sourcedata/raw/dataset_description.json", 2 * KB],
+    ["sourcedata/raw/sub-01/ses-20250110/videos/camera-top.mp4", 48 * GB],
+    ["sourcedata/raw/sub-01/ses-20250110/videos/camera-side.mp4", 44 * GB],
+    ["sourcedata/raw/sub-01/ses-20250110/audio/mic-array.wav", 3 * GB + 200 * MB],
+    ["sourcedata/raw/sub-01/ses-20250110/events.csv", 240 * KB],
+  ]);
 }
