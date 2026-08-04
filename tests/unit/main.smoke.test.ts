@@ -11,10 +11,12 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 function bodyFromIndexHtml(): string {
   // import.meta.url is an http URL under jsdom; vitest's cwd is the repo root (see its config).
   const html = readFileSync(resolve(process.cwd(), "index.html"), "utf-8");
-  const body = html.slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"));
-  // The inline pre-paint/analytics scripts (and the module entry) don't belong in this harness;
-  // main.ts is imported directly below instead.
-  return body.replace(/<script[\s\S]*?<\/script>/g, "");
+  // The inline pre-paint/analytics scripts (and the module entry) don't belong in this harness —
+  // main.ts is imported directly below instead. Parsed and pruned via the DOM (DOMParser never
+  // executes scripts) rather than regex-filtering the HTML.
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  for (const script of Array.from(doc.querySelectorAll("script"))) script.remove();
+  return doc.body.innerHTML;
 }
 
 function el<T extends HTMLElement>(id: string): T {
