@@ -30,8 +30,8 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🏠 Internal
 
-- Added Storybook prototypes of the redesign under \`stories/prototypes/\` with design notes in \`docs/file-management-redesign.md\` ([#66](https://github.com/brain-bbqs/bbqs-uploader/pull/66))
-- New unit suites for the selection model and the archive-listing client, plus integration coverage of the selection tree, the archive diff, and ignore patterns ([#66](https://github.com/brain-bbqs/bbqs-uploader/pull/66))
+- Added component stories for the redesigned selection UI (selection tree, remote contents banner, full upload card), built on the production modules with deterministic fixtures, and design notes in \`docs/file-management-redesign.md\` ([#66](https://github.com/brain-bbqs/bbqs-uploader/pull/66))
+- New unit suites for the selection model and the archive-listing client, integration coverage of the selection tree, the archive diff, and ignore patterns, plus a boot smoke test that runs \`src/main.ts\` against the real \`index.html\` markup (raising the coverage ratchet to statements 75, branches 65, functions 74, lines 76) ([#66](https://github.com/brain-bbqs/bbqs-uploader/pull/66))
 
 ## 1.0.8
 
