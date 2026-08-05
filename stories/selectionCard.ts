@@ -193,7 +193,13 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
       <div class="remote-banner-title"></div>
       <div class="remote-banner-body"></div>
     </div>
-    <button type="button" aria-label="Re-check EMBER" title="Re-check EMBER">🔄</button>
+    <button type="button" aria-label="Re-check EMBER" title="Re-check EMBER">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="23 4 23 10 17 10" />
+        <path d="M20.49 15 A9 9 0 1 1 18.36 5.64 L23 10" />
+      </svg>
+    </button>
   `;
   const icon = banner.querySelector<HTMLSpanElement>('[data-role="icon"]')!;
   const title = banner.querySelector<HTMLDivElement>(".remote-banner-title")!;
