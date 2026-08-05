@@ -747,9 +747,15 @@ ul.human-subjects-body {
 .dir-toggle:hover {
   background: var(--accent-soft);
 }
+/* Scaled up (~1.6x) from the row's own font size for visibility, but boxed with line-height 1
+   and vertical centering so the enlarged glyph doesn't grow the compact row height. */
 .dir-chevron {
-  display: inline-block;
-  width: 0.6em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75em;
+  font-size: 1.6em;
+  line-height: 1;
   flex-shrink: 0;
   color: var(--muted);
   transition: transform 0.12s ease;
