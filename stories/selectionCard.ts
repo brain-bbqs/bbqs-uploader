@@ -212,7 +212,7 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
     banner.classList.add("checked");
     icon.textContent = "☁️";
     title.textContent = "Nothing uploaded yet";
-    body.innerHTML = "<code>sourcedata/raw/</code> is empty in this dataset, so everything is new.";
+    body.textContent = "This dataset is currently empty.";
   } else {
     banner.classList.add("checked");
     icon.textContent = "☁️";

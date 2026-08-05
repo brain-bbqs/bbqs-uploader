@@ -985,7 +985,7 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
       els.remoteBannerBody.textContent =
         "This dataset is currently empty; pick a base folder to start an initial upload.";
     } else {
-      els.remoteBannerBody.innerHTML = "<code>sourcedata/raw/</code> is empty in this dataset, so everything is new.";
+      els.remoteBannerBody.textContent = "This dataset is currently empty.";
     }
   } else if (state.kind === "browse") {
     els.remoteBannerIcon.className = "";
