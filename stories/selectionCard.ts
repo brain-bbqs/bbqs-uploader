@@ -193,7 +193,7 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
       <div class="remote-banner-title"></div>
       <div class="remote-banner-body"></div>
     </div>
-    <button type="button">Re-check</button>
+    <button type="button" aria-label="Re-check EMBER" title="Re-check EMBER">🔄</button>
   `;
   const icon = banner.querySelector<HTMLSpanElement>('[data-role="icon"]')!;
   const title = banner.querySelector<HTMLDivElement>(".remote-banner-title")!;

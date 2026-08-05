@@ -490,10 +490,12 @@ ul.human-subjects-body {
   color: var(--muted);
   font-size: 0.8rem;
 }
+/* Icon-only re-check button: symmetric padding around the lone reload symbol. */
 .remote-banner > button {
   margin-left: auto;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.9rem;
+  line-height: 1;
   white-space: nowrap;
 }
 .remote-banner-spinner {
