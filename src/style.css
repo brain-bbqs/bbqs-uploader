@@ -469,9 +469,11 @@ ul.human-subjects-body {
 .remote-banner {
   display: flex;
   align-items: flex-start;
+  /* Horizontal padding matches the flex gap, so the logo sits as far from the card's left edge
+     as it does from the title text (and the re-check button mirrors it on the right). */
   gap: 0.6rem;
   margin-top: 0.75rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.6rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 0.85rem;
