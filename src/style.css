@@ -312,10 +312,13 @@ button.primary:disabled {
 }
 /* The pills' direction arrows — outbound ↗ on "View on EMBER", its inbound mirror ↘ on
    "Load from EMBER" — bumped 20% over the label text, boxed so the taller glyph doesn't
-   stretch the pill. */
+   stretch the pill. The glyph's ink rides low in its em box, so a small upward nudge centers
+   it optically against the label. */
 .btn-arrow {
   font-size: 1.2em;
   line-height: 1;
+  position: relative;
+  top: -0.08em;
 }
 
 .dandiset-single {
@@ -1042,6 +1045,14 @@ ul.human-subjects-body {
   color: #fff;
   border-radius: 8px;
   padding: 0.4rem 0.85rem;
+}
+/* The two EMBER pills stack in the Dataset card; a shared minimum width (sized to the longer
+   "Load from EMBER" label) with centered content keeps their right-aligned edges and widths
+   identical. */
+.view-dataset-link,
+.load-remote-btn {
+  min-width: 12rem;
+  justify-content: center;
 }
 .view-dataset-link:hover {
   background: var(--ember-red-hover);
