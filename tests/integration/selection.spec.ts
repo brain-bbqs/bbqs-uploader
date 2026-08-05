@@ -87,6 +87,63 @@ test("folder checkboxes cascade and Select all/none drive the whole tree", async
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 4 files (64 B)");
 });
 
+test("folders the archive already holds in full start collapsed; the slider re-expands them", async ({ page }) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-collapse-"));
+  fs.mkdirSync(path.join(dir, "done"));
+  fs.writeFileSync(path.join(dir, "done", "one.bin"), Buffer.alloc(16));
+  fs.writeFileSync(path.join(dir, "done", "two.bin"), Buffer.alloc(16));
+  fs.mkdirSync(path.join(dir, "fresh"));
+  fs.writeFileSync(path.join(dir, "fresh", "new.bin"), Buffer.alloc(16));
+
+  await seedSignedIn(page);
+  await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, (route: Route) =>
+    route.fulfill({
+      json: {
+        results: [
+          { asset_id: "a-1", path: "sourcedata/raw/done/one.bin", size: 16 },
+          { asset_id: "a-2", path: "sourcedata/raw/done/two.bin", size: 16 },
+        ],
+        next: null,
+      },
+    }),
+  );
+  await page.goto("/");
+  await page.locator("#folder-input").setInputFiles(dir);
+  await expect(page.locator("#remote-banner")).toContainText("Already on EMBER: 2 files");
+
+  const doneToggle = page
+    .locator(".dir-item", { has: page.locator(".dir-name", { hasText: "done/" }) })
+    .locator(".dir-toggle")
+    .first();
+  const freshToggle = page
+    .locator(".dir-item", { has: page.locator(".dir-name", { hasText: "fresh/" }) })
+    .locator(".dir-toggle")
+    .first();
+  await expect(doneToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(freshToggle).toHaveAttribute("aria-expanded", "true");
+
+  // The slider means "show me this many files", so moving it re-expands the collapsed folder.
+  await page.locator("#expand-depth").fill("3");
+  await expect(doneToggle).toHaveAttribute("aria-expanded", "true");
+});
+
+test("the Compare with EMBER toggle disables the archive diff and restores it on re-enable", async ({ page }) => {
+  await stageFolder(page);
+  await expect(page.locator("#remote-banner")).toContainText("Already on EMBER: 2 files");
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
+
+  // Off: banner and badges disappear, and the auto-deselected uploaded file is selected again.
+  await page.locator("#remote-check-toggle").uncheck();
+  await expect(page.locator("#remote-banner")).toBeHidden();
+  await expect(page.locator("#file-list .badge:visible")).toHaveCount(0);
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 4 files (64 B)");
+
+  // Back on: the check re-runs and the diff returns.
+  await page.locator("#remote-check-toggle").check();
+  await expect(page.locator("#remote-banner")).toContainText("Already on EMBER: 2 files");
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
+});
+
 test("ignore patterns exclude matching files until removed", async ({ page }) => {
   await stageFolder(page);
 

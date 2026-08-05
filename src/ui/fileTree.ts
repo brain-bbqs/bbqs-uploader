@@ -17,6 +17,8 @@ export function yieldToMain(): Promise<void> {
 export interface DirRowEls {
   checkbox: HTMLInputElement;
   sizeEl: HTMLSpanElement;
+  /** Collapses or expands the folder programmatically (same effect as clicking its toggle). */
+  setExpanded(expanded: boolean): void;
 }
 
 export interface RenderedFileTree {
@@ -63,15 +65,15 @@ export async function renderFileTree(
       li.querySelector(".dir-name")!.textContent = `${child.name}/`;
       const childUl = li.querySelector<HTMLUListElement>(".dir-children")!;
       const toggle = li.querySelector<HTMLButtonElement>(".dir-toggle")!;
-      toggle.addEventListener("click", () => {
-        const nowHidden = !childUl.hidden;
-        childUl.hidden = nowHidden;
-        toggle.setAttribute("aria-expanded", String(!nowHidden));
-      });
+      const setExpanded = (expanded: boolean): void => {
+        childUl.hidden = !expanded;
+        toggle.setAttribute("aria-expanded", String(expanded));
+      };
+      toggle.addEventListener("click", () => setExpanded(childUl.hidden));
       const checkbox = li.querySelector<HTMLInputElement>(".select-check")!;
       checkbox.setAttribute("aria-label", `Include everything in ${child.path}/`);
       checkbox.addEventListener("change", () => onDirCheckbox?.(child.path, checkbox.checked));
-      dirs.set(child.path, { checkbox, sizeEl: li.querySelector<HTMLSpanElement>(".dir-size")! });
+      dirs.set(child.path, { checkbox, sizeEl: li.querySelector<HTMLSpanElement>(".dir-size")!, setExpanded });
 
       container.appendChild(li);
       if (++processed % RENDER_CHUNK_SIZE === 0) await yieldToMain();

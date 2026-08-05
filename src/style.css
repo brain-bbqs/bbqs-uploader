@@ -809,6 +809,19 @@ ul.human-subjects-body {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.dest-root-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.remote-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
 
 .expand-control {
   display: flex;

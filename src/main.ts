@@ -981,10 +981,25 @@ function readTestRemoteListingCount(): number | null {
   return count >= 0 ? count : null;
 }
 
+// Whether this staged folder already had its fully-uploaded subfolders auto-collapsed; only the
+// first applied listing collapses (a later Re-check must not undo the user's own expanding).
+let autoCollapsedUploaded = false;
+
 function applyRemoteListing(listing: Map<string, number>): void {
   selection.applyRemote(listing);
   refreshAllRows();
   refreshSelectionUI();
+  // Folders the archive already holds in full are the ones there's nothing left to decide
+  // about, so they start collapsed; the reveal slider (see its input listener) re-expands
+  // everything on demand.
+  if (!autoCollapsedUploaded) {
+    autoCollapsedUploaded = true;
+    const aggregates = selection.dirAggregates();
+    for (const [dirPath, dir] of dirEls) {
+      const agg = aggregates.get(dirPath);
+      if (agg && agg.files > 0 && agg.uploaded === agg.files) dir.setExpanded(false);
+    }
+  }
   let bytes = 0;
   for (const size of listing.values()) bytes += size;
   renderRemoteBanner({ kind: "checked", files: listing.size, bytes });
@@ -992,6 +1007,11 @@ function applyRemoteListing(listing: Map<string, number>): void {
 
 async function refreshRemoteListing(): Promise<void> {
   if (selection.files().length === 0) return;
+  // The "Compare with EMBER" toggle turns the whole archive check off (classic staging).
+  if (!els.remoteCheckToggle.checked) {
+    renderRemoteBanner(null);
+    return;
+  }
   const seq = ++remoteCheckSeq;
   const testCount = readTestRemoteListingCount();
   if (testCount !== null) {
@@ -1206,11 +1226,13 @@ function resetUploader(): void {
   selection.clear();
   rowByFile.clear();
   dirEls.clear();
+  autoCollapsedUploaded = false;
   remoteCheckSeq++; // discard any in-flight listing so it can't apply to the next folder
   sessionStartedAt = null;
   els.fileList.replaceChildren();
   els.folderSummary.hidden = true;
   els.selectionBar.hidden = true;
+  els.remoteCheckToggle.checked = true;
   els.ignorePatternInput.value = "";
   renderIgnoreChips();
   renderRemoteBanner(null);
@@ -1298,6 +1320,20 @@ els.changeFolderBtn.addEventListener("click", () => {
   els.folderInput.click();
 });
 els.remoteRecheckBtn.addEventListener("click", () => void refreshRemoteListing());
+els.remoteCheckToggle.addEventListener("change", () => {
+  if (els.remoteCheckToggle.checked) {
+    void refreshRemoteListing();
+    return;
+  }
+  // Off = classic staging: cancel any in-flight check, forget the diff (re-selecting files that
+  // sat deselected as already-uploaded), and re-expand anything the diff auto-collapsed.
+  remoteCheckSeq++;
+  selection.clearRemote();
+  for (const dir of dirEls.values()) dir.setExpanded(true);
+  refreshAllRows();
+  refreshSelectionUI();
+  renderRemoteBanner(null);
+});
 els.selectAllBtn.addEventListener("click", () => {
   for (const f of selection.setSubtreeChecked("", true)) applyRowAppearance(f);
   refreshSelectionUI();
@@ -1338,6 +1374,9 @@ els.expandDepthInput.addEventListener("input", () => {
   expandDepthUpdateScheduled = true;
   requestAnimationFrame(() => {
     expandDepthUpdateScheduled = false;
+    // The slider means "show me this many files", so it overrides any collapsed folders —
+    // including the automatically collapsed already-on-EMBER ones — or its count would lie.
+    for (const dir of dirEls.values()) dir.setExpanded(true);
     setRevealCount(els.fileList, Number(els.expandDepthInput.value));
   });
 });

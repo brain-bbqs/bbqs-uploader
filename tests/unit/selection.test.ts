@@ -135,6 +135,21 @@ describe("createSelectionModel", () => {
     expect(model.summary().selectedFiles).toBe(2);
   });
 
+  it("clearRemote forgets the diff and re-selects files deselected as already-uploaded", () => {
+    const { model, files } = modelWith([
+      ["a", "same.mp4", 10],
+      ["a", "new.mp4", 20],
+    ]);
+    model.applyRemote(new Map([["sourcedata/raw/a/same.mp4", 10]]));
+    model.setChecked(files[1], false);
+    model.clearRemote();
+    expect(model.hasRemote()).toBe(false);
+    expect(model.get(files[0])?.remote).toBe(null);
+    expect(model.get(files[0])?.checked).toBe(true);
+    // A manual deselection of an ordinary file survives the forget.
+    expect(model.get(files[1])?.checked).toBe(false);
+  });
+
   it("treats an empty remote listing as no diff at all (no badges to show)", () => {
     const { model, files } = modelWith([["a", "one.mp4", 10]]);
     model.applyRemote(new Map());
@@ -156,22 +171,49 @@ describe("createSelectionModel", () => {
       selected: 1,
       selectableBytes: 30,
       selectedBytes: 10,
+      files: 2,
       allBytes: 30,
+      uploaded: 0,
     });
     expect(aggregates.get("a/b")).toEqual({
       selectable: 1,
       selected: 0,
       selectableBytes: 20,
       selectedBytes: 0,
+      files: 1,
       allBytes: 20,
+      uploaded: 0,
     });
     expect(aggregates.get("c")).toEqual({
       selectable: 1,
       selected: 1,
       selectableBytes: 40,
       selectedBytes: 40,
+      files: 1,
       allBytes: 40,
+      uploaded: 0,
     });
+  });
+
+  it("counts already-uploaded files per folder, so fully-uploaded folders are identifiable", () => {
+    const { model } = modelWith([
+      ["done", "one.mp4", 10],
+      ["done", "two.mp4", 20],
+      ["mixed", "three.mp4", 30],
+      ["mixed", "four.mp4", 40],
+    ]);
+    model.applyRemote(
+      new Map([
+        ["sourcedata/raw/done/one.mp4", 10],
+        ["sourcedata/raw/done/two.mp4", 20],
+        ["sourcedata/raw/mixed/three.mp4", 30],
+      ]),
+    );
+    const aggregates = model.dirAggregates();
+    expect(aggregates.get("done")?.uploaded).toBe(2);
+    expect(aggregates.get("done")?.files).toBe(2);
+    expect(aggregates.get("mixed")?.uploaded).toBe(1);
+    expect(aggregates.get("mixed")?.files).toBe(2);
   });
 
   it("consumes the selected files and removes them from later summaries and toggles", () => {

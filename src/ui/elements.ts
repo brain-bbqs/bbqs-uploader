@@ -59,6 +59,7 @@ export function getElements() {
     ignorePatternAddBtn: required<HTMLButtonElement>("ignore-pattern-add"),
     fileList: required<HTMLUListElement>("file-list"),
     destRoot: required<HTMLDivElement>("dest-root"),
+    remoteCheckToggle: required<HTMLInputElement>("remote-check-toggle"),
     expandDepthInput: required<HTMLInputElement>("expand-depth"),
     expandDepthValue: required<HTMLSpanElement>("expand-depth-value"),
     expandDepthBubble: required<HTMLSpanElement>("expand-depth-bubble"),

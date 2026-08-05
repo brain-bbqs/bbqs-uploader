@@ -12,9 +12,11 @@ How file selection works since the post-user-testing redesign (PR #66), and why.
    dataset's draft (`src/lib/remote-listing.ts`, a paginated prefix query on the assets
    endpoint) and folds it into the tree: same path and size shows "Uploaded" and starts
    deselected (re-checking it means "will replace"), a size mismatch shows "Changed" and stays
-   selected, everything else shows "New". An empty listing shows no badges at all; a failed
-   check degrades to a warning banner and treats everything as new. Switching datasets or
-   clicking "Re-check" re-runs it.
+   selected, everything else shows "New". Folders whose entire contents are already uploaded
+   start collapsed; moving the reveal slider re-expands everything. An empty listing shows no
+   badges at all; a failed check degrades to a warning banner and treats everything as new.
+   Switching datasets or clicking "Re-check" re-runs it, and the "Compare with EMBER" toggle
+   next to the destination path (on by default) turns the check off entirely.
 3. **Include/exclude selection.** Per-file checkboxes, tri-state folder checkboxes with
    selected-of-total size rollups, Select all/none, and ignore patterns as chips. Pattern
    shapes: `*.tmp` matches filenames, `scratch/` matches any folder segment, anything containing

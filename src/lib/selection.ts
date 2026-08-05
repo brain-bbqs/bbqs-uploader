@@ -33,8 +33,11 @@ export interface DirAggregate {
   selected: number;
   selectableBytes: number;
   selectedBytes: number;
-  /** Total bytes of every file under this folder, selectable or not. */
+  /** Every file under this folder, selectable or not, and their total bytes. */
+  files: number;
   allBytes: number;
+  /** How many of those files the archive already holds unchanged (remote === "uploaded"). */
+  uploaded: number;
 }
 
 function globToRegExp(glob: string): RegExp {
@@ -103,6 +106,11 @@ export interface SelectionModel {
    * deselected (unless already consumed); size mismatches become "changed" and stay selected.
    */
   applyRemote(listing: Map<string, number>): void;
+  /**
+   * Forgets any applied listing: re-selects files that sat deselected as already-uploaded and
+   * clears every remote mark, returning the tree to its no-diff appearance.
+   */
+  clearRemote(): void;
   summary(): SelectionSummary;
   /** Per-folder selected/selectable rollups for tri-state checkboxes and size labels. */
   dirAggregates(): Map<string, DirAggregate>;
@@ -178,6 +186,13 @@ export function createSelectionModel(): SelectionModel {
         if (f.remote === "uploaded" && !f.consumed) f.checked = false;
       }
     },
+    clearRemote() {
+      remoteApplied = false;
+      for (const f of byFile.values()) {
+        if (f.remote === "uploaded" && !f.consumed) f.checked = true;
+        f.remote = null;
+      }
+    },
     summary() {
       let selectedFiles = 0;
       let selectedBytes = 0;
@@ -200,10 +215,20 @@ export function createSelectionModel(): SelectionModel {
         for (const dirPath of ancestorDirPaths(f.relativePath)) {
           let agg = aggregates.get(dirPath);
           if (!agg) {
-            agg = { selectable: 0, selected: 0, selectableBytes: 0, selectedBytes: 0, allBytes: 0 };
+            agg = {
+              selectable: 0,
+              selected: 0,
+              selectableBytes: 0,
+              selectedBytes: 0,
+              files: 0,
+              allBytes: 0,
+              uploaded: 0,
+            };
             aggregates.set(dirPath, agg);
           }
+          agg.files++;
           agg.allBytes += f.file.size;
+          if (f.remote === "uploaded") agg.uploaded++;
           if (isSelectable(f)) {
             agg.selectable++;
             agg.selectableBytes += f.file.size;
