@@ -989,8 +989,8 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "☁️";
     els.remoteBannerTitle.textContent = `On EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
-    els.remoteBannerBody.innerHTML =
-      "Everything this dataset already holds under <code>sourcedata/raw/</code>; pick the matching base folder to stage new uploads.";
+    els.remoteBannerBody.textContent =
+      "Currently uploaded content; choose the matching base folder to submit new uploads.";
   } else {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "☁️";

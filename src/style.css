@@ -310,6 +310,13 @@ button.primary:disabled {
   outline: 2px solid var(--ember-orange);
   outline-offset: 1px;
 }
+/* The pills' direction arrows — outbound ↗ on "View on EMBER", its inbound mirror ↘ on
+   "Load from EMBER" — bumped 20% over the label text, boxed so the taller glyph doesn't
+   stretch the pill. */
+.btn-arrow {
+  font-size: 1.2em;
+  line-height: 1;
+}
 
 .dandiset-single {
   display: flex;
