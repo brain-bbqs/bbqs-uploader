@@ -1430,6 +1430,10 @@ const mockUploadCount = readTestMockUploadCount();
 if (mockUploadCount !== null) {
   mockMode = true;
   void addFiles({ folderName: "mock-dataset", entries: generateMockDroppedFiles(mockUploadCount) });
+} else if (readTestRemoteListingCount() !== null) {
+  // "?test&remote_listing=N" with nothing staged auto-opens the read-only "Load from EMBER"
+  // browse over N fabricated archive files — see docs/README.md.
+  void loadRemoteBrowse();
 }
 els.dandisetId.addEventListener("change", () => {
   updateUploadGate();

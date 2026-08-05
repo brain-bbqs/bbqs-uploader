@@ -15,6 +15,7 @@
 | `?test&num_datasets=1&human_subjects`   | Single dataset flagged as human subjects: warning banner, upload gated  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&human_subjects)   |
 | `?test&mock_upload=25`                  | A nested batch of 25 fake files, scanning then uploading                | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25)                  |
 | `?test&mock_upload=25&remote_listing=8` | Same, with 8 files faked as already on the archive (one "Changed")      | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25&remote_listing=8) |
+| `?test&remote_listing=12`               | Read-only "Load from EMBER" browse of 12 fake archive files             | [Open](https://upload.brain-bbqs.org/?test&remote_listing=12)               |
 | `?test&signed_out`                      | The page as a signed-out visitor sees it, regardless of your real state | [Open](https://upload.brain-bbqs.org/?test&signed_out)                      |
 | `?test&freeze_scan`                     | Every staged file hangs mid-scan once "Upload" is clicked               | [Open](https://upload.brain-bbqs.org/?test&freeze_scan)                     |
 
@@ -31,7 +32,7 @@ Adding `&human_subjects` to any `num_datasets` injection marks every fake datase
 No bytes are read, hashed, or sent anywhere.
 While it's active, every file (including a genuinely dropped one) runs through the same simulated timers, so don't combine this with a real upload.
 
-`remote_listing=N` fabricates the "already on EMBER" check instead of asking the archive: the first `N` staged files (by path) are reported as already uploaded, with the first of them at a different size so one row shows "Changed" (and stays selected for replacement) while the rest show "Uploaded" (and start deselected). `remote_listing=0` previews the nothing-uploaded-yet banner. It needs staged files to act on, so combine it with `mock_upload=N` (or a genuinely picked folder). With no files staged and a dataset selected (e.g. combined with `num_datasets=1`), it instead enables the "Load from EMBER" button, which browses `N` fabricated archive files read-only.
+`remote_listing=N` fabricates the archive's `sourcedata/raw/` contents instead of asking EMBER. With staged files (combined with `mock_upload=N` or a genuinely picked folder), it drives the "already on EMBER" diff: the first `N` staged files (by path) are reported as already uploaded, with the first of them at a different size so one row shows "Changed" (and stays selected for replacement) while the rest show "Uploaded" (and start deselected); `remote_listing=0` previews the nothing-uploaded-yet banner. With nothing staged, it instead auto-opens the read-only "Load from EMBER" browse over `N` fabricated archive files (add `num_datasets=1` to also preview the button in the Dataset card that triggers it for real).
 
 `signed_out` forces every auth-dependent render (the header's sign-in control, the Dataset card, upload blocking) to behave as if signed out, without ever touching `oauthTokens` or `localStorage`, so it also works while genuinely signed in.
 

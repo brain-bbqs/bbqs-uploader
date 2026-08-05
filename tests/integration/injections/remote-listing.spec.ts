@@ -19,6 +19,17 @@ test.describe("?test&remote_listing", () => {
     await expect(page.locator("#upload-all-btn")).toContainText("Upload 5 files");
   });
 
+  test("with nothing staged, auto-opens the read-only Load from EMBER browse", async ({ page }) => {
+    await page.goto("/?test&remote_listing=5");
+
+    await expect(page.locator("#remote-banner")).toContainText("On EMBER: 5 files");
+    await expect(page.locator("#file-list .file-item")).toHaveCount(5);
+    // Read-only: no checkboxes, nothing staged to upload.
+    await expect(page.locator("#file-list .select-check:visible")).toHaveCount(0);
+    await expect(page.locator("#upload-bar")).toBeHidden();
+    await expect(page.locator("#selection-bar")).toBeHidden();
+  });
+
   test("a zero listing renders the nothing-uploaded-yet banner with no badges", async ({ page }) => {
     await page.goto("/?test&mock_upload=3&remote_listing=0");
 
