@@ -217,8 +217,7 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
     banner.classList.add("checked");
     icon.textContent = "☁️";
     title.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
-    body.innerHTML =
-      "Matching files under <code>sourcedata/raw/</code> are deselected below; re-check one to replace its uploaded copy.";
+    body.textContent = "Existing files are deselected below; re-select to replace the previous upload.";
   }
   return banner;
 }

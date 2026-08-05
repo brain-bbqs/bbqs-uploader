@@ -997,8 +997,7 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "☁️";
     els.remoteBannerTitle.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
-    els.remoteBannerBody.innerHTML =
-      "Matching files under <code>sourcedata/raw/</code> are deselected below; re-check one to replace its uploaded copy.";
+    els.remoteBannerBody.textContent = "Existing files are deselected below; re-select to replace the previous upload.";
   }
 }
 
