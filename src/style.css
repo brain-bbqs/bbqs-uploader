@@ -857,9 +857,56 @@ ul.human-subjects-body {
 .remote-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   white-space: nowrap;
   cursor: pointer;
+}
+/* Rendered as a slide switch rather than another checkbox, so it reads as a mode toggle and not
+   one more file-selection box; the input stays a semantic checkbox underneath. */
+.remote-toggle input {
+  appearance: none;
+  width: 2rem;
+  height: 1.15rem;
+  margin: 0;
+  position: relative;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.remote-toggle input::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 0.8rem;
+  height: 0.8rem;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: left 0.15s ease;
+}
+.remote-toggle input:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.remote-toggle input:checked::after {
+  left: calc(100% - 0.8rem - 2px);
+}
+.remote-toggle input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .remote-toggle input,
+  .remote-toggle input::after {
+    transition: none;
+  }
 }
 /* Browse mode (the "Load from EMBER" view of existing archive contents): the listing is
    read-only, so the include checkboxes and the compare toggle have nothing to control. */
