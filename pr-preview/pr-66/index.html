@@ -91,8 +91,8 @@
         });
       });
     </script>
-    <script type="module" crossorigin src="./assets/index-D2psfY4J.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DjZ0phOP.css">
+    <script type="module" crossorigin src="./assets/index-B723F4_Z.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BBFPz-J6.css">
   </head>
   <body>
     <main>
@@ -354,7 +354,16 @@
           <button type="button" id="remote-recheck-btn" hidden>Re-check</button>
         </div>
         <div id="dest-root" class="dest-root" hidden>
-          <code>sourcedata/raw/</code>
+          <span class="dest-root-left">
+            <label
+              class="remote-toggle"
+              title="Check what already exists under sourcedata/raw/ in the selected dataset and mark staged files as Uploaded, Changed, or New"
+            >
+              <input type="checkbox" id="remote-check-toggle" class="select-check" checked />
+              Compare with EMBER
+            </label>
+            <code>sourcedata/raw/</code>
+          </span>
           <span class="expand-control">
             <span class="expand-slider">
               <span class="expand-bubble" id="expand-depth-bubble"><span id="expand-depth-value">0</span> files</span>
