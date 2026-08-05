@@ -1046,13 +1046,15 @@ ul.human-subjects-body {
   border-radius: 8px;
   padding: 0.4rem 0.85rem;
 }
-/* The two EMBER pills stack in the Dataset card; a shared minimum width (sized to the longer
-   "Load from EMBER" label) with centered content keeps their right-aligned edges and widths
-   identical. */
+/* The two EMBER pills stack in the Dataset card. A shared minimum width (sized to hug the
+   longer "Load from EMBER" label) keeps their widths identical; padding is symmetric with the
+   vertical padding, and content anchors to the right edge so both arrows sit on the same
+   vertical line. */
 .view-dataset-link,
 .load-remote-btn {
-  min-width: 12rem;
-  justify-content: center;
+  padding: 0.4rem;
+  min-width: 10.8rem;
+  justify-content: flex-end;
 }
 .view-dataset-link:hover {
   background: var(--ember-red-hover);

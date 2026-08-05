@@ -15,7 +15,9 @@
 | `?test&num_datasets=1&human_subjects`   | Single dataset flagged as human subjects: warning banner, upload gated  | [Open](https://upload.brain-bbqs.org/?test&num_datasets=1&human_subjects)   |
 | `?test&mock_upload=25`                  | A nested batch of 25 fake files, scanning then uploading                | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25)                  |
 | `?test&mock_upload=25&remote_listing=8` | Same, with 8 files faked as already on the archive (one "Changed")      | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25&remote_listing=8) |
+| `?test&mock_upload=25&remote_listing=0` | Staged files against an empty dataset: "Nothing uploaded yet" banner    | [Open](https://upload.brain-bbqs.org/?test&mock_upload=25&remote_listing=0) |
 | `?test&remote_listing=12`               | Read-only "Load from EMBER" browse of 12 fake archive files             | [Open](https://upload.brain-bbqs.org/?test&remote_listing=12)               |
+| `?test&remote_listing=0`                | Read-only browse of an empty dataset ("currently empty" banner)         | [Open](https://upload.brain-bbqs.org/?test&remote_listing=0)                |
 | `?test&signed_out`                      | The page as a signed-out visitor sees it, regardless of your real state | [Open](https://upload.brain-bbqs.org/?test&signed_out)                      |
 | `?test&freeze_scan`                     | Every staged file hangs mid-scan once "Upload" is clicked               | [Open](https://upload.brain-bbqs.org/?test&freeze_scan)                     |
 

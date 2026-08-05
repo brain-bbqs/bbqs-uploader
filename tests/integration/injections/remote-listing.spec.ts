@@ -30,6 +30,15 @@ test.describe("?test&remote_listing", () => {
     await expect(page.locator("#selection-bar")).toBeHidden();
   });
 
+  test("with nothing staged, a zero listing shows the empty-dataset browse banner", async ({ page }) => {
+    await page.goto("/?test&remote_listing=0");
+
+    await expect(page.locator("#remote-banner")).toContainText("Nothing uploaded yet");
+    await expect(page.locator("#remote-banner")).toContainText("currently empty");
+    await expect(page.locator("#file-list .file-item")).toHaveCount(0);
+    await expect(page.locator("#upload-bar")).toBeHidden();
+  });
+
   test("a zero listing renders the nothing-uploaded-yet banner with no badges", async ({ page }) => {
     await page.goto("/?test&mock_upload=3&remote_listing=0");
 
