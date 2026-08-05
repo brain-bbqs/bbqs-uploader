@@ -720,13 +720,19 @@ ul.human-subjects-body {
 .dir-item {
   list-style: none;
 }
-/* The guide rail: a thin vertical line tracing each branch down to its children, VS
-   Code-explorer style, so nesting stays legible even once rows are tightened up. */
+/* A little air below each folder block, so where one folder's contents end and the next
+   sibling begins reads at a glance. */
+.dir-item:not(:last-child) {
+  margin-bottom: 0.3rem;
+}
+/* The guide rail: a vertical line tracing each branch down to its children, VS Code-explorer
+   style. Deliberately thick and deeply indented — with a long flat run of files inside one
+   folder, a subtle rail let the whole run read as top-level. */
 .dir-item .dir-children {
   list-style: none;
-  margin: 0 0 0 0.5rem;
-  padding: 0 0 0 0.7rem;
-  border-left: 1px solid var(--border);
+  margin: 0 0 0 0.7rem;
+  padding: 0 0 0 1.05rem;
+  border-left: 2px solid var(--border);
 }
 .dir-toggle {
   display: flex;
