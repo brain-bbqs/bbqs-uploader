@@ -63,7 +63,9 @@ describe("main.ts boot", () => {
   it("renders the version indicator and the signed-out dataset placeholder", () => {
     expect(el("version-indicator").textContent).toMatch(/^v\d+\.\d+\.\d+$/);
     expect(el("dandiset-message").textContent).toContain("sign in");
-    expect(el("upload-card").hidden).toBe(true);
+    expect(el("folder-card").hidden).toBe(true);
+    expect(el("files-card").hidden).toBe(true);
+    expect(el("load-remote-btn").hidden).toBe(true);
   });
 
   it("stages a picked folder: summary row, hidden dropzone, live selection UI", async () => {
@@ -75,6 +77,7 @@ describe("main.ts boot", () => {
     await waitForSummary("3 of 3 files");
 
     expect(el("dropzone").hidden).toBe(true);
+    expect(el("files-card").hidden).toBe(false);
     expect(el("folder-summary").hidden).toBe(false);
     expect(el("folder-summary-name").textContent).toBe("base");
     expect(el("folder-summary-stats").textContent).toContain("3 files");
@@ -134,7 +137,8 @@ describe("main.ts boot", () => {
     expect(el("folder-summary").hidden).toBe(true);
     expect(el("selection-bar").hidden).toBe(true);
     expect(el("upload-bar").hidden).toBe(true);
-    // Signed out, so the dropzone stays hidden along with the rest of the upload card.
-    expect(el("upload-card").hidden).toBe(true);
+    // Signed out, so both cards stay hidden after the reset.
+    expect(el("folder-card").hidden).toBe(true);
+    expect(el("files-card").hidden).toBe(true);
   });
 });

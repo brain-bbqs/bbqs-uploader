@@ -31,7 +31,7 @@ Adding `&human_subjects` to any `num_datasets` injection marks every fake datase
 No bytes are read, hashed, or sent anywhere.
 While it's active, every file (including a genuinely dropped one) runs through the same simulated timers, so don't combine this with a real upload.
 
-`remote_listing=N` fabricates the "already on EMBER" check instead of asking the archive: the first `N` staged files (by path) are reported as already uploaded, with the first of them at a different size so one row shows "Changed" (and stays selected for replacement) while the rest show "Uploaded" (and start deselected). `remote_listing=0` previews the nothing-uploaded-yet banner. It needs staged files to act on, so combine it with `mock_upload=N` (or a genuinely picked folder).
+`remote_listing=N` fabricates the "already on EMBER" check instead of asking the archive: the first `N` staged files (by path) are reported as already uploaded, with the first of them at a different size so one row shows "Changed" (and stays selected for replacement) while the rest show "Uploaded" (and start deselected). `remote_listing=0` previews the nothing-uploaded-yet banner. It needs staged files to act on, so combine it with `mock_upload=N` (or a genuinely picked folder). With no files staged and a dataset selected (e.g. combined with `num_datasets=1`), it instead enables the "Load from EMBER" button, which browses `N` fabricated archive files read-only.
 
 `signed_out` forces every auth-dependent render (the header's sign-in control, the Dataset card, upload blocking) to behave as if signed out, without ever touching `oauthTokens` or `localStorage`, so it also works while genuinely signed in.
 

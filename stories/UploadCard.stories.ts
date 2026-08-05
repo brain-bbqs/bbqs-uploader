@@ -7,13 +7,15 @@ import { humanSize } from "../src/lib/format";
 import { withCard, withTheme } from "./utils";
 
 function buildUploadCard(): HTMLElement {
-  const card = document.createElement("section");
-  card.className = "card";
+  const wrapper = document.createElement("div");
 
   const entries = localFolderFixture();
   const totalBytes = entries.reduce((sum, e) => sum + e.file.size, 0);
   const listing = remoteListingFixture();
 
+  // Card 1: the picked base folder, standing in for the dropzone once a folder is chosen.
+  const folderCard = document.createElement("section");
+  folderCard.className = "card";
   const folderRow = document.createElement("div");
   folderRow.className = "folder-summary";
   folderRow.innerHTML = `
@@ -24,18 +26,23 @@ function buildUploadCard(): HTMLElement {
   `;
   folderRow.querySelector(".folder-summary-name")!.textContent = FIXTURE_FOLDER_NAME;
   folderRow.querySelector(".folder-summary-stats")!.textContent = `${entries.length} files, ${humanSize(totalBytes)}`;
-  card.appendChild(folderRow);
+  folderCard.appendChild(folderRow);
+  wrapper.appendChild(folderCard);
+
+  // Card 2: everything file-selection, spawned below the folder card.
+  const filesCard = document.createElement("section");
+  filesCard.className = "card";
 
   let listingBytes = 0;
   for (const size of listing.values()) listingBytes += size;
-  card.appendChild(buildRemoteBanner({ kind: "checked", files: listing.size, bytes: listingBytes }));
+  filesCard.appendChild(buildRemoteBanner({ kind: "checked", files: listing.size, bytes: listingBytes }));
 
   const uploadBar = document.createElement("div");
   uploadBar.className = "upload-bar";
   uploadBar.innerHTML = `<button type="button" class="primary"></button><button type="button">Reset</button>`;
   const uploadBtn = uploadBar.querySelector<HTMLButtonElement>(".primary")!;
 
-  card.appendChild(
+  filesCard.appendChild(
     buildSelectionTree({
       entries,
       patterns: ["*.tmp", "*.log"],
@@ -46,8 +53,9 @@ function buildUploadCard(): HTMLElement {
       },
     }),
   );
-  card.appendChild(uploadBar);
-  return withCard(card);
+  filesCard.appendChild(uploadBar);
+  wrapper.appendChild(filesCard);
+  return withCard(wrapper);
 }
 
 export default {

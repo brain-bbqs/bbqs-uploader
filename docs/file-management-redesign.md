@@ -4,10 +4,13 @@ How file selection works since the post-user-testing redesign (PR #66), and why.
 
 ## The flow
 
-1. **One base folder.** The dropzone accepts exactly one dataset folder (drag or picker); loose
-   files are rejected with an explanation. The folder's own name is stripped: its contents land
-   directly under `sourcedata/raw/`, and a compact summary row ("folder, N files, X GB, Change
-   folder") replaces the dropzone once picked.
+1. **One base folder.** The dropzone lives in its own card and accepts exactly one dataset
+   folder (drag or picker); loose files are rejected with an explanation. The folder's own name
+   is stripped: its contents land directly under `sourcedata/raw/`, and a compact summary row
+   ("folder, N files, X GB, Change folder") replaces the dropzone once picked. Everything
+   file-selection (banner, tree, upload controls) is a second card below it, which also hosts
+   the read-only "Load from EMBER" browse of existing archive contents (a button in the Dataset
+   card), useful for remembering which base folder to pick before staging anything.
 2. **Archive check.** The app lists what already exists under `sourcedata/raw/` in the selected
    dataset's draft (`src/lib/remote-listing.ts`, a paginated prefix query on the assets
    endpoint) and folds it into the tree: same path and size shows "Uploaded" and starts

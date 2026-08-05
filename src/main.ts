@@ -573,22 +573,37 @@ function isSignedIn(): boolean {
   return !forceSignedOut && !!oauthTokens;
 }
 
-// The upload card (dropzone, progress bars, file list, ...) is only worth showing while signed
-// in with the selected dataset's human-subjects warning (if any) confirmed; otherwise, with
-// nothing queued, it would just be an empty bordered box (the dropzone inside is hidden in those
-// same states — see updateDropzoneVisibility). The one exception is a non-empty file queue,
-// which survives a mid-session sign-out or a switch to an unconfirmed dataset — that state still
-// needs the card to show its rows, just without the dropzone offering to add more.
-function updateUploadCardVisibility(): void {
-  els.uploadCard.hidden = (!isSignedIn() || humanSubjectsUnconfirmed()) && els.fileList.children.length === 0;
+// True while the file list shows the read-only "Load from EMBER" browse of existing archive
+// contents rather than a staged local folder. Staging a folder (or Reset) leaves browse mode.
+let remoteBrowseActive = false;
+
+// The folder card (dropzone / picked-folder summary) is only worth showing while signed in with
+// the selected dataset's human-subjects warning (if any) confirmed; the one exception is a
+// staged folder, which survives a mid-session sign-out or a switch to an unconfirmed dataset.
+// The files card (tree, selection, progress) only appears once it has content to show: a staged
+// folder or the read-only archive browse.
+function updateCardsVisibility(): void {
+  const staged = selection.files().length > 0;
+  els.folderCard.hidden = (!isSignedIn() || humanSubjectsUnconfirmed()) && !staged;
+  els.filesCard.hidden = !staged && !remoteBrowseActive;
+  updateLoadRemoteBtn();
 }
 
-// The dropzone is only useful before anything has been queued; once files are selected it just
-// takes up space above the file list, so it's hidden as soon as the queue is non-empty. It's
-// also withheld while the selected dataset's human-subjects warning awaits its "I confirm", so
-// nothing can even be staged before the warning is acknowledged.
+// The dropzone is only useful before a folder has been staged; after that its card spot belongs
+// to the picked-folder summary row. It's also withheld while the selected dataset's
+// human-subjects warning awaits its "I confirm", so nothing can even be staged before the
+// warning is acknowledged.
 function updateDropzoneVisibility(): void {
-  els.dropzone.hidden = !isSignedIn() || els.fileList.children.length > 0 || humanSubjectsUnconfirmed();
+  els.dropzone.hidden = !isSignedIn() || selection.files().length > 0 || humanSubjectsUnconfirmed();
+}
+
+// "Load from EMBER" browses existing archive contents before a folder is picked; once one is
+// staged the diff view already tells that story, so the button retires.
+function updateLoadRemoteBtn(): void {
+  const staged = selection.files().length > 0;
+  const canReal = isSignedIn() && !!currentConfig().dandisetId;
+  const canTest = readTestRemoteListingCount() !== null && !!els.dandisetId.value;
+  els.loadRemoteBtn.hidden = staged || (!canReal && !canTest);
 }
 
 function renderAuthUI(): void {
@@ -596,7 +611,7 @@ function renderAuthUI(): void {
   els.oauthSigninBtn.hidden = signedIn;
   els.oauthSignedIn.hidden = !signedIn;
   updateDropzoneVisibility();
-  updateUploadCardVisibility();
+  updateCardsVisibility();
   // Once the real auth state is known, this element-level hidden state is authoritative; the
   // pre-paint script's stand-in attribute (see index.html) is no longer needed.
   delete document.documentElement.dataset.signedIn;
@@ -654,7 +669,7 @@ function renderHumanSubjectsBanner(): void {
   els.humanSubjectsConfirmed.hidden = !confirmed;
   updateUploadGate();
   updateDropzoneVisibility();
-  updateUploadCardVisibility();
+  updateCardsVisibility();
 }
 
 // Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
@@ -816,11 +831,14 @@ function updateViewDatasetLink(): void {
   } else {
     els.viewDatasetLink.hidden = true;
   }
+  updateLoadRemoteBtn();
 }
 
 function updateUploadBar(): void {
   const s = selection.summary();
-  els.uploadBar.hidden = els.fileList.children.length === 0;
+  // Keyed off staged files, not the rendered list: the read-only archive browse fills the list
+  // with rows nothing can be done to.
+  els.uploadBar.hidden = selection.files().length === 0;
   els.uploadAllBtn.hidden = s.selectedFiles === 0;
   els.uploadAllBtn.textContent = `Upload ${s.selectedFiles} file${s.selectedFiles === 1 ? "" : "s"} (${humanSize(s.selectedBytes)})`;
 }
@@ -937,12 +955,16 @@ function addIgnorePatternFromInput(): void {
 
 let remoteCheckSeq = 0;
 
-type RemoteBannerState = { kind: "checking" } | { kind: "checked"; files: number; bytes: number } | { kind: "failed" };
+type RemoteBannerState =
+  | { kind: "checking" }
+  | { kind: "checked"; files: number; bytes: number }
+  | { kind: "browse"; files: number; bytes: number }
+  | { kind: "failed" };
 
 function renderRemoteBanner(state: RemoteBannerState | null): void {
   els.remoteBanner.hidden = state === null;
   if (!state) return;
-  els.remoteBanner.classList.toggle("checked", state.kind === "checked");
+  els.remoteBanner.classList.toggle("checked", state.kind === "checked" || state.kind === "browse");
   els.remoteBanner.classList.toggle("failed", state.kind === "failed");
   els.remoteRecheckBtn.hidden = state.kind === "checking";
   if (state.kind === "checking") {
@@ -959,7 +981,16 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "☁️";
     els.remoteBannerTitle.textContent = "Nothing uploaded yet";
-    els.remoteBannerBody.innerHTML = "<code>sourcedata/raw/</code> is empty in this dataset, so everything is new.";
+    els.remoteBannerBody.innerHTML =
+      state.kind === "browse"
+        ? "<code>sourcedata/raw/</code> is empty in this dataset; pick a base folder to stage its first upload."
+        : "<code>sourcedata/raw/</code> is empty in this dataset, so everything is new.";
+  } else if (state.kind === "browse") {
+    els.remoteBannerIcon.className = "";
+    els.remoteBannerIcon.textContent = "☁️";
+    els.remoteBannerTitle.textContent = `On EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
+    els.remoteBannerBody.innerHTML =
+      "Everything this dataset already holds under <code>sourcedata/raw/</code>; pick the matching base folder to stage new uploads.";
   } else {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "☁️";
@@ -1041,12 +1072,101 @@ async function refreshRemoteListing(): Promise<void> {
   }
 }
 
+// ---- "Load from EMBER" browse ------------------------------------------------------------
+// A read-only rendering of what the dataset already holds under sourcedata/raw/, shown in the
+// files card before any folder is picked, to inform/remind which base folder to select. Rows
+// carry no checkboxes and nothing is uploadable; staging a folder (or Reset) replaces it.
+
+function clearRemoteBrowse(): void {
+  if (!remoteBrowseActive) return;
+  remoteBrowseActive = false;
+  els.fileList.replaceChildren();
+  els.fileList.classList.remove("browse");
+  els.destRoot.classList.remove("browse");
+  els.destRoot.hidden = true;
+  dirEls.clear();
+  addedFiles = 0;
+  renderRemoteBanner(null);
+}
+
+async function renderRemoteBrowse(listing: Map<string, number>): Promise<void> {
+  clearRemoteBrowse();
+  remoteBrowseActive = true;
+  els.fileList.classList.add("browse");
+  els.destRoot.classList.add("browse");
+  const entries: { file: File; relativePath: string }[] = Array.from(listing, ([fullPath, size]) => {
+    const rel = fullPath.startsWith("sourcedata/raw/") ? fullPath.slice("sourcedata/raw/".length) : fullPath;
+    const segments = rel.split("/").filter(Boolean);
+    const name = segments.pop() ?? rel;
+    // Placeholder File objects (no content, shadowed size) — the tree renderer and rows only
+    // ever read name/size, the same trick the mock-upload injection uses.
+    const file = new File([], name);
+    Object.defineProperty(file, "size", { value: size, configurable: true });
+    return { file, relativePath: segments.join("/") };
+  });
+  addedFiles = entries.length;
+  updateExpandDepthRange();
+  els.expandDepthInput.value = String(Math.min(DEFAULT_REVEAL_COUNT, addedFiles));
+  updateExpandBubble();
+  const rendered = await renderFileTree(els.fileList, entries);
+  for (const [dirPath, dir] of rendered.dirs) dirEls.set(dirPath, dir);
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const container = rendered.targets.get(entry.file) ?? els.fileList;
+    const { row } = queueFileRow(container, entry.file, entry.relativePath, false);
+    row.el.hidden = true;
+    if ((i + 1) % ADD_FILES_CHUNK_SIZE === 0) await yieldToMain();
+  }
+  setRevealCount(els.fileList, Number(els.expandDepthInput.value));
+  let bytes = 0;
+  for (const size of listing.values()) bytes += size;
+  renderRemoteBanner({ kind: "browse", files: listing.size, bytes });
+  els.destRoot.hidden = false;
+  updateCardsVisibility();
+  updateUploadBar();
+}
+
+async function loadRemoteBrowse(): Promise<void> {
+  if (selection.files().length > 0) return; // a staged folder's diff already tells this story
+  const seq = ++remoteCheckSeq;
+  const testCount = readTestRemoteListingCount();
+  if (testCount !== null) {
+    // Debug-only companion path: fabricate the archive contents from mock files, so the browse
+    // can be previewed without a real dataset — see docs/README.md.
+    const listing = new Map(
+      generateMockDroppedFiles(testCount).map((e) => [
+        ["sourcedata/raw", e.relativePath, e.file.name].filter(Boolean).join("/"),
+        e.file.size,
+      ]),
+    );
+    await renderRemoteBrowse(listing);
+    return;
+  }
+  const cfg = currentConfig();
+  if (!isSignedIn() || !cfg.dandisetId) return;
+  remoteBrowseActive = true; // the checking banner needs the files card on screen
+  updateCardsVisibility();
+  renderRemoteBanner({ kind: "checking" });
+  try {
+    await ensureFreshOAuth();
+    const listing = await listRemoteFiles(currentConfig());
+    if (seq !== remoteCheckSeq) return;
+    await renderRemoteBrowse(listing);
+  } catch (e) {
+    if (seq !== remoteCheckSeq) return;
+    console.warn("Could not list the dataset's existing sourcedata/raw/ contents:", e);
+    renderRemoteBanner({ kind: "failed" });
+  }
+}
+
 // How many files to queue (create a row + register selection state) per animation frame. Doing
 // this for an entire large folder in one synchronous loop would block the browser from painting
 // until it's done, on top of the tree render itself.
 const ADD_FILES_CHUNK_SIZE = 200;
 
 async function addFiles(folder: AcceptedFolder): Promise<void> {
+  // A staged folder replaces the read-only archive browse, if one is showing.
+  clearRemoteBrowse();
   const entries = folder.entries;
   const isFirstBatch = addedFiles === 0;
   addedFiles += entries.length;
@@ -1087,7 +1207,7 @@ async function addFiles(folder: AcceptedFolder): Promise<void> {
   els.selectionBar.hidden = els.fileList.children.length === 0;
   renderIgnoreChips();
   updateDropzoneVisibility();
-  updateUploadCardVisibility();
+  updateCardsVisibility();
   refreshSelectionUI();
   void refreshRemoteListing();
 }
@@ -1219,6 +1339,7 @@ async function startUpload(): Promise<void> {
 function resetUploader(): void {
   for (const controller of activeHashes) controller.abort();
   for (const controller of activeUploads) controller.abort();
+  clearRemoteBrowse();
   hashJobs.clear();
   lastHashBytes.clear();
   lastUploadBytes.clear();
@@ -1264,7 +1385,7 @@ function resetUploader(): void {
   els.expandDepthInput.value = "0";
   updateExpandDepthRange();
   updateDropzoneVisibility();
-  updateUploadCardVisibility();
+  updateCardsVisibility();
   updateCancelAllVisibility();
   updateUploadBar();
   updateProgressSummary();
@@ -1312,14 +1433,20 @@ els.dandisetId.addEventListener("change", () => {
   updateUploadGate();
   void refreshHumanSubjectsGate();
   runConnectionCheck();
-  // A different dataset holds different contents; the staged tree's diff must follow it.
-  void refreshRemoteListing();
+  // A different dataset holds different contents; the staged tree's diff (or the read-only
+  // archive browse) must follow it.
+  if (remoteBrowseActive) void loadRemoteBrowse();
+  else void refreshRemoteListing();
 });
 els.changeFolderBtn.addEventListener("click", () => {
   resetUploader();
   els.folderInput.click();
 });
-els.remoteRecheckBtn.addEventListener("click", () => void refreshRemoteListing());
+els.loadRemoteBtn.addEventListener("click", () => void loadRemoteBrowse());
+els.remoteRecheckBtn.addEventListener("click", () => {
+  if (selection.files().length === 0) void loadRemoteBrowse();
+  else void refreshRemoteListing();
+});
 els.remoteCheckToggle.addEventListener("change", () => {
   if (els.remoteCheckToggle.checked) {
     void refreshRemoteListing();

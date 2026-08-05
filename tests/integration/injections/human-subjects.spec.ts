@@ -39,14 +39,14 @@ test.describe("human subjects warning banner", () => {
     await expect(page.locator("#upload-all-btn")).toBeDisabled();
     // The whole upload card is withheld until confirmation (not just the dropzone inside it,
     // which would leave an empty bordered box), so nothing can be staged early.
-    await expect(page.locator("#upload-card")).toBeHidden();
+    await expect(page.locator("#folder-card")).toBeHidden();
 
     await page.locator("#human-subjects-confirm-btn").click();
 
     await expect(page.locator("#human-subjects-confirmed")).toContainText("Confirmed");
     await expect(page.locator("#human-subjects-unconfirmed")).toBeHidden();
     await expect(page.locator("#upload-all-btn")).toBeEnabled();
-    await expect(page.locator("#upload-card")).toBeVisible();
+    await expect(page.locator("#folder-card")).toBeVisible();
     await expect(page.locator("#dropzone")).toBeVisible();
   });
 
@@ -54,11 +54,11 @@ test.describe("human subjects warning banner", () => {
     await page.goto("/?test&num_datasets=1&human_subjects");
 
     await expect(page.locator("#human-subjects-banner")).toBeVisible();
-    await expect(page.locator("#upload-card")).toBeHidden();
+    await expect(page.locator("#folder-card")).toBeHidden();
 
     await page.locator("#human-subjects-confirm-btn").click();
 
-    await expect(page.locator("#upload-card")).toBeVisible();
+    await expect(page.locator("#folder-card")).toBeVisible();
     await expect(page.locator("#dropzone")).toBeVisible();
   });
 });

@@ -144,6 +144,42 @@ test("the Compare with EMBER toggle disables the archive diff and restores it on
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
 });
 
+test("Load from EMBER browses existing archive contents read-only, until a folder is staged", async ({ page }) => {
+  await seedSignedIn(page);
+  await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, (route: Route) =>
+    route.fulfill({
+      json: {
+        results: [
+          { asset_id: "a-1", path: "sourcedata/raw/sessions/old.bin", size: 16 },
+          { asset_id: "a-2", path: "sourcedata/raw/notes.txt", size: 8 },
+        ],
+        next: null,
+      },
+    }),
+  );
+  await page.goto("/");
+
+  await expect(page.locator("#load-remote-btn")).toBeVisible();
+  await page.locator("#load-remote-btn").click();
+
+  // The files card shows the read-only listing: banner, rows without checkboxes, no upload bar.
+  await expect(page.locator("#remote-banner")).toContainText("On EMBER: 2 files");
+  await expect(page.locator("#file-list .file-item")).toHaveCount(2);
+  await expect(page.locator("#file-list .select-check:visible")).toHaveCount(0);
+  await expect(page.locator("#upload-bar")).toBeHidden();
+  // The dropzone card stays available so the matching base folder can still be picked.
+  await expect(page.locator("#dropzone")).toBeVisible();
+
+  // Staging a folder replaces the browse with the ordinary selectable tree.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-browse-"));
+  fs.writeFileSync(path.join(dir, "fresh.bin"), Buffer.alloc(16));
+  await page.locator("#folder-input").setInputFiles(dir);
+  await expect(page.locator("#file-list .file-item")).toHaveCount(1);
+  await expect(page.locator("#file-list .select-check")).toHaveCount(1);
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file (16 B)");
+  await expect(page.locator("#load-remote-btn")).toBeHidden();
+});
+
 test("ignore patterns exclude matching files until removed", async ({ page }) => {
   await stageFolder(page);
 

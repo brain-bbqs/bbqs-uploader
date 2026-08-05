@@ -7,7 +7,7 @@ test("Main page - default", async ({ page }) => {
   // landing view instead leads with the sign-in button.
   await page.goto("/");
   await expect(page.locator("#oauth-signin-btn")).toBeVisible();
-  await expect(page.locator("#upload-card")).toBeHidden();
+  await expect(page.locator("#folder-card")).toBeHidden();
 });
 
 test("Main page - file queued", async ({ page }) => {

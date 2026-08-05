@@ -245,11 +245,41 @@
               This dataset is not embargoed. Direct uploads are only allowed to embargoed dandisets; contact EMBER/BBQS
               admins.
             </p>
+            <button
+              type="button"
+              id="load-remote-btn"
+              class="load-remote-btn"
+              title="Browse what this dataset already holds under sourcedata/raw/, before picking a folder"
+              hidden
+            >
+              Load from EMBER
+            </button>
           </div>
         </form>
       </section>
 
-      <section class="card" id="upload-card" hidden>
+      <section class="card" id="folder-card" hidden>
+        <div id="dropzone">
+          <div class="dz-inner">
+            <div class="dz-icon"><span>📁</span></div>
+            <p>
+              Drop your dataset folder here, or
+              <button type="button" id="browse-folder-btn" class="dz-browse">browse for a folder</button>.
+            </p>
+            <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
+            <p id="dropzone-reject" class="dz-reject" hidden></p>
+          </div>
+          <input type="file" id="folder-input" webkitdirectory multiple hidden />
+        </div>
+        <div id="folder-summary" class="folder-summary" hidden>
+          <span aria-hidden="true">📁</span>
+          <span id="folder-summary-name" class="folder-summary-name"></span>
+          <span id="folder-summary-stats" class="folder-summary-stats"></span>
+          <button type="button" id="change-folder-btn">Change folder</button>
+        </div>
+      </section>
+
+      <section class="card" id="files-card" hidden>
         <div id="progress-summary" class="progress-summary" hidden>
           <div class="progress-phase progress-phase--scan">
             <div class="progress-phase-head">
@@ -324,24 +354,6 @@
             <span id="progress-footer-mid"></span>
             <span></span>
           </div>
-        </div>
-        <div id="dropzone">
-          <div class="dz-inner">
-            <div class="dz-icon"><span>📁</span></div>
-            <p>
-              Drop your dataset folder here, or
-              <button type="button" id="browse-folder-btn" class="dz-browse">browse for a folder</button>.
-            </p>
-            <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
-            <p id="dropzone-reject" class="dz-reject" hidden></p>
-          </div>
-          <input type="file" id="folder-input" webkitdirectory multiple hidden />
-        </div>
-        <div id="folder-summary" class="folder-summary" hidden>
-          <span aria-hidden="true">📁</span>
-          <span id="folder-summary-name" class="folder-summary-name"></span>
-          <span id="folder-summary-stats" class="folder-summary-stats"></span>
-          <button type="button" id="change-folder-btn">Change folder</button>
         </div>
         <div id="remote-banner" class="remote-banner" hidden>
           <span id="remote-banner-icon" aria-hidden="true"></span>

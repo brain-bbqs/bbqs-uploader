@@ -274,12 +274,18 @@ button.primary:disabled {
 :root[data-signed-in="1"] #oauth-signed-in[hidden] {
   display: inline-flex !important;
 }
-/* Same pre-paint reservation as above, but for the upload card: it's only ever meant to be
-   visible while signed in, so it stays hidden by default (see index.html) and this rule shows it
-   early when stored tokens are present, before renderAuthUI() takes over as the authoritative
+/* Same pre-paint reservation as above, but for the folder-picking card: it's only ever meant to
+   be visible while signed in, so it stays hidden by default (see index.html) and this rule shows
+   it early when stored tokens are present, before renderAuthUI() takes over as the authoritative
    source. */
-:root[data-signed-in="1"] #upload-card[hidden] {
+:root[data-signed-in="1"] #folder-card[hidden] {
   display: block !important;
+}
+
+.load-remote-btn {
+  justify-self: start;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
 }
 
 .dandiset-single {
@@ -821,6 +827,14 @@ ul.human-subjects-body {
   gap: 0.35rem;
   white-space: nowrap;
   cursor: pointer;
+}
+/* Browse mode (the "Load from EMBER" view of existing archive contents): the listing is
+   read-only, so the include checkboxes and the compare toggle have nothing to control. */
+#file-list.browse .select-check {
+  display: none;
+}
+.dest-root.browse .remote-toggle {
+  display: none;
 }
 
 .expand-control {
