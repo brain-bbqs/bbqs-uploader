@@ -141,4 +141,26 @@ describe("main.ts boot", () => {
     expect(el("folder-card").hidden).toBe(true);
     expect(el("files-card").hidden).toBe(true);
   });
+
+  it("Load from EMBER renders a read-only browse of (injected) archive contents", async () => {
+    // The ?test&remote_listing injection is read per call, so it can be enabled here for the
+    // browse path the same way a pasted URL would.
+    window.history.replaceState(null, "", "/?test&remote_listing=4");
+    el<HTMLButtonElement>("load-remote-btn").click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll("#file-list .file-item")).toHaveLength(4);
+    });
+
+    expect(el("files-card").hidden).toBe(false);
+    expect(el("remote-banner").hidden).toBe(false);
+    expect(el("remote-banner").textContent).toContain("On EMBER: 4 files");
+    // Read-only: nothing to upload, nothing to include/exclude.
+    expect(el("upload-bar").hidden).toBe(true);
+    expect(el("selection-bar").hidden).toBe(true);
+    expect(document.querySelectorAll("#file-list .file-item .select-check")).toHaveLength(0);
+
+    el("reset-all-btn").click();
+    expect(document.querySelectorAll("#file-list .file-item")).toHaveLength(0);
+    expect(el("files-card").hidden).toBe(true);
+  });
 });
