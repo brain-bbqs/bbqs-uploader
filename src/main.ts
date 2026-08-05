@@ -963,7 +963,7 @@ type RemoteBannerState =
   | { kind: "failed" };
 
 function showEmberBannerLogo(): void {
-  els.remoteBannerIcon.className = "";
+  els.remoteBannerIcon.className = "remote-banner-icon-logo";
   const img = document.createElement("img");
   img.src = emberLogoUrl;
   img.alt = "";

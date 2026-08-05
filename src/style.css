@@ -500,11 +500,17 @@ ul.human-subjects-body {
   padding: 0.35rem;
   line-height: 1;
 }
+/* The logo box mirrors the icon-only re-check button on the banner's right edge: same outer
+   height (18px icon + its 0.35rem padding + 1px borders) and the same vertical centering. */
+.remote-banner-icon-logo {
+  display: flex;
+  align-self: center;
+  flex-shrink: 0;
+}
 .remote-banner-logo {
   display: block;
-  height: 1.2rem;
+  height: calc(18px + 0.7rem + 2px);
   width: auto;
-  margin-top: 0.05rem;
 }
 .remote-banner-spinner {
   display: inline-block;

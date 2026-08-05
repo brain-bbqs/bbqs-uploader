@@ -225,11 +225,13 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
     body.textContent = "Everything below is treated as new; re-check to try again.";
   } else if (state.files === 0) {
     banner.classList.add("checked");
+    icon.className = "remote-banner-icon-logo";
     icon.replaceChildren(emberLogoImg());
     title.textContent = "Nothing uploaded yet";
     body.textContent = "This dataset is currently empty.";
   } else {
     banner.classList.add("checked");
+    icon.className = "remote-banner-icon-logo";
     icon.replaceChildren(emberLogoImg());
     title.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
     body.textContent = "Existing files are deselected below; re-select to replace the previous upload.";
