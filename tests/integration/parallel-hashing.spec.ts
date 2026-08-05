@@ -41,6 +41,14 @@ test("fans a single multi-part file out across workers and cancels hashing via C
   page.on("worker", (w) => workerUrls.push(w.url()));
 
   await seedSignedIn(page);
+  // Even throttled, a fast CI runner can finish the scan before the cancel click lands; with no
+  // upload API mocked, the batch would then error out instantly and hide the Cancel button mid-
+  // click. Stalling the first upload call keeps the batch alive (and cancellable) either way —
+  // a cancel landing in that window still reads "Cancelled" via the upload's own abort path.
+  await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, async (route: Route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.fulfill({ status: 500, body: "stalled for test" });
+  });
   await page.goto("/");
 
   // Slow the page down so the mid-hash cancel below isn't a race against real-time MD5 speed.
