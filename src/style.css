@@ -770,9 +770,9 @@ ul.human-subjects-body {
 }
 .dir-chevron::before {
   content: "";
-  border-left: 0.6rem solid currentColor;
-  border-top: 0.45rem solid transparent;
-  border-bottom: 0.45rem solid transparent;
+  border-left: 0.54rem solid currentColor;
+  border-top: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid transparent;
 }
 .dir-toggle[aria-expanded="true"] .dir-chevron {
   transform: rotate(90deg);
