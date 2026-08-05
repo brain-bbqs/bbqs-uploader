@@ -1103,7 +1103,9 @@ async function renderRemoteBrowse(listing: Map<string, number>): Promise<void> {
     const file = new File([], name);
     Object.defineProperty(file, "size", { value: size, configurable: true });
     return { file, relativePath: segments.join("/") };
-  });
+    // The .transfer/ dot-folder holds this app's machine-written transfer reports (see
+    // transfer-report.ts), not dataset content — the browse hides it.
+  }).filter((e) => e.relativePath !== ".transfer" && !e.relativePath.startsWith(".transfer/"));
   addedFiles = entries.length;
   updateExpandDepthRange();
   els.expandDepthInput.value = String(Math.min(DEFAULT_REVEAL_COUNT, addedFiles));
@@ -1119,8 +1121,8 @@ async function renderRemoteBrowse(listing: Map<string, number>): Promise<void> {
   }
   setRevealCount(els.fileList, Number(els.expandDepthInput.value));
   let bytes = 0;
-  for (const size of listing.values()) bytes += size;
-  renderRemoteBanner({ kind: "browse", files: listing.size, bytes });
+  for (const entry of entries) bytes += entry.file.size;
+  renderRemoteBanner({ kind: "browse", files: entries.length, bytes });
   els.destRoot.hidden = false;
   updateCardsVisibility();
   updateUploadBar();

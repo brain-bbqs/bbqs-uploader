@@ -10,6 +10,10 @@
      signed-in avatar/sign-out accents. */
   --ember-red: #c81a24;
   --ember-red-hover: #a8151d;
+  /* The flame's orange, darkened enough that white text stays readable — used for the
+     "Load from EMBER" browse button. */
+  --ember-orange: #b84f02;
+  --ember-orange-hover: #9a4202;
   --ok: #15803d;
   --ok-soft: #e9f9ef;
   --warn: #b45309;
@@ -282,10 +286,29 @@ button.primary:disabled {
   display: block !important;
 }
 
+/* Mirrors .view-dataset-link (the "View on EMBER" pill in the card heading above), pinned to
+   the card's right edge, in the flame's orange rather than its red. */
 .load-remote-btn {
-  justify-self: start;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.85rem;
-  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--ember-orange);
+  border: 1px solid var(--ember-orange);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+}
+.load-remote-btn:hover {
+  background: var(--ember-orange-hover);
+  border-color: var(--ember-orange-hover);
+}
+.load-remote-btn:focus-visible {
+  outline: 2px solid var(--ember-orange);
+  outline-offset: 1px;
 }
 
 .dandiset-single {
