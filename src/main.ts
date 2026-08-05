@@ -26,6 +26,7 @@ import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { FileRow } from "./ui/fileRow";
 import { renderChangelogHtml, countChangelogVersions } from "./lib/changelog";
 import changelog from "../CHANGELOG.md?raw";
+import emberLogoUrl from "./assets/ember-logo.png";
 
 declare const __APP_VERSION__: string;
 
@@ -961,6 +962,15 @@ type RemoteBannerState =
   | { kind: "browse"; files: number; bytes: number }
   | { kind: "failed" };
 
+function showEmberBannerLogo(): void {
+  els.remoteBannerIcon.className = "";
+  const img = document.createElement("img");
+  img.src = emberLogoUrl;
+  img.alt = "";
+  img.className = "remote-banner-logo";
+  els.remoteBannerIcon.replaceChildren(img);
+}
+
 function renderRemoteBanner(state: RemoteBannerState | null): void {
   els.remoteBanner.hidden = state === null;
   if (!state) return;
@@ -978,8 +988,7 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
     els.remoteBannerTitle.textContent = "Couldn't check what's already on EMBER";
     els.remoteBannerBody.textContent = "Everything below is treated as new; re-check to try again.";
   } else if (state.files === 0) {
-    els.remoteBannerIcon.className = "";
-    els.remoteBannerIcon.textContent = "☁️";
+    showEmberBannerLogo();
     els.remoteBannerTitle.textContent = "Nothing uploaded yet";
     if (state.kind === "browse") {
       els.remoteBannerBody.textContent =
@@ -988,14 +997,12 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
       els.remoteBannerBody.textContent = "This dataset is currently empty.";
     }
   } else if (state.kind === "browse") {
-    els.remoteBannerIcon.className = "";
-    els.remoteBannerIcon.textContent = "☁️";
+    showEmberBannerLogo();
     els.remoteBannerTitle.textContent = `On EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
     els.remoteBannerBody.textContent =
       "Currently uploaded content; choose the matching base folder to submit new uploads.";
   } else {
-    els.remoteBannerIcon.className = "";
-    els.remoteBannerIcon.textContent = "☁️";
+    showEmberBannerLogo();
     els.remoteBannerTitle.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
     els.remoteBannerBody.textContent = "Existing files are deselected below; re-select to replace the previous upload.";
   }

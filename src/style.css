@@ -495,9 +495,16 @@ ul.human-subjects-body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   margin-left: auto;
   padding: 0.35rem;
   line-height: 1;
+}
+.remote-banner-logo {
+  display: block;
+  height: 1.2rem;
+  width: auto;
+  margin-top: 0.05rem;
 }
 .remote-banner-spinner {
   display: inline-block;

@@ -8,6 +8,7 @@ import { renderFileTree, type DirRowEls } from "../src/ui/fileTree";
 import { createFileRow, type FileRow } from "../src/ui/fileRow";
 import { humanSize } from "../src/lib/format";
 import type { DroppedFile } from "../src/lib/fileTree";
+import emberLogoUrl from "../src/assets/ember-logo.png";
 
 export interface SelectionCardOptions {
   entries: DroppedFile[];
@@ -180,6 +181,14 @@ export function buildSelectionTree(opts: SelectionCardOptions): HTMLElement {
   return root;
 }
 
+function emberLogoImg(): HTMLImageElement {
+  const img = document.createElement("img");
+  img.src = emberLogoUrl;
+  img.alt = "";
+  img.className = "remote-banner-logo";
+  return img;
+}
+
 export type RemoteBannerState =
   { kind: "checking" } | { kind: "checked"; files: number; bytes: number } | { kind: "failed" };
 
@@ -216,12 +225,12 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
     body.textContent = "Everything below is treated as new; re-check to try again.";
   } else if (state.files === 0) {
     banner.classList.add("checked");
-    icon.textContent = "☁️";
+    icon.replaceChildren(emberLogoImg());
     title.textContent = "Nothing uploaded yet";
     body.textContent = "This dataset is currently empty.";
   } else {
     banner.classList.add("checked");
-    icon.textContent = "☁️";
+    icon.replaceChildren(emberLogoImg());
     title.textContent = `Already on EMBER: ${state.files} file${state.files === 1 ? "" : "s"} (${humanSize(state.bytes)})`;
     body.textContent = "Existing files are deselected below; re-select to replace the previous upload.";
   }
