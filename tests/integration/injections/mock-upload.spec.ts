@@ -17,17 +17,17 @@ for (const theme of ["light", "dark"] as const) {
       await page.goto("/?test&mock_upload=6");
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 
-      await expect(page.locator("#progress-summary")).toBeVisible();
       await expect(page.locator("#file-list .file-item")).toHaveCount(6);
-      await expect(page.locator("#upload-all-btn")).toHaveText("Upload 6 files");
-
-      // Scanning starts on its own, before "Upload" is ever clicked.
-      await expect(page.locator("#progress-hash-files")).toHaveText("6 of 6", { timeout: 15000 });
-      await expect(page.locator("#progress-hash-pct")).toHaveText("100%");
-      await expect(page.locator("#progress-upload-files")).toHaveText("0 of 6");
+      // The fake files have randomized sizes, so only the count part of the label is stable.
+      await expect(page.locator("#upload-all-btn")).toContainText("Upload 6 files");
+      // Scanning starts at "Upload", so staging alone shows no progress summary.
+      await expect(page.locator("#progress-summary")).toBeHidden();
 
       await page.locator("#upload-all-btn").click();
 
+      await expect(page.locator("#progress-summary")).toBeVisible();
+      await expect(page.locator("#progress-hash-files")).toHaveText("6 of 6", { timeout: 45000 });
+      await expect(page.locator("#progress-hash-pct")).toHaveText("100%");
       await expect(page.locator("#progress-upload-files")).toHaveText("6 of 6", { timeout: 45000 });
       await expect(page.locator("#progress-upload-pct")).toHaveText("100%");
       await expect(page.locator("#progress-footer-left")).toContainText("6 done");

@@ -1,10 +1,16 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import { resolveAppVersion } from "./appVersion";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url));
 
 export default defineConfig({
   root: rootDir,
+  // Same injection vite.config.ts performs, so src/main.ts (which reads __APP_VERSION__) can be
+  // imported by the boot smoke test.
+  define: {
+    __APP_VERSION__: JSON.stringify(resolveAppVersion()),
+  },
   test: {
     environment: "node",
     include: ["tests/unit/**/*.test.ts"],
@@ -18,10 +24,10 @@ export default defineConfig({
       // these as coverage of src/ui and src/main.ts improves; they are not a
       // target, only a floor.
       thresholds: {
-        statements: 60,
-        branches: 57,
-        functions: 63,
-        lines: 60,
+        statements: 75,
+        branches: 65,
+        functions: 74,
+        lines: 76,
       },
     },
   },

@@ -193,12 +193,12 @@
           <li>Use Fiber internet rather than cable or DSL, if available.</li>
           <li>
             <a
-              href="https://github.com/orgs/brain-bbqs/discussions/new?category=q-a&title=Consultation+request%3A+improve+transfer+speeds&body=Hi+EMBER+Team%2C%0A%0AI%27d+like+to+request+a+consultation+to+help+improve+my+transfer+speeds.%0A%0AHere%27s+some+context+on+my+setup%3A%0A-+"
+              href="https://github.com/orgs/brain-bbqs/discussions/new?category=q-a&title=Consultation+request%3A+Improve+transfer+speeds&body=Hi+EMBER+Team%2C%0A%0AI%27d+like+to+request+a+consultation+to+help+improve+my+transfer+speeds.%0A%0AHere%27s+some+context+on+my+setup%3A%0A-+"
               target="_blank"
               rel="noopener"
               >Request a consultation</a
             >
-            from our Tech Support Team to attempt to improve your transfer speeds.
+            from our Tech Support team to attempt to improve your transfer speeds.
           </li>
         </ul>
       </div>
@@ -232,7 +232,9 @@
       <section class="card" id="config-card">
         <div class="card-heading">
           <h2>Dataset</h2>
-          <a id="view-dataset-link" class="view-dataset-link" target="_blank" rel="noopener" hidden>View on EMBER ↗</a>
+          <a id="view-dataset-link" class="view-dataset-link" target="_blank" rel="noopener" hidden
+            >View on EMBER <span class="btn-arrow" aria-hidden="true">↗</span></a
+          >
         </div>
         <form id="config-form">
           <div class="grid">
@@ -245,11 +247,41 @@
               This dataset is not embargoed. Direct uploads are only allowed to embargoed dandisets; contact EMBER/BBQS
               admins.
             </p>
+            <button
+              type="button"
+              id="load-remote-btn"
+              class="load-remote-btn"
+              title="Browse what this dataset already holds under sourcedata/raw/, before picking a folder"
+              hidden
+            >
+              Load from EMBER <span class="btn-arrow" aria-hidden="true">↘</span>
+            </button>
           </div>
         </form>
       </section>
 
-      <section class="card" id="upload-card" hidden>
+      <section class="card" id="folder-card" hidden>
+        <div id="dropzone">
+          <div class="dz-inner">
+            <div class="dz-icon"><span>📁</span></div>
+            <p>
+              Drop your dataset folder here, or
+              <button type="button" id="browse-folder-btn" class="dz-browse">browse for a folder</button>.
+            </p>
+            <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
+            <p id="dropzone-reject" class="dz-reject" hidden></p>
+          </div>
+          <input type="file" id="folder-input" webkitdirectory multiple hidden />
+        </div>
+        <div id="folder-summary" class="folder-summary" hidden>
+          <span aria-hidden="true">📁</span>
+          <span id="folder-summary-name" class="folder-summary-name"></span>
+          <span id="folder-summary-stats" class="folder-summary-stats"></span>
+          <button type="button" id="change-folder-btn">Change folder</button>
+        </div>
+      </section>
+
+      <section class="card" id="files-card" hidden>
         <div id="progress-summary" class="progress-summary" hidden>
           <div class="progress-phase progress-phase--scan">
             <div class="progress-phase-head">
@@ -325,30 +357,42 @@
             <span></span>
           </div>
         </div>
-        <div id="dropzone">
-          <div class="dz-inner">
-            <div class="dz-icon">
-              <span>🎥</span>
-              <span>🔬</span>
-              <span>📄</span>
-            </div>
-            <p>
-              Drop your research contents here, or click to browse
-              <button type="button" id="browse-files-btn" class="dz-browse">files</button>
-              or select an entire
-              <button type="button" id="browse-folder-btn" class="dz-browse">folder</button>.
-            </p>
+        <div id="remote-banner" class="remote-banner" hidden>
+          <span id="remote-banner-icon" aria-hidden="true"></span>
+          <div>
+            <div id="remote-banner-title" class="remote-banner-title"></div>
+            <div id="remote-banner-body" class="remote-banner-body"></div>
           </div>
-          <input type="file" id="file-input" multiple hidden />
-          <input type="file" id="folder-input" webkitdirectory multiple hidden />
-        </div>
-        <div id="upload-bar" class="upload-bar" hidden>
-          <button type="button" id="upload-all-btn" class="primary">Upload</button>
-          <button type="button" id="cancel-all-btn" hidden>Cancel</button>
-          <button type="button" id="reset-all-btn" class="reset-all-btn">Reset</button>
+          <button type="button" id="remote-recheck-btn" aria-label="Re-check EMBER" title="Re-check EMBER" hidden>
+            <!-- Inline SVG rather than a reload glyph/emoji: Windows renders 🔄 with color emoji
+                 presentation, while currentColor strokes stay monochrome and theme-aware. -->
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15 A9 9 0 1 1 18.36 5.64 L23 10" />
+            </svg>
+          </button>
         </div>
         <div id="dest-root" class="dest-root" hidden>
-          <code>sourcedata/raw/</code>
+          <span class="dest-root-left">
+            <label
+              class="remote-toggle"
+              title="Check what already exists under sourcedata/raw/ in the selected dataset and mark staged files as Uploaded, Changed, or New"
+            >
+              <input type="checkbox" id="remote-check-toggle" checked />
+              Compare with EMBER
+            </label>
+            <code>sourcedata/raw/</code>
+          </span>
           <span class="expand-control">
             <span class="expand-slider">
               <span class="expand-bubble" id="expand-depth-bubble"><span id="expand-depth-value">0</span> files</span>
@@ -357,7 +401,32 @@
             </span>
           </span>
         </div>
+        <div id="selection-bar" hidden>
+          <div class="select-toolbar">
+            <span id="selection-summary" class="select-toolbar-summary"></span>
+            <span class="select-toolbar-actions">
+              <button type="button" id="select-all-btn" class="mini-btn">Select all</button>
+              <button type="button" id="select-none-btn" class="mini-btn">Select none</button>
+            </span>
+          </div>
+          <div class="ignore-chip-row">
+            <span>Ignoring:</span>
+            <span id="ignore-chips"></span>
+            <input
+              id="ignore-pattern-input"
+              class="ignore-pattern-input"
+              placeholder="Add pattern, e.g. *.tmp or scratch/"
+              aria-label="Add ignore pattern"
+            />
+            <button type="button" id="ignore-pattern-add" class="mini-btn">Add</button>
+          </div>
+        </div>
         <ul id="file-list"></ul>
+        <div id="upload-bar" class="upload-bar" hidden>
+          <button type="button" id="upload-all-btn" class="primary">Upload</button>
+          <button type="button" id="cancel-all-btn" hidden>Cancel</button>
+          <button type="button" id="reset-all-btn" class="reset-all-btn">Reset</button>
+        </div>
       </section>
     </main>
 

@@ -1,33 +1,31 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { initDropzone } from "../../src/ui/dropzone";
+import { initDropzone, type AcceptedFolder } from "../../src/ui/dropzone";
 import type { UploaderElements } from "../../src/ui/elements";
-import type { DroppedFile } from "../../src/lib/fileTree";
 
 interface Harness {
   els: UploaderElements;
   dz: HTMLDivElement;
-  fileInput: HTMLInputElement;
+  reject: HTMLParagraphElement;
   folderInput: HTMLInputElement;
-  browseFilesBtn: HTMLButtonElement;
   browseFolderBtn: HTMLButtonElement;
-  addFiles: ReturnType<typeof vi.fn>;
+  onFolder: ReturnType<typeof vi.fn>;
 }
 
 function setup(): Harness {
   const dz = document.createElement("div");
-  const fileInput = document.createElement("input");
+  const reject = document.createElement("p");
+  reject.hidden = true;
   const folderInput = document.createElement("input");
-  const browseFilesBtn = document.createElement("button");
   const browseFolderBtn = document.createElement("button");
-  // Mirror the real layout: the buttons and hidden inputs live inside the dropzone,
+  // Mirror the real layout: the button, message, and hidden input live inside the dropzone,
   // so their clicks bubble to it.
-  dz.append(browseFilesBtn, browseFolderBtn, fileInput, folderInput);
+  dz.append(browseFolderBtn, reject, folderInput);
   document.body.appendChild(dz);
-  const els = { dropzone: dz, fileInput, folderInput, browseFilesBtn, browseFolderBtn } as unknown as UploaderElements;
-  const addFiles = vi.fn();
-  initDropzone(els, addFiles);
-  return { els, dz, fileInput, folderInput, browseFilesBtn, browseFolderBtn, addFiles };
+  const els = { dropzone: dz, dropzoneReject: reject, folderInput, browseFolderBtn } as unknown as UploaderElements;
+  const onFolder = vi.fn();
+  initDropzone(els, onFolder);
+  return { els, dz, reject, folderInput, browseFolderBtn, onFolder };
 }
 
 function setInputFiles(input: HTMLInputElement, files: File[]): void {
@@ -80,53 +78,64 @@ function itemsFor(entries: (FakeFileEntry | FakeDirEntry | null)[]): unknown {
   return { items: entries.map((e) => ({ kind: "file", webkitGetAsEntry: () => e })), files: [] };
 }
 
+function acceptedFolder(mock: ReturnType<typeof vi.fn>): AcceptedFolder {
+  return mock.mock.calls[0][0] as AcceptedFolder;
+}
+
 beforeEach(() => {
   document.body.textContent = "";
 });
 
 describe("initDropzone browse wiring", () => {
-  it("opens the file picker when the dropzone itself is clicked", () => {
-    const { dz, fileInput } = setup();
-    const click = vi.spyOn(fileInput, "click").mockImplementation(() => {});
+  it("opens the folder picker when the dropzone itself is clicked", () => {
+    const { dz, folderInput } = setup();
+    const click = vi.spyOn(folderInput, "click").mockImplementation(() => {});
     dz.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(click).toHaveBeenCalledTimes(1);
   });
 
-  it("opens only the folder picker from the folder button, despite bubbling", () => {
-    const { browseFolderBtn, fileInput, folderInput } = setup();
-    const fileClick = vi.spyOn(fileInput, "click").mockImplementation(() => {});
+  it("opens the folder picker exactly once from the browse button, despite bubbling", () => {
+    const { browseFolderBtn, folderInput } = setup();
     const folderClick = vi.spyOn(folderInput, "click").mockImplementation(() => {});
     browseFolderBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(folderClick).toHaveBeenCalledTimes(1);
-    expect(fileClick).not.toHaveBeenCalled();
   });
 
-  it("passes picked flat files to addFiles and resets the input for re-picking", () => {
-    const { fileInput, addFiles } = setup();
-    const file = new File(["x"], "clip.mp4");
-    setInputFiles(fileInput, [file]);
-    fileInput.dispatchEvent(new Event("change"));
-    expect(addFiles).toHaveBeenCalledWith([{ file, relativePath: "" }]);
-    expect(fileInput.value).toBe("");
-  });
-
-  it("derives folder structure from webkitRelativePath on folder picks", () => {
-    const { folderInput, addFiles } = setup();
-    const file = withRelativePath(new File(["x"], "clip.mp4"), "myfolder/sub/clip.mp4");
-    setInputFiles(folderInput, [file]);
+  it("strips the base folder segment from webkitRelativePath on folder picks", () => {
+    const { folderInput, onFolder } = setup();
+    const top = withRelativePath(new File(["x"], "notes.txt"), "myfolder/notes.txt");
+    const nested = withRelativePath(new File(["x"], "clip.mp4"), "myfolder/sub/clip.mp4");
+    setInputFiles(folderInput, [top, nested]);
     folderInput.dispatchEvent(new Event("change"));
-    expect(addFiles).toHaveBeenCalledWith([{ file, relativePath: "myfolder/sub" }]);
+    expect(acceptedFolder(onFolder)).toEqual({
+      folderName: "myfolder",
+      entries: [
+        { file: top, relativePath: "" },
+        { file: nested, relativePath: "sub" },
+      ],
+    });
+    expect(folderInput.value).toBe("");
   });
 
   it("filters out OS junk files and everything inside ignored folders", () => {
-    const { folderInput, addFiles } = setup();
-    const keep = withRelativePath(new File(["x"], "clip.mp4"), "data/clip.mp4");
-    const junk = withRelativePath(new File(["x"], ".DS_Store"), "data/.DS_Store");
-    const cached = withRelativePath(new File(["x"], "mod.pyc"), "data/mod.pyc");
-    const inGit = withRelativePath(new File(["x"], "config"), "data/.git/config");
+    const { folderInput, onFolder } = setup();
+    const keep = withRelativePath(new File(["x"], "clip.mp4"), "base/data/clip.mp4");
+    const junk = withRelativePath(new File(["x"], ".DS_Store"), "base/data/.DS_Store");
+    const cached = withRelativePath(new File(["x"], "mod.pyc"), "base/data/mod.pyc");
+    const inGit = withRelativePath(new File(["x"], "config"), "base/data/.git/config");
     setInputFiles(folderInput, [keep, junk, cached, inGit]);
     folderInput.dispatchEvent(new Event("change"));
-    expect(addFiles).toHaveBeenCalledWith([{ file: keep, relativePath: "data" }]);
+    expect(acceptedFolder(onFolder).entries).toEqual([{ file: keep, relativePath: "data" }]);
+  });
+
+  it("rejects a picked folder whose every file is filtered out", () => {
+    const { folderInput, reject, onFolder } = setup();
+    const junk = withRelativePath(new File(["x"], ".DS_Store"), "base/.DS_Store");
+    setInputFiles(folderInput, [junk]);
+    folderInput.dispatchEvent(new Event("change"));
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.hidden).toBe(false);
+    expect(reject.textContent).toContain("no uploadable files");
   });
 });
 
@@ -139,8 +148,8 @@ describe("initDropzone drag & drop", () => {
     expect(dz.classList.contains("dragover")).toBe(false);
   });
 
-  it("walks dropped directory entries recursively, skipping ignored names", async () => {
-    const { dz, addFiles } = setup();
+  it("walks a dropped folder recursively, stripping its own name and skipping ignored names", async () => {
+    const { dz, onFolder } = setup();
     const tree = dirEntry("session1", [
       fileEntry("clip.mp4"),
       fileEntry(".DS_Store"),
@@ -149,27 +158,60 @@ describe("initDropzone drag & drop", () => {
     ]);
     dz.dispatchEvent(dropEvent(itemsFor([tree])));
 
-    await vi.waitFor(() => expect(addFiles).toHaveBeenCalled());
-    const entries = addFiles.mock.calls[0][0] as DroppedFile[];
-    expect(entries.map((e) => `${e.relativePath}/${e.file.name}`)).toEqual([
-      "session1/clip.mp4",
-      "session1/sub/trace.csv",
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    const folder = acceptedFolder(onFolder);
+    expect(folder.folderName).toBe("session1");
+    expect(folder.entries.map((e) => [e.relativePath, e.file.name].filter(Boolean).join("/"))).toEqual([
+      "clip.mp4",
+      "sub/trace.csv",
     ]);
   });
 
-  it("falls back to flat dataTransfer.files when entries are unavailable", async () => {
-    const { dz, addFiles } = setup();
-    const file = new File(["x"], "clip.mp4");
-    dz.dispatchEvent(dropEvent({ items: [], files: [file] }));
+  it("accepts only the first folder when several things are dropped together", async () => {
+    const { dz, onFolder } = setup();
+    const first = dirEntry("one", [fileEntry("a.txt")]);
+    const second = dirEntry("two", [fileEntry("b.txt")]);
+    dz.dispatchEvent(dropEvent(itemsFor([fileEntry("loose.txt"), first, second])));
 
-    await vi.waitFor(() => expect(addFiles).toHaveBeenCalled());
-    expect(addFiles).toHaveBeenCalledWith([{ file, relativePath: "" }]);
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    expect(acceptedFolder(onFolder).folderName).toBe("one");
+    expect(acceptedFolder(onFolder).entries.map((e) => e.file.name)).toEqual(["a.txt"]);
   });
 
-  it("ignores a drop that yields no files at all", async () => {
-    const { dz, addFiles } = setup();
+  it("rejects a drop of loose files with an explanation instead of queueing them", async () => {
+    const { dz, reject, onFolder } = setup();
+    dz.dispatchEvent(dropEvent(itemsFor([fileEntry("clip.mp4"), fileEntry("notes.txt")])));
+
+    await vi.waitFor(() => expect(reject.hidden).toBe(false));
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.textContent).toContain("Drop the folder that contains them");
+  });
+
+  it("clears the rejection message once a folder is accepted", async () => {
+    const { dz, reject, onFolder } = setup();
+    dz.dispatchEvent(dropEvent(itemsFor([fileEntry("clip.mp4")])));
+    await vi.waitFor(() => expect(reject.hidden).toBe(false));
+
+    dz.dispatchEvent(dropEvent(itemsFor([dirEntry("session1", [fileEntry("a.txt")])])));
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    expect(reject.hidden).toBe(true);
+  });
+
+  it("rejects drops in browsers without webkitGetAsEntry support", async () => {
+    const { dz, reject, onFolder } = setup();
+    const file = new File(["x"], "clip.mp4");
+    dz.dispatchEvent(dropEvent({ items: [{ kind: "file" }], files: [file] }));
+
+    await vi.waitFor(() => expect(reject.hidden).toBe(false));
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.textContent).toContain("browse button");
+  });
+
+  it("ignores a drop that yields no items at all", async () => {
+    const { dz, reject, onFolder } = setup();
     dz.dispatchEvent(dropEvent({ items: [], files: [] }));
     await new Promise((r) => setTimeout(r, 0));
-    expect(addFiles).not.toHaveBeenCalled();
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.hidden).toBe(true);
   });
 });

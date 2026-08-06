@@ -28,12 +28,12 @@ test("hashes concurrently-uploading files on separate workers, not the main thre
     { name: "c.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(6 * 1024 * 1024) },
   ]);
 
-  // Hashing starts the moment files are dropped, before "Upload" is ever clicked.
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (18 MB)");
+  await page.locator("#upload-all-btn").click();
+
+  // Hashing starts when "Upload" is clicked, fanning the batch out across pool workers.
   await expect(page.locator("[data-role='badge']").first()).toBeVisible({ timeout: 5000 });
   await expect.poll(() => workerUrls.length, { timeout: 5000 }).toBeGreaterThan(1);
-
-  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files");
-  await page.locator("#upload-all-btn").click();
 });
 
 test("fans a single multi-part file out across workers and cancels hashing via Cancel all", async ({ page }) => {
@@ -41,6 +41,14 @@ test("fans a single multi-part file out across workers and cancels hashing via C
   page.on("worker", (w) => workerUrls.push(w.url()));
 
   await seedSignedIn(page);
+  // Even throttled, a fast CI runner can finish the scan before the cancel click lands; with no
+  // upload API mocked, the batch would then error out instantly and hide the Cancel button mid-
+  // click. Stalling the first upload call keeps the batch alive (and cancellable) either way —
+  // a cancel landing in that window still reads "Cancelled" via the upload's own abort path.
+  await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, async (route: Route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.fulfill({ status: 500, body: "stalled for test" });
+  });
   await page.goto("/");
 
   // Slow the page down so the mid-hash cancel below isn't a race against real-time MD5 speed.
@@ -53,6 +61,7 @@ test("fans a single multi-part file out across workers and cancels hashing via C
   writeFileSync(bigPath, Buffer.alloc(64 * 1024 * 1024 + 10));
 
   await dropFile(page, bigPath);
+  await page.locator("#upload-all-btn").click();
 
   const badge = page.locator("[data-role='badge']").first();
   await expect(badge).toHaveText("Scanning", { timeout: 10000 });

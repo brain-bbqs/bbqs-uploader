@@ -47,10 +47,15 @@ test("re-dropping an unchanged file after a reload hashes only one verification 
   writeFileSync(bigPath, bytes);
 
   await seedSignedIn(page);
+  // Hashing starts at "Upload", which then proceeds into the (irrelevant here) network pipeline;
+  // failing the first upload call keeps this test's traffic fully mocked while the scan — the
+  // part under test — completes normally.
+  await page.route("**/uploads/initialize/", (route) => route.fulfill({ status: 500, body: "stubbed" }));
   await page.goto("/");
   await dropFile(page, bigPath);
+  await page.locator("#upload-all-btn").click();
 
-  // First drop: a full scan, fanning the two parts out across two pool workers.
+  // First batch: a full scan, fanning the two parts out across two pool workers.
   await expect(page.locator("#progress-hash-files")).toHaveText("1 of 1", { timeout: 60_000 });
   await expect.poll(() => workerUrls.length).toBe(2);
 
@@ -63,8 +68,9 @@ test("re-dropping an unchanged file after a reload hashes only one verification 
   await page.reload();
   workerUrls.length = 0;
   await dropFile(page, bigPath);
+  await page.locator("#upload-all-btn").click();
 
-  // Second drop: every part comes from the cache, so the pool only re-hashes the single
+  // Second batch: every part comes from the cache, so the pool only re-hashes the single
   // verification part — observable as exactly one worker (of a pool that fans a full scan of
   // this file out to two) ever spawning in the fresh page.
   await expect(page.locator("#progress-hash-files")).toHaveText("1 of 1", { timeout: 60_000 });

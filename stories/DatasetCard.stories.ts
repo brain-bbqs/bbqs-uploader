@@ -12,10 +12,11 @@ function buildDatasetCard(mode: Mode): HTMLElement {
   card.className = "card";
   card.id = "config-card";
   const showMessage = mode === "signed-out" || mode === "zero";
+  const showBrowse = mode === "dropdown" || mode === "single";
   card.innerHTML = `
     <div class="card-heading">
       <h2>Dataset</h2>
-      <a class="view-dataset-link" target="_blank" rel="noopener"${showMessage ? " hidden" : ""}>View on EMBER ↗</a>
+      <a class="view-dataset-link" target="_blank" rel="noopener"${showMessage ? " hidden" : ""}>View on EMBER <span class="btn-arrow" aria-hidden="true">↗</span></a>
     </div>
     <form id="config-form">
       <div class="grid">
@@ -27,6 +28,14 @@ function buildDatasetCard(mode: Mode): HTMLElement {
         <p class="dandiset-single"${mode === "single" ? "" : " hidden"}>
           <span>Uploading directly to EMBER Dandiset <code>000475</code>, "Incoming: Throughput test"</span>
         </p>
+        <button
+          type="button"
+          class="load-remote-btn"
+          title="Browse what this dataset already holds under sourcedata/raw/, before picking a folder"
+          ${showBrowse ? "" : "hidden"}
+        >
+          Load from EMBER <span class="btn-arrow" aria-hidden="true">↘</span>
+        </button>
       </div>
     </form>
   `;

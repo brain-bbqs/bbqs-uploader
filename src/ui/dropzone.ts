@@ -54,6 +54,17 @@ interface FileSystemDirectoryEntryLike extends FileSystemEntryLike {
   createReader(): FileSystemDirectoryReaderLike;
 }
 
+/** A base folder accepted by the dropzone: its name plus every (non-ignored) file inside it. */
+export interface AcceptedFolder {
+  folderName: string;
+  entries: DroppedFile[];
+}
+
+const REJECT_LOOSE_FILES =
+  "Individual files can't be uploaded on their own. Drop the folder that contains them instead.";
+const REJECT_UNSUPPORTED_DROP = "This browser can't read dropped folders; use the browse button instead.";
+const REJECT_EMPTY_FOLDER = "That folder contains no uploadable files.";
+
 function readAllEntries(reader: FileSystemDirectoryReaderLike): Promise<FileSystemEntryLike[]> {
   return new Promise((resolve, reject) => {
     const all: FileSystemEntryLike[] = [];
@@ -86,63 +97,75 @@ async function walkEntry(entry: FileSystemEntryLike, relativeDir: string, out: D
   }
 }
 
-async function collectDroppedFiles(dataTransfer: DataTransfer): Promise<DroppedFile[]> {
-  const items = Array.from(dataTransfer.items);
-  const entries = items
+/**
+ * Resolves a drop to the single base folder it carries, or null when it holds no folder at all
+ * (loose files only, or a browser without webkitGetAsEntry). The base folder's own name is NOT
+ * part of the returned relativePaths — its contents land directly under sourcedata/raw/ — and
+ * anything dropped alongside the folder is ignored.
+ */
+async function collectDroppedFolder(dataTransfer: DataTransfer): Promise<AcceptedFolder | null> {
+  const entries = Array.from(dataTransfer.items)
     // The DOM types declare webkitGetAsEntry unconditionally, but older browsers genuinely
-    // lack it and the flat-files fallback below depends on this returning null there.
+    // lack it, and without it a drop can't be told apart from loose files — so it's rejected.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     .map((item) => (item.kind === "file" ? (item.webkitGetAsEntry?.() as FileSystemEntryLike | null) : null))
     .filter((e): e is FileSystemEntryLike => !!e);
-  if (entries.length) {
-    const out: DroppedFile[] = [];
-    for (const entry of entries) {
-      await walkEntry(entry, "", out);
-    }
-    return out;
-  }
-  // Fallback for browsers without webkitGetAsEntry support: flat files only.
-  return Array.from(dataTransfer.files).map((file) => ({ file, relativePath: "" }));
-}
-
-function filesFromFileList(fileList: FileList): DroppedFile[] {
+  const folder = entries.find((e) => e.isDirectory) as FileSystemDirectoryEntryLike | undefined;
+  if (!folder || isIgnoredName(folder.name)) return null;
   const out: DroppedFile[] = [];
-  for (const file of Array.from(fileList)) {
-    // webkitdirectory-selected files carry the folder structure in webkitRelativePath,
-    // e.g. "myfolder/sub/clip.mp4"; strip the filename to get the containing folder path.
-    const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
-    const segments = rel.split("/");
-    const dirSegments = segments.slice(0, -1);
-    if (isIgnoredName(file.name) || dirSegments.some((s) => isIgnoredName(s))) continue;
-    out.push({ file, relativePath: dirSegments.join("/") });
+  for (const child of await readAllEntries(folder.createReader())) {
+    await walkEntry(child, "", out);
   }
-  return out;
+  return { folderName: folder.name, entries: out };
 }
 
-export function initDropzone(els: UploaderElements, addFiles: (entries: DroppedFile[]) => void): void {
+/**
+ * Resolves a webkitdirectory picker's FileList to the picked base folder. webkitRelativePath
+ * carries the folder structure as "base/sub/clip.mp4"; the base segment names the folder and is
+ * stripped from every relativePath, matching the drag-and-drop path above.
+ */
+function folderFromFileList(fileList: FileList): AcceptedFolder {
+  const entries: DroppedFile[] = [];
+  let folderName = "";
+  for (const file of Array.from(fileList)) {
+    const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
+    const segments = rel.split("/").filter(Boolean);
+    if (!folderName && segments.length > 1) folderName = segments[0];
+    const dirSegments = segments.slice(1, -1);
+    if (isIgnoredName(file.name) || segments.slice(0, -1).some((s) => isIgnoredName(s))) continue;
+    entries.push({ file, relativePath: dirSegments.join("/") });
+  }
+  return { folderName, entries };
+}
+
+export function initDropzone(els: UploaderElements, onFolder: (folder: AcceptedFolder) => void): void {
   const dz = els.dropzone;
-  dz.addEventListener("click", () => els.fileInput.click());
-  // A single input cannot offer both files and folders, so each browse link opens its own
-  // input; stopPropagation keeps the dropzone's own click handler from also firing.
-  els.browseFilesBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.fileInput.click();
-  });
+
+  function showReject(message: string): void {
+    els.dropzoneReject.textContent = message;
+    els.dropzoneReject.hidden = false;
+  }
+
+  function accept(folder: AcceptedFolder): void {
+    if (!folder.entries.length) {
+      showReject(REJECT_EMPTY_FOLDER);
+      return;
+    }
+    els.dropzoneReject.hidden = true;
+    onFolder(folder);
+  }
+
+  // The dropzone accepts exactly one thing — a folder — so clicking anywhere on it opens the
+  // folder picker; stopPropagation keeps the browse button's own click (and the synthetic click
+  // bubbling back out of the hidden input) from opening a second picker on top.
+  dz.addEventListener("click", () => els.folderInput.click());
   els.browseFolderBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     els.folderInput.click();
   });
-  // The hidden inputs live inside the dropzone, so the synthetic click from input.click()
-  // bubbles back to the dropzone handler and would pop a second (file) picker on top of the
-  // folder picker.
-  els.fileInput.addEventListener("click", (e) => e.stopPropagation());
   els.folderInput.addEventListener("click", (e) => e.stopPropagation());
-  els.fileInput.addEventListener("change", () => {
-    if (els.fileInput.files?.length) addFiles(filesFromFileList(els.fileInput.files));
-    els.fileInput.value = "";
-  });
   els.folderInput.addEventListener("change", () => {
-    if (els.folderInput.files?.length) addFiles(filesFromFileList(els.folderInput.files));
+    if (els.folderInput.files?.length) accept(folderFromFileList(els.folderInput.files));
     els.folderInput.value = "";
   });
   ["dragenter", "dragover"].forEach((evt) =>
@@ -159,11 +182,21 @@ export function initDropzone(els: UploaderElements, addFiles: (entries: DroppedF
   );
   dz.addEventListener("drop", (e) => {
     if (!e.dataTransfer) return;
-    void collectDroppedFiles(e.dataTransfer).then((entries) => {
-      if (entries.length) addFiles(entries);
+    // DataTransfer items are only readable synchronously during the event; snapshot what the
+    // rejection message needs before the async folder walk starts.
+    const hadItems = e.dataTransfer.items.length > 0 || e.dataTransfer.files.length > 0;
+    const hasEntrySupport = Array.from(e.dataTransfer.items).some(
+      (item) => typeof item.webkitGetAsEntry === "function",
+    );
+    void collectDroppedFolder(e.dataTransfer).then((folder) => {
+      if (folder) {
+        accept(folder);
+      } else if (hadItems) {
+        showReject(hasEntrySupport ? REJECT_LOOSE_FILES : REJECT_UNSUPPORTED_DROP);
+      }
     });
   });
-  // Prevent the browser from navigating away when a file misses the dropzone.
+  // Prevent the browser from navigating away when a drop misses the dropzone.
   window.addEventListener("dragover", (e) => e.preventDefault());
   window.addEventListener("drop", (e) => e.preventDefault());
 }

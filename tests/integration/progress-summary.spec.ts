@@ -32,18 +32,13 @@ test("tracks overall progress and per-outcome counts across a mixed batch", asyn
     { name: "other.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(16) },
   ]);
 
-  // The summary is present as soon as files are queued, showing the total size up front, and no
-  // files have finished (hashing happens in the background, but that isn't a "finished" outcome).
-  await expect(page.locator("#progress-summary")).toBeVisible();
-  await expect(page.locator("#progress-upload-files")).toHaveText("0 of 2");
-  await expect(page.locator("#progress-hash-done")).toContainText("32 B");
-  await expect(page.locator("#progress-upload-done")).toContainText("32 B");
-  // Scanning finishes (in the background) well before Upload is even clicked, so its own file
-  // counter should reach 2 of 2 independently of the upload counter, which is still at 0 of 2.
-  await expect(page.locator("#progress-hash-files")).toHaveText("2 of 2");
-  await expect(page.locator("#progress-upload-files")).toHaveText("0 of 2");
+  // Scanning now starts at "Upload", not on drop, so staging alone shows no progress summary —
+  // just the selection UI and the Upload button carrying the batch's size.
+  await expect(page.locator("#progress-summary")).toBeHidden();
+  await expect(page.locator("#upload-all-btn")).toHaveText("Upload 2 files (32 B)");
 
   await page.locator("#upload-all-btn").click();
+  await expect(page.locator("#progress-summary")).toBeVisible();
 
   await expect(page.locator("#progress-upload-files")).toHaveText("2 of 2", { timeout: 15000 });
   await expect(page.locator("#progress-hash-files")).toHaveText("2 of 2");

@@ -16,7 +16,7 @@ function buildDatasetCard(): HTMLElement {
   card.innerHTML = `
     <div class="card-heading">
       <h2>Dataset</h2>
-      <a class="view-dataset-link" target="_blank" rel="noopener" hidden>View on EMBER ↗</a>
+      <a class="view-dataset-link" target="_blank" rel="noopener" hidden>View on EMBER <span class="btn-arrow" aria-hidden="true">↗</span></a>
     </div>
     <form>
       <div class="grid">

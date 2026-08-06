@@ -1,10 +1,36 @@
-import type { FileChooser, Page } from "@playwright/test";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import type { Page } from "@playwright/test";
 
-/** Drops file(s) through the dropzone's file chooser; accepts anything setFiles does
- * (a path on disk, an in-memory payload, or an array of either). */
-export async function dropFile(page: Page, files: Parameters<FileChooser["setFiles"]>[0]): Promise<void> {
+interface FilePayload {
+  name: string;
+  mimeType?: string;
+  buffer: Buffer;
+}
+
+/**
+ * Stages file(s) through the dropzone's folder chooser. The dropzone only accepts base folders,
+ * so the given payloads/paths are materialized into a fresh temp directory and that directory is
+ * picked; since the base folder's own name is stripped from every relativePath, the staged files
+ * come out identical to the loose-file drops this helper used to perform. On-disk paths are
+ * copied with their mtimes preserved, so checksum-cache keys survive the round-trip.
+ */
+export async function dropFile(page: Page, files: string | FilePayload | (string | FilePayload)[]): Promise<void> {
+  const list = Array.isArray(files) ? files : [files];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-drop-"));
+  for (const f of list) {
+    if (typeof f === "string") {
+      const dest = path.join(dir, path.basename(f));
+      fs.copyFileSync(f, dest);
+      const stat = fs.statSync(f);
+      fs.utimesSync(dest, stat.atime, stat.mtime);
+    } else {
+      fs.writeFileSync(path.join(dir, f.name), f.buffer);
+    }
+  }
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.locator("#dropzone").click();
   const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(files);
+  await fileChooser.setFiles(dir);
 }

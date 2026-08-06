@@ -1,17 +1,21 @@
 import { withCard, withTheme } from "./utils";
 
-function buildDropzone(dragover: boolean): HTMLElement {
+type DropzoneState = "idle" | "dragover" | "rejected";
+
+function buildDropzone(state: DropzoneState): HTMLElement {
   const dz = document.createElement("div");
   dz.id = "dropzone";
-  if (dragover) dz.classList.add("dragover");
+  if (state === "dragover") dz.classList.add("dragover");
   dz.innerHTML = `
     <div class="dz-inner">
-      <div class="dz-icon"><span>🎥</span><span>🔬</span><span>📄</span></div>
+      <div class="dz-icon"><span>📁</span></div>
       <p>
-        Drop your research contents here, or click to browse
-        <button type="button" class="dz-browse">files</button>
-        or a
-        <button type="button" class="dz-browse">folder</button>.
+        Drop your dataset folder here, or
+        <button type="button" class="dz-browse">browse for a folder</button>.
+      </p>
+      <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
+      <p class="dz-reject" ${state === "rejected" ? "" : "hidden"}>
+        Individual files can't be uploaded on their own. Drop the folder that contains them instead.
       </p>
     </div>
   `;
@@ -24,20 +28,30 @@ export default {
 
 export const IdleLight = {
   name: "Idle (light)",
-  render: () => withTheme("light", () => buildDropzone(false)),
+  render: () => withTheme("light", () => buildDropzone("idle")),
 };
 
 export const IdleDark = {
   name: "Idle (dark)",
-  render: () => withTheme("dark", () => buildDropzone(false)),
+  render: () => withTheme("dark", () => buildDropzone("idle")),
 };
 
 export const DragOverLight = {
   name: "Drag over (light)",
-  render: () => withTheme("light", () => buildDropzone(true)),
+  render: () => withTheme("light", () => buildDropzone("dragover")),
 };
 
 export const DragOverDark = {
   name: "Drag over (dark)",
-  render: () => withTheme("dark", () => buildDropzone(true)),
+  render: () => withTheme("dark", () => buildDropzone("dragover")),
+};
+
+export const RejectedLight = {
+  name: "Loose files rejected (light)",
+  render: () => withTheme("light", () => buildDropzone("rejected")),
+};
+
+export const RejectedDark = {
+  name: "Loose files rejected (dark)",
+  render: () => withTheme("dark", () => buildDropzone("rejected")),
 };

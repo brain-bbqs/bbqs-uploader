@@ -10,6 +10,10 @@
      signed-in avatar/sign-out accents. */
   --ember-red: #c81a24;
   --ember-red-hover: #a8151d;
+  /* The flame's orange, darkened enough that white text stays readable — used for the
+     "Load from EMBER" browse button. */
+  --ember-orange: #b84f02;
+  --ember-orange-hover: #9a4202;
   --ok: #15803d;
   --ok-soft: #e9f9ef;
   --warn: #b45309;
@@ -274,12 +278,47 @@ button.primary:disabled {
 :root[data-signed-in="1"] #oauth-signed-in[hidden] {
   display: inline-flex !important;
 }
-/* Same pre-paint reservation as above, but for the upload card: it's only ever meant to be
-   visible while signed in, so it stays hidden by default (see index.html) and this rule shows it
-   early when stored tokens are present, before renderAuthUI() takes over as the authoritative
+/* Same pre-paint reservation as above, but for the folder-picking card: it's only ever meant to
+   be visible while signed in, so it stays hidden by default (see index.html) and this rule shows
+   it early when stored tokens are present, before renderAuthUI() takes over as the authoritative
    source. */
-:root[data-signed-in="1"] #upload-card[hidden] {
+:root[data-signed-in="1"] #folder-card[hidden] {
   display: block !important;
+}
+
+/* Mirrors .view-dataset-link (the "View on EMBER" pill in the card heading above), pinned to
+   the card's right edge, in the flame's orange rather than its red. */
+.load-remote-btn {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--ember-orange);
+  border: 1px solid var(--ember-orange);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+}
+.load-remote-btn:hover {
+  background: var(--ember-orange-hover);
+  border-color: var(--ember-orange-hover);
+}
+.load-remote-btn:focus-visible {
+  outline: 2px solid var(--ember-orange);
+  outline-offset: 1px;
+}
+/* The pills' direction arrows — outbound ↗ on "View on EMBER", its inbound mirror ↘ on
+   "Load from EMBER" — bumped 20% over the label text, boxed so the taller glyph doesn't
+   stretch the pill. The glyph's ink rides low in its em box, so a small upward nudge centers
+   it optically against the label. */
+.btn-arrow {
+  font-size: 1.2em;
+  line-height: 1;
+  position: relative;
+  top: -0.08em;
 }
 
 .dandiset-single {
@@ -381,6 +420,233 @@ ul.human-subjects-body {
   color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
+}
+.dz-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.dz-reject {
+  margin: 0.85rem auto 0;
+  max-width: 26rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: var(--err-soft);
+  color: var(--err);
+  font-size: 0.85rem;
+}
+
+/* Compact summary of the accepted base folder, shown in the dropzone's place once one is picked. */
+.folder-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 0.9rem;
+}
+.folder-summary-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folder-summary-stats {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.folder-summary > button {
+  margin-left: auto;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Banner reporting what already exists under sourcedata/raw/ in the selected dataset. */
+.remote-banner {
+  display: flex;
+  align-items: flex-start;
+  /* Horizontal padding matches the flex gap, so the logo sits as far from the card's left edge
+     as it does from the title text (and the re-check button mirrors it on the right). */
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.remote-banner.checked {
+  background: var(--ok-soft);
+}
+.remote-banner.failed {
+  background: var(--warn-soft);
+}
+.remote-banner-title {
+  font-weight: 600;
+}
+.remote-banner-body {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+/* Icon-only re-check button: symmetric padding around the lone reload icon. */
+.remote-banner > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin-left: auto;
+  padding: 0.35rem;
+  line-height: 1;
+}
+/* The logo box mirrors the icon-only re-check button on the banner's right edge: same outer
+   height (18px icon + its 0.35rem padding + 1px borders) and the same vertical centering. */
+.remote-banner-icon-logo {
+  display: flex;
+  align-self: center;
+  flex-shrink: 0;
+}
+.remote-banner-logo {
+  display: block;
+  height: calc(18px + 0.7rem + 2px);
+  width: auto;
+}
+.remote-banner-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.15rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: remote-banner-spin 0.8s linear infinite;
+}
+@keyframes remote-banner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .remote-banner-spinner {
+    animation: none;
+  }
+}
+
+/* Selection summary + bulk actions + ignore-pattern chips above the file tree. */
+.select-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.select-toolbar-summary strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.select-toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+}
+.mini-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+}
+.ignore-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+/* The chips container is a plain span purely for element lookup; its chips lay out as flex
+   items of the row itself. */
+#ignore-chips {
+  display: contents;
+}
+.ignore-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.25rem 0.1rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+.ignore-chip > button {
+  border: none;
+  background: none;
+  padding: 0 0.25rem;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9em;
+  line-height: 1;
+}
+.ignore-chip > button:hover {
+  color: var(--err);
+}
+.ignore-pattern-input {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  min-width: 13rem;
+}
+.ignore-pattern-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Include checkboxes shared by folder and file rows. */
+.select-check {
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.select-check:disabled {
+  cursor: not-allowed;
+}
+/* Folder rows: the checkbox sits beside the existing full-width .dir-toggle button (a checkbox
+   can't live inside a <button>), so a flex wrapper recreates the one-line row. */
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-left: 0.3rem;
+}
+.dir-row > .dir-toggle {
+  flex: 1;
+  min-width: 0;
+}
+/* Deselected or pattern-ignored rows stay visible but recede. */
+.file-item.deselected > .file-name,
+.file-item.deselected > .file-size,
+.file-item.deselected > .file-status {
+  opacity: 0.45;
+}
+.file-item.ignored > .file-name {
+  font-style: italic;
+}
+/* Neutral badge for pattern-ignored files (the other badge kinds are all "activity" colors). */
+.badge.mute {
+  background: var(--border);
+  color: var(--muted);
 }
 
 .oauth-row {
@@ -511,13 +777,19 @@ ul.human-subjects-body {
 .dir-item {
   list-style: none;
 }
-/* The guide rail: a thin vertical line tracing each branch down to its children, VS
-   Code-explorer style, so nesting stays legible even once rows are tightened up. */
+/* A little air below each folder block, so where one folder's contents end and the next
+   sibling begins reads at a glance. */
+.dir-item:not(:last-child) {
+  margin-bottom: 0.3rem;
+}
+/* The guide rail: a vertical line tracing each branch down to its children, VS Code-explorer
+   style. Deliberately thick and deeply indented — with a long flat run of files inside one
+   folder, a subtle rail let the whole run read as top-level. */
 .dir-item .dir-children {
   list-style: none;
-  margin: 0 0 0 0.5rem;
-  padding: 0 0 0 0.7rem;
-  border-left: 1px solid var(--border);
+  margin: 0 0 0 0.7rem;
+  padding: 0 0 0 1.05rem;
+  border-left: 2px solid var(--border);
 }
 .dir-toggle {
   display: flex;
@@ -538,12 +810,26 @@ ul.human-subjects-body {
 .dir-toggle:hover {
   background: var(--accent-soft);
 }
+/* The expand affordance. The markup's "▸" text glyph inks only a small fraction of its em box,
+   so it stayed hard to spot no matter the font size; it's hidden (font-size: 0) and replaced by
+   a solid CSS-drawn triangle that fills the box, boxed at 1rem so the compact row height still
+   doesn't grow. */
 .dir-chevron {
-  display: inline-block;
-  width: 0.6em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  font-size: 0;
   flex-shrink: 0;
   color: var(--muted);
   transition: transform 0.12s ease;
+}
+.dir-chevron::before {
+  content: "";
+  border-left: 0.54rem solid currentColor;
+  border-top: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid transparent;
 }
 .dir-toggle[aria-expanded="true"] .dir-chevron {
   transform: rotate(90deg);
@@ -579,6 +865,74 @@ ul.human-subjects-body {
   margin-top: 0.75rem;
   color: var(--muted);
   font-size: 0.85rem;
+}
+.dest-root-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.remote-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* Rendered as a slide switch rather than another checkbox, so it reads as a mode toggle and not
+   one more file-selection box; the input stays a semantic checkbox underneath. */
+.remote-toggle input {
+  appearance: none;
+  width: 2rem;
+  height: 1.15rem;
+  margin: 0;
+  position: relative;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.remote-toggle input::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 0.8rem;
+  height: 0.8rem;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: left 0.15s ease;
+}
+.remote-toggle input:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.remote-toggle input:checked::after {
+  left: calc(100% - 0.8rem - 2px);
+}
+.remote-toggle input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .remote-toggle input,
+  .remote-toggle input::after {
+    transition: none;
+  }
+}
+/* Browse mode (the "Load from EMBER" view of existing archive contents): the listing is
+   read-only, so the include checkboxes and the compare toggle have nothing to control. */
+#file-list.browse .select-check {
+  display: none;
+}
+.dest-root.browse .remote-toggle {
+  display: none;
 }
 
 .expand-control {
@@ -756,6 +1110,15 @@ ul.human-subjects-body {
   color: #fff;
   border-radius: 8px;
   padding: 0.4rem 0.85rem;
+}
+/* The two EMBER pills stack right-aligned in the Dataset card, with padding symmetric with the
+   vertical padding, hugging their labels. Right edges flush + identical right padding keeps
+   both arrows on the same vertical line without a fixed width (which piled its slack up as
+   left whitespace on font renderings where the labels came out narrower). */
+.view-dataset-link,
+.load-remote-btn {
+  padding: 0.4rem;
+  justify-content: flex-end;
 }
 .view-dataset-link:hover {
   background: var(--ember-red-hover);
