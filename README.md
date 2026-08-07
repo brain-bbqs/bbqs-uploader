@@ -1,16 +1,22 @@
-<div align="center">
-  <img src="src/assets/bbqs-uploader-logo.svg" alt="BBQS Uploader logo" width="120" />
-
-<h1>BBQS Uploader</h1>
-<p>
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/test.yml"><img alt="Test" src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/test.yml/badge.svg"></a>
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/lint.yml"><img alt="Lint" src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/lint.yml/badge.svg"></a>
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml"><img alt="Deploy to GitHub Pages" src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml/badge.svg"></a>
+<p align="center">
+  <img src="src/assets/bbqs-uploader-logo.svg" width="120" alt="BBQS Uploader logo"/>
+  <h1 align="center">BBQS Uploader</h1>
+  <p align="center">
+    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/test.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/test.yml/badge.svg" alt="Test"></a>
+    <a href="https://codecov.io/github/brain-bbqs/bbqs-uploader?branch=main"><img src="https://codecov.io/github/brain-bbqs/bbqs-uploader/coverage.svg?branch=main" alt="codecov"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT"></a>
+  </p>
+  <p align="center">
+    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-storybook.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-storybook.yml/badge.svg" alt="Chromatic (Storybook)"></a>
+    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml/badge.svg" alt="Chromatic (Playwright)"></a>
+  </p>
+  <p align="center">
+    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml/badge.svg" alt="Deploy to GitHub Pages"></a>
+  </p>
+  <p align="center">
+    <a href="https://github.com/prettier/prettier"><img alt="code style: prettier" src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat"></a>
+  </p>
 </p>
-<p>
-    <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-</p>
-</div>
 
 A **fully static, backend-free** web app for BBQS teams to upload files to an existing Dandiset on the EMBER Archive through a simple drag-and-drop interface.
 
