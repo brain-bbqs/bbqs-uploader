@@ -126,7 +126,7 @@ header h1 {
 }
 
 .site-title-logo {
-  height: 1.7rem;
+  height: 2.21rem;
   width: auto;
 }
 
@@ -137,17 +137,12 @@ header h1 {
   gap: 0.6rem;
   margin: 0.75rem 0 0;
   color: var(--muted);
-  font-size: 1.35rem;
+  font-size: 1rem;
   text-align: center;
 }
 
-.site-subtitle-logo {
-  height: 2.2rem;
-  width: auto;
-}
-
 .speed-tips {
-  max-width: 560px;
+  max-width: 672px;
   margin: 1rem auto 0;
   padding: 0.85rem 1.1rem;
   border: 1px solid var(--border);
