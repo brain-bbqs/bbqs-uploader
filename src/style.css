@@ -1524,11 +1524,18 @@ ul.human-subjects-body {
   }
 }
 
-/* Below ~900px, main no longer has enough side margin to keep the fixed corner watermark and
-   footer bar clear of the cards; as the page scrolls, they end up pinned on top of card content
-   instead of framing it. Take them out of fixed positioning so they sit in normal document flow
-   (the watermark logo is dropped entirely, since the header already shows the same BBQS logo). */
-@media (max-width: 900px) {
+/* main caps out at an 828px-wide content box (860px max-width minus its own 1rem/16px side
+   padding); below that, it's centered with (viewport - 860) / 2 px of margin on each side. The
+   footer bar's left column (the "What's New"/bug-report/version stack) is ~270px wide including
+   its own left offset, so cards stop clearing it once that margin drops under ~270px, i.e. around
+   a 1368px-wide viewport (measured against the built page; the CON logo's own margin need is
+   smaller, ~1178px, so it's covered by the same threshold). Below that point, as the page scrolls,
+   the fixed corner watermark and footer bar end up pinned on top of card content instead of
+   framing it. Take them out of fixed positioning so they sit in normal document flow instead (the
+   watermark logo is dropped entirely, since the header already shows the same BBQS logo). The
+   1400px threshold below leaves a little slack past the measured 1368px for footer-text width
+   drifting with future version strings. */
+@media (max-width: 1400px) {
   .brand-watermark-link {
     display: none;
   }
