@@ -18,7 +18,14 @@ interface FilePayload {
  */
 export async function dropFile(page: Page, files: string | FilePayload | (string | FilePayload)[]): Promise<void> {
   const list = Array.isArray(files) ? files : [files];
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-drop-"));
+  // The picked folder's own name is stripped from every relativePath, but it still surfaces
+  // verbatim in the UI (the folder-summary label). mkdtemp's random suffix would otherwise leak
+  // into that label and change on every run, drifting the Chromatic baseline; nesting a
+  // fixed-name folder inside the random temp root keeps parallel test runs isolated on disk
+  // while the folder actually picked always has the same, stable name.
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-drop-"));
+  const dir = path.join(root, "dataset");
+  fs.mkdirSync(dir);
   for (const f of list) {
     if (typeof f === "string") {
       const dest = path.join(dir, path.basename(f));
