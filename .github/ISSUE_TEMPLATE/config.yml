@@ -4,5 +4,5 @@ contact_links:
     url: https://emberarchive.org/about
     about: Do you have a bunch of really specific questions you don't want to raise on GitHub? Are you looking to learn more about the EMBER archive? Reach out via e-mail!
   - name: General questions
-    url: https://github.com/dandi/helpdesk
+    url: https://github.com/brain-bbqs/bbqs-helpdesk
     about: Do you have specific questions about data standards and archives in general? The DANDI helpdesk is a great way to connect with people who can help!
