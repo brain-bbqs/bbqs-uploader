@@ -42,7 +42,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await expect(page.locator("#view-dataset-link")).toBeVisible();
   await expect(page.locator("#view-dataset-link")).toHaveAttribute(
     "href",
-    "https://dandi.emberarchive.org/dandiset/000123/draft/files",
+    "https://dandi.emberarchive.org/dandiset/000123/draft/files?location=sourcedata%2Fraw",
   );
   expect(createdAssets).toEqual([
     { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },

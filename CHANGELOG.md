@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2
+
+#### 🐛 Bug Fix
+
+- "View on EMBER" now opens the dataset's file browser scrolled to where uploads actually land, instead of the dataset root ([#70](https://github.com/brain-bbqs/bbqs-uploader/pull/70))
+- Dropped mentions of the internal `sourcedata/raw` archive path from the app's tooltips and labels; it's a behind-the-scenes detail, not something users need to track ([#70](https://github.com/brain-bbqs/bbqs-uploader/pull/70))
+
 ## 1.1.1
 
 #### 🚀 Enhancement

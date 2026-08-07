@@ -3,7 +3,7 @@ import { getElements } from "./ui/elements";
 import { initDropzone, type AcceptedFolder } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { createSelectionModel, type SelectionFile } from "./lib/selection";
-import { listRemoteFiles } from "./lib/remote-listing";
+import { listRemoteFiles, REMOTE_PREFIX } from "./lib/remote-listing";
 import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
 import {
   uploadTransferReport,
@@ -827,7 +827,7 @@ async function refreshDandisetOptions(): Promise<void> {
 function updateViewDatasetLink(): void {
   const cfg = currentConfig();
   if (cfg.dandisetId) {
-    els.viewDatasetLink.href = `${cfg.web}/dandiset/${cfg.dandisetId}/draft/files`;
+    els.viewDatasetLink.href = `${cfg.web}/dandiset/${cfg.dandisetId}/draft/files?location=${encodeURIComponent(REMOTE_PREFIX.replace(/\/$/, ""))}`;
     els.viewDatasetLink.hidden = false;
   } else {
     els.viewDatasetLink.hidden = true;
@@ -981,7 +981,7 @@ function renderRemoteBanner(state: RemoteBannerState | null): void {
     els.remoteBannerIcon.className = "remote-banner-spinner";
     els.remoteBannerIcon.textContent = "";
     els.remoteBannerTitle.textContent = "Checking EMBER…";
-    els.remoteBannerBody.innerHTML = "Listing what is already under <code>sourcedata/raw/</code> in this dataset.";
+    els.remoteBannerBody.textContent = "Listing what is already in this dataset.";
   } else if (state.kind === "failed") {
     els.remoteBannerIcon.className = "";
     els.remoteBannerIcon.textContent = "⚠️";

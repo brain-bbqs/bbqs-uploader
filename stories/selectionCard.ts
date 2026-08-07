@@ -217,7 +217,7 @@ export function buildRemoteBanner(state: RemoteBannerState): HTMLDivElement {
     banner.querySelector("button")!.hidden = true;
     icon.className = "remote-banner-spinner";
     title.textContent = "Checking EMBER…";
-    body.innerHTML = "Listing what is already under <code>sourcedata/raw/</code> in this dataset.";
+    body.textContent = "Listing what is already in this dataset.";
   } else if (state.kind === "failed") {
     banner.classList.add("failed");
     icon.textContent = "⚠️";

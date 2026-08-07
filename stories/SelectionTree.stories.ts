@@ -8,10 +8,6 @@ import { withCard, withTheme } from "./utils";
 function buildCard(): HTMLElement {
   const card = document.createElement("section");
   card.className = "card";
-  const heading = document.createElement("div");
-  heading.className = "dest-root";
-  heading.innerHTML = "<code>sourcedata/raw/</code>";
-  card.appendChild(heading);
   card.appendChild(
     buildSelectionTree({
       entries: localFolderFixture(),

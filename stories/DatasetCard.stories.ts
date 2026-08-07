@@ -31,7 +31,7 @@ function buildDatasetCard(mode: Mode): HTMLElement {
         <button
           type="button"
           class="load-remote-btn"
-          title="Browse what this dataset already holds under sourcedata/raw/, before picking a folder"
+          title="Browse what this dataset already holds, before picking a folder"
           ${showBrowse ? "" : "hidden"}
         >
           Load from EMBER <span class="btn-arrow" aria-hidden="true">↘</span>
