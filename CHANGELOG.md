@@ -1,13 +1,5 @@
 # Changelog
 
-## 1.1.3
-
-#### 🚀 Enhancement
-
-- Removed the EMBER logos flanking the "Your direct upload link to the EMBER-DANDI Archive" subtitle and reduced its font size ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-- Enlarged the BBQS Uploader logo next to the header title by 30% ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-- Widened the transfer speed recommendations card by 20% ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-
 ## 1.1.2
 
 #### 🐛 Bug Fix
