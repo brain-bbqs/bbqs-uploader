@@ -189,27 +189,51 @@
         <span>Your direct upload link to the EMBER-DANDI Archive</span>
       </p>
 
-      <div class="speed-tips">
-        <p class="speed-tips-heading">Recommendations for optimal transfer speed</p>
-        <p class="speed-tips-subheading">1,000 Mbps is recommended for contents over 100 GB</p>
-        <ul>
-          <li>Store data on a high-throughput NVMe SSD (PCIe, ideally in an M.2 slot).</li>
-          <li>
-            USB-A (Generation 1 or 2) connections are not recommended; USB-A 3.0 or higher, or any USB-C/Thunderbolt
-            connection are preferred.
-          </li>
-          <li>Use a wired Ethernet connection rather than Wi-Fi.</li>
-          <li>Use Fiber internet rather than cable or DSL, if available.</li>
-          <li>
-            <a
-              href="https://github.com/orgs/brain-bbqs/discussions/new?category=q-a&title=Consultation+request%3A+Improve+transfer+speeds&body=Hi+EMBER+Team%2C%0A%0AI%27d+like+to+request+a+consultation+to+help+improve+my+transfer+speeds.%0A%0AHere%27s+some+context+on+my+setup%3A%0A-+"
-              target="_blank"
-              rel="noopener"
-              >Request a consultation</a
-            >
-            from our Tech Support team to attempt to improve your transfer speeds.
-          </li>
-        </ul>
+      <div class="speed-tips" id="speed-tips">
+        <button
+          type="button"
+          id="speed-tips-toggle"
+          class="speed-tips-toggle"
+          aria-expanded="true"
+          aria-controls="speed-tips-body"
+        >
+          <span class="speed-tips-heading">Recommendations for optimal transfer speed</span>
+          <svg
+            class="speed-tips-chevron"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="speed-tips-body" class="speed-tips-body">
+          <p class="speed-tips-subheading">1,000 Mbps is recommended for contents over 100 GB</p>
+          <ul>
+            <li>Store data on a high-throughput NVMe SSD (PCIe, ideally in an M.2 slot).</li>
+            <li>
+              USB-A (Generation 1 or 2) connections are not recommended; USB-A 3.0 or higher, or any USB-C/Thunderbolt
+              connection are preferred.
+            </li>
+            <li>Use a wired Ethernet connection rather than Wi-Fi.</li>
+            <li>Use Fiber internet rather than cable or DSL, if available.</li>
+            <li>
+              <a
+                href="https://github.com/orgs/brain-bbqs/discussions/new?category=q-a&title=Consultation+request%3A+Improve+transfer+speeds&body=Hi+EMBER+Team%2C%0A%0AI%27d+like+to+request+a+consultation+to+help+improve+my+transfer+speeds.%0A%0AHere%27s+some+context+on+my+setup%3A%0A-+"
+                target="_blank"
+                rel="noopener"
+                >Request a consultation</a
+              >
+              from our Tech Support team to attempt to improve your transfer speeds.
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div id="human-subjects-banner" class="human-subjects-banner" role="alert" hidden>
