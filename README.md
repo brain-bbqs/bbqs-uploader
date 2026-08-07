@@ -7,8 +7,8 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT"></a>
   </p>
   <p align="center">
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-storybook.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-storybook.yml/badge.svg" alt="Chromatic (Storybook)"></a>
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml/badge.svg" alt="Chromatic (Playwright)"></a>
+    <a href="https://www.chromatic.com/library?appId=6a5e6f9044ee1e69114e356e"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-storybook.yml/badge.svg" alt="Chromatic (Storybook)"></a>
+    <a href="https://www.chromatic.com/library?appId=6a5e6f3759969fee5b7d7b48"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml/badge.svg" alt="Chromatic (Playwright)"></a>
   </p>
   <p align="center">
     <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml/badge.svg" alt="Deploy to GitHub Pages"></a>
