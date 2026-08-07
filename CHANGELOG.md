@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5
+
+#### 🐛 Bug Fix
+
+- Fixed the fixed corner watermark and bottom-left footer links overlapping card content once the window is too narrow to fit them in the margins; they now flow below the page instead of floating on top of it, and the redundant BBQS watermark logo (already shown in the header) is hidden ([#73](https://github.com/brain-bbqs/bbqs-uploader/pull/73))
+
 ## 1.1.4
 
 #### 🚀 Enhancement

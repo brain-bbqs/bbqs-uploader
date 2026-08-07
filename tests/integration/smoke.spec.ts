@@ -4,6 +4,10 @@ import { dropFile } from "./helpers/drop";
 
 test.describe("BBQS uploader shell", () => {
   test("renders branding, version, and the connection form", async ({ page }) => {
+    // Wide enough that the corner watermark and footer bar stay in their fixed, viewport-anchored
+    // spots instead of the narrow-screen fallback (see the max-width: 1400px query in style.css)
+    // that hides the watermark and flows the footer into the page to avoid overlapping cards.
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedSignedIn(page);
     await page.goto("/");
     await expect(page).toHaveTitle(/BBQS Uploader/);
