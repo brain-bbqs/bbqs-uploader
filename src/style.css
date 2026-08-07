@@ -103,16 +103,36 @@ main {
   gap: 1rem;
 }
 
-.site-header > a:has(.brand-logo) {
+.site-header > a:has(.header-logo) {
   justify-self: start;
   line-height: 0;
 }
 
-.brand-logo {
+/* The BBQS Uploader logo isn't square, so it renders at its natural aspect ratio rather than
+   being forced into the circular crop used for the (square) BBQS org logo below. */
+.header-logo {
   height: 3rem;
-  width: 3rem;
+  width: auto;
+}
+
+/* A fixed corner watermark, diametrically opposed to the CON watermark in the bottom-right
+   corner (see .con-brand-link below). */
+.brand-watermark-link {
+  position: fixed;
+  top: 0.15rem;
+  left: 0.35rem;
+  z-index: 1;
+  line-height: 0;
+}
+
+/* The BBQS org logo is square, so the circular crop belongs on it, not on the header logo above. */
+.brand-watermark-logo {
+  display: block;
+  height: 5rem;
+  width: 5rem;
   object-fit: cover;
   border-radius: 50%;
+  opacity: 0.484;
 }
 
 header h1 {
@@ -128,17 +148,12 @@ header h1 {
   gap: 0.6rem;
   margin: 0.75rem 0 0;
   color: var(--muted);
-  font-size: 1.35rem;
+  font-size: 1rem;
   text-align: center;
 }
 
-.site-subtitle-logo {
-  height: 2.2rem;
-  width: auto;
-}
-
 .speed-tips {
-  max-width: 560px;
+  max-width: 773px;
   margin: 1rem auto 0;
   padding: 0.85rem 1.1rem;
   border: 1px solid var(--border);
@@ -148,10 +163,35 @@ header h1 {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+.speed-tips-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .speed-tips-heading {
   margin: 0;
   font-weight: 600;
   color: var(--text);
+}
+.speed-tips-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.speed-tips-toggle[aria-expanded="false"] .speed-tips-chevron {
+  transform: rotate(-90deg);
+}
+.speed-tips-body {
+  margin-top: 0.4rem;
 }
 .speed-tips-subheading {
   margin: 0.15rem 0 0.4rem;
@@ -660,7 +700,7 @@ ul.human-subjects-body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Matches .brand-logo and .oauth-avatar, so all header circles are the same size. */
+  /* Matches .header-logo and .oauth-avatar, so header circles line up with the logo. */
   width: 3rem;
   height: 3rem;
   padding: 0;
@@ -699,7 +739,7 @@ ul.human-subjects-body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Matches .brand-logo, so the two circles flanking the header are the same size. */
+  /* Matches .header-logo, so the circle lines up with the logo. */
   width: 3rem;
   height: 3rem;
   border-radius: 50%;

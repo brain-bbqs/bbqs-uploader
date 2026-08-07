@@ -26,6 +26,27 @@ export function saveStoredTheme(theme: ThemePreference): void {
   }
 }
 
+export const SPEED_TIPS_COLLAPSED_KEY = "bbqs-uploader.speed-tips-collapsed";
+
+/** Whether the user previously minimized the transfer speed recommendations card; defaults to
+ *  expanded (false) if they never touched it. */
+export function loadSpeedTipsCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SPEED_TIPS_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveSpeedTipsCollapsed(collapsed: boolean): void {
+  try {
+    if (collapsed) localStorage.setItem(SPEED_TIPS_COLLAPSED_KEY, "1");
+    else localStorage.removeItem(SPEED_TIPS_COLLAPSED_KEY);
+  } catch (e) {
+    console.warn("Could not save speed tips collapsed state:", e);
+  }
+}
+
 export function loadStoredSettings(): StoredSettings | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

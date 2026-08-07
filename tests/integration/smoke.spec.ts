@@ -7,7 +7,8 @@ test.describe("BBQS uploader shell", () => {
     await seedSignedIn(page);
     await page.goto("/");
     await expect(page).toHaveTitle(/BBQS Uploader/);
-    await expect(page.locator(".brand-logo")).toBeVisible();
+    await expect(page.locator(".header-logo")).toBeVisible();
+    await expect(page.locator(".brand-watermark-logo")).toBeVisible();
     const versionLink = page.locator("#version-indicator");
     await expect(versionLink).toHaveText(/^v\d+\.\d+\.\d+$/);
     await expect(versionLink).toHaveAttribute("href", "https://github.com/brain-bbqs/bbqs-uploader");

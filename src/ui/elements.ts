@@ -74,6 +74,8 @@ export function getElements() {
     versionIndicator: required<HTMLAnchorElement>("version-indicator"),
     clearScanCacheBtn: required<HTMLButtonElement>("clear-scan-cache-btn"),
     themeToggle: required<HTMLButtonElement>("theme-toggle"),
+    speedTipsToggle: required<HTMLButtonElement>("speed-tips-toggle"),
+    speedTipsBody: required<HTMLDivElement>("speed-tips-body"),
     whatsNewButton: required<HTMLButtonElement>("whats-new-button"),
     whatsNewModal: required<HTMLDialogElement>("whats-new-modal"),
     whatsNewClose: required<HTMLButtonElement>("whats-new-close"),

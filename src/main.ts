@@ -17,7 +17,14 @@ import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
 import { runQueue } from "./lib/queue";
-import { loadStoredSettings, saveStoredSettings, resolveConfig, saveStoredTheme } from "./lib/settings";
+import {
+  loadStoredSettings,
+  saveStoredSettings,
+  resolveConfig,
+  saveStoredTheme,
+  loadSpeedTipsCollapsed,
+  saveSpeedTipsCollapsed,
+} from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
 import { containsHumanSubjects, fetchDraftMetadata } from "./lib/humanSubjects";
@@ -520,6 +527,18 @@ els.themeToggle.addEventListener("click", () => {
   const next = current === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
   saveStoredTheme(next);
+});
+
+// Expanded by default; a returning visitor who minimized it stays minimized.
+function setSpeedTipsCollapsed(collapsed: boolean): void {
+  els.speedTipsBody.hidden = collapsed;
+  els.speedTipsToggle.setAttribute("aria-expanded", String(!collapsed));
+}
+setSpeedTipsCollapsed(loadSpeedTipsCollapsed());
+els.speedTipsToggle.addEventListener("click", () => {
+  const collapsed = els.speedTipsToggle.getAttribute("aria-expanded") === "true";
+  setSpeedTipsCollapsed(collapsed);
+  saveSpeedTipsCollapsed(collapsed);
 });
 
 let oauthTokens: OAuthTokenSet | null = null;
