@@ -1,13 +1,5 @@
 # Changelog
 
-## 1.1.3
-
-#### 🚀 Enhancement
-
-- Added the project's new logo to the README and next to the app title in the header ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-- Updated the browser tab favicon to the project's new logo ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-- Centered the README's logo and title, and added Test, codecov, license, Chromatic, deploy, and code style badges ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
-
 ## 1.1.2
 
 #### 🐛 Bug Fix
