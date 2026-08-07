@@ -94,7 +94,7 @@ main {
   padding: 2rem 1rem 5rem;
 }
 
-/* Equal 1fr side columns keep the title truly centered on the page, with the logo and the
+/* Equal 1fr side columns keep the title truly centered on the page, with the spacer and the
    sign-in controls flanking it symmetrically. */
 .site-header {
   display: grid;
@@ -103,16 +103,21 @@ main {
   gap: 1rem;
 }
 
-.site-header > a:has(.brand-logo) {
-  justify-self: start;
+/* A fixed corner watermark, diametrically opposed to the CON watermark in the bottom-right
+   corner (see .con-brand-link below). */
+.brand-watermark-link {
+  position: fixed;
+  top: 0.15rem;
+  left: 0.35rem;
+  z-index: 1;
   line-height: 0;
 }
 
 .brand-logo {
-  height: 3rem;
-  width: 3rem;
-  object-fit: cover;
-  border-radius: 50%;
+  display: block;
+  height: 5rem;
+  width: auto;
+  opacity: 0.312;
 }
 
 header h1 {
