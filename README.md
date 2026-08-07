@@ -11,9 +11,6 @@
     <a href="https://www.chromatic.com/library?appId=6a5e6f3759969fee5b7d7b48"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/chromatic-playwright.yml/badge.svg" alt="Chromatic (Playwright)"></a>
   </p>
   <p align="center">
-    <a href="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml"><img src="https://github.com/brain-bbqs/bbqs-uploader/actions/workflows/deploy.yml/badge.svg" alt="Deploy to GitHub Pages"></a>
-  </p>
-  <p align="center">
     <a href="https://github.com/prettier/prettier"><img alt="code style: prettier" src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat"></a>
   </p>
 </p>
