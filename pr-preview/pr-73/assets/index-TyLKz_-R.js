@@ -23,7 +23,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🐛 Bug Fix
 
-- Fixed the fixed corner watermark and bottom-left footer links overlapping card content on narrow screens; below ~900px wide they now flow below the page instead of floating on top of it, and the redundant BBQS watermark logo (already shown in the header) is hidden ([#73](https://github.com/brain-bbqs/bbqs-uploader/pull/73))
+- Fixed the fixed corner watermark and bottom-left footer links overlapping card content once the window is too narrow to fit them in the margins; they now flow below the page instead of floating on top of it, and the redundant BBQS watermark logo (already shown in the header) is hidden ([#73](https://github.com/brain-bbqs/bbqs-uploader/pull/73))
 
 ## 1.1.4
 
