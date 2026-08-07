@@ -23,7 +23,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 
 #### 🚀 Enhancement
 
-- Added "Report a bug" and "Request a feature" links to the bottom-left footer, above the version/What's New row, pointing to the repo's new GitHub issue templates ([#68](https://github.com/brain-bbqs/bbqs-uploader/pull/68))
+- Added "🐛 Report a bug" and "💡 Request a feature" links to the bottom-left footer, above the version/What's New row, pointing to the repo's new GitHub issue templates ([#68](https://github.com/brain-bbqs/bbqs-uploader/pull/68))
 
 ## 1.1.0
 
