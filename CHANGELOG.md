@@ -4,7 +4,7 @@
 
 #### 🚀 Enhancement
 
-- Added "🐛 Report a bug" and "💡 Request a feature" links to the bottom-left footer, above the version/What's New row, pointing to the repo's new GitHub issue templates ([#68](https://github.com/brain-bbqs/bbqs-uploader/pull/68))
+- Added "🐛 Report a bug" and "💡 Request a feature" links to the bottom-left footer, pointing to the repo's new GitHub issue templates; the footer now stacks "✨ What's New", "🐛 Report a bug", "💡 Request a feature", and the version/cache-clearing row on their own lines ([#68](https://github.com/brain-bbqs/bbqs-uploader/pull/68))
 
 ## 1.1.0
 
