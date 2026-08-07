@@ -1300,8 +1300,22 @@ ul.human-subjects-body {
 
 .footer-left {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.footer-row {
+  display: flex;
   align-items: baseline;
   gap: 0.75rem;
+}
+
+.footer-text-link {
+  color: var(--accent);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .footer-dot {
