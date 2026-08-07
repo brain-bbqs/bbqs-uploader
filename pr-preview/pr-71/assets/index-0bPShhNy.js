@@ -19,6 +19,14 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
 `)){let e=r.trim();e&&(e.startsWith(`#### `)?(n&&=(t+=`</ul>`,!1),t+=`<h4>${ln(e.slice(5))}</h4>`):e.startsWith(`- `)?(n||=(t+=`<ul>`,!0),t+=`<li>${ln(e.slice(2))}</li>`):(n&&=(t+=`</ul>`,!1),t+=`<p>${ln(e)}</p>`))}return n&&(t+=`</ul>`),t}function dn(e){return e.split(/^## /m).length-1}function fn(e,t=3){return e.split(/^## /m).slice(1,t+1).map(e=>{let t=e.indexOf(`
 `),n=(t===-1?e:e.slice(0,t)).trim(),r=t===-1?``:e.slice(t+1);return`<section class="changelog-version"><h3>${cn(n)}</h3>${un(r)}</section>`}).join(``)}var pn=`# Changelog
 
+## 1.1.3
+
+#### 🚀 Enhancement
+
+- Removed the EMBER logos flanking the "Your direct upload link to the EMBER-DANDI Archive" subtitle and reduced its font size ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
+- Enlarged the BBQS Uploader logo next to the header title by 30% ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
+- Widened the transfer speed recommendations card by 20% ([#71](https://github.com/brain-bbqs/bbqs-uploader/pull/71))
+
 ## 1.1.2
 
 #### 🐛 Bug Fix
