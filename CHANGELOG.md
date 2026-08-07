@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+#### 🚀 Enhancement
+
+- The "What's New" modal now opens directly when the page loads with a `#changelog` fragment in the URL, so the link can be copied and shared to point someone straight at it; the fragment is added when the modal opens and removed again once it's closed ([#72](https://github.com/brain-bbqs/bbqs-uploader/pull/72))
+
 ## 1.1.2
 
 #### 🐛 Bug Fix
