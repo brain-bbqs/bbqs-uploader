@@ -1,7 +1,5 @@
 name: Bug report
 description: Report a problem with the BBQS Uploader
-labels:
-  - bug
 body:
   - type: textarea
     id: description
