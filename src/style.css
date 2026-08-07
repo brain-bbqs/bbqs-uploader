@@ -1523,3 +1523,29 @@ ul.human-subjects-body {
     flex-direction: column;
   }
 }
+
+/* Below ~900px, main no longer has enough side margin to keep the fixed corner watermark and
+   footer bar clear of the cards; as the page scrolls, they end up pinned on top of card content
+   instead of framing it. Take them out of fixed positioning so they sit in normal document flow
+   (the watermark logo is dropped entirely, since the header already shows the same BBQS logo). */
+@media (max-width: 900px) {
+  .brand-watermark-link {
+    display: none;
+  }
+
+  main {
+    padding-bottom: 2rem;
+  }
+
+  .page-footer-bar {
+    position: static;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1rem 1.5rem;
+  }
+
+  .footer-left {
+    align-items: center;
+  }
+}
