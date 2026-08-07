@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+#### 🚀 Enhancement
+
+- Various style and quality of life improvements.
+
 ## 1.1.2
 
 #### 🐛 Bug Fix

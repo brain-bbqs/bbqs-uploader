@@ -512,11 +512,36 @@ els.whatsNewShowMore.addEventListener("click", () => {
   els.whatsNewContent.innerHTML = renderChangelogHtml(changelog, Infinity);
   els.whatsNewShowMore.hidden = true;
 });
-els.whatsNewButton.addEventListener("click", () => els.whatsNewModal.showModal());
+// The modal is also reachable via the #changelog URL fragment, so the link can be copied and
+// shared to drop someone directly into it. Opening writes the fragment (so the address bar
+// reflects it); closing strips it back out again so it doesn't linger once dismissed.
+const CHANGELOG_HASH = "#changelog";
+
+function openWhatsNewModal(): void {
+  if (!els.whatsNewModal.open) els.whatsNewModal.showModal();
+  if (window.location.hash !== CHANGELOG_HASH) {
+    window.location.hash = CHANGELOG_HASH.slice(1);
+  }
+}
+
+els.whatsNewButton.addEventListener("click", () => openWhatsNewModal());
 els.whatsNewClose.addEventListener("click", () => els.whatsNewModal.close());
 els.whatsNewModal.addEventListener("click", (e) => {
   if (e.target === els.whatsNewModal) els.whatsNewModal.close();
 });
+// Covers every dismissal path (close button, backdrop click, Esc key) so the fragment never
+// outlives the modal it points to.
+els.whatsNewModal.addEventListener("close", () => {
+  if (window.location.hash === CHANGELOG_HASH) {
+    const url = new URL(window.location.href);
+    url.hash = "";
+    window.history.replaceState({}, "", url.toString());
+  }
+});
+window.addEventListener("hashchange", () => {
+  if (window.location.hash === CHANGELOG_HASH) openWhatsNewModal();
+});
+if (window.location.hash === CHANGELOG_HASH) openWhatsNewModal();
 
 // The inline script in index.html already applied any stored theme override before first paint,
 // so the toggle only has to flip and persist it. With nothing stored, data-theme is unset and the
