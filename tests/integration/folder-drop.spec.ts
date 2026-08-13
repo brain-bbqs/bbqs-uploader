@@ -154,6 +154,12 @@ test("dropping a loose file rejects it with a message card centered in the dropz
   const reject = page.locator("#dropzone-reject");
   await expect(reject).toHaveText(/Individual files can't be uploaded on their own/);
 
+  // The "what to do instead" half sits on its own line, one blank line below the first.
+  await expect(reject.locator("br")).toHaveCount(2);
+  expect(await reject.innerText()).toBe(
+    "Individual files can't be uploaded on their own.\n\nDrop the folder that contains them instead.",
+  );
+
   // The card is narrower than the dropzone, so it only looks deliberate when it sits on the
   // dropzone's center line; `.dz-inner p` used to zero out its `auto` side margins and pin it
   // to the left edge.

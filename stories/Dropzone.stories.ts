@@ -15,7 +15,7 @@ function buildDropzone(state: DropzoneState): HTMLElement {
       </p>
       <p class="dz-hint">Everything inside the folder is scanned first; you choose what to include next.</p>
       <p class="dz-reject" ${state === "rejected" ? "" : "hidden"}>
-        Individual files can't be uploaded on their own. Drop the folder that contains them instead.
+        Individual files can't be uploaded on their own.<br /><br />Drop the folder that contains them instead.
       </p>
     </div>
   `;

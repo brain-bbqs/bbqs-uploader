@@ -60,8 +60,10 @@ export interface AcceptedFolder {
   entries: DroppedFile[];
 }
 
+// A blank line (\n\n) renders as <br><br> — see showReject. Splitting the "what went wrong" and
+// "what to do instead" halves onto their own lines keeps the fix visible at a glance.
 const REJECT_LOOSE_FILES =
-  "Individual files can't be uploaded on their own. Drop the folder that contains them instead.";
+  "Individual files can't be uploaded on their own.\n\nDrop the folder that contains them instead.";
 const REJECT_UNSUPPORTED_DROP = "This browser can't read dropped folders; use the browse button instead.";
 const REJECT_EMPTY_FOLDER = "That folder contains no uploadable files.";
 
@@ -141,9 +143,20 @@ function folderFromFileList(fileList: FileList): AcceptedFolder {
 export function initDropzone(els: UploaderElements, onFolder: (folder: AcceptedFolder) => void): void {
   const dz = els.dropzone;
 
+  /**
+   * Renders `message` into the reject slot, turning each blank line into a <br><br> gap. The
+   * breaks are appended as real elements and the prose as text nodes, so no part of `message`
+   * is ever parsed as markup — the messages are static today, but this keeps a future caller
+   * from turning a dynamic string (an API error, a filename) into an XSS vector. See SECURITY.md.
+   */
   function showReject(message: string): void {
-    els.dropzoneReject.textContent = message;
-    els.dropzoneReject.hidden = false;
+    const el = els.dropzoneReject;
+    el.textContent = "";
+    message.split("\n\n").forEach((paragraph, i) => {
+      if (i) el.append(document.createElement("br"), document.createElement("br"));
+      el.append(paragraph);
+    });
+    el.hidden = false;
   }
 
   function accept(folder: AcceptedFolder): void {
