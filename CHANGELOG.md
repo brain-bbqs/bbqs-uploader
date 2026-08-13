@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.6
+
+#### 🐛 Bug Fix
+
+- Fixed the dropzone's rejection message ("Individual files can't be uploaded on their own") sitting flush against the left edge instead of centered under the drop prompt ([#74](https://github.com/brain-bbqs/bbqs-uploader/pull/74))
+
 ## 1.1.5
 
 #### 🐛 Bug Fix
