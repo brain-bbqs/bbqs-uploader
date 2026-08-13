@@ -137,3 +137,34 @@ test("a folder with more than 30 files reveals the first 30 and truncates the re
   await expect(page.locator("#file-list .file-item:visible")).toHaveCount(35);
   await expect(page.locator("#file-list .more-files")).toHaveCount(0);
 });
+
+test("dropping a loose file rejects it with a message card centered in the dropzone", async ({ page }) => {
+  await seedSignedIn(page);
+  await page.goto("/");
+
+  // A real drag-and-drop of a loose file: the synthetic DataTransfer's item still answers
+  // webkitGetAsEntry(), so the dropzone takes the "files, but no folder" rejection branch
+  // rather than the "browser can't read folders" one.
+  await page.locator("#dropzone").evaluate((dz) => {
+    const dt = new DataTransfer();
+    dt.items.add(new File(["clip"], "clip.mp4", { type: "video/mp4" }));
+    dz.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  });
+
+  const reject = page.locator("#dropzone-reject");
+  await expect(reject).toHaveText(/Individual files can't be uploaded on their own/);
+
+  // The "what to do instead" half sits on its own line, one blank line below the first.
+  await expect(reject.locator("br")).toHaveCount(2);
+  expect(await reject.innerText()).toBe(
+    "Individual files can't be uploaded on their own.\n\nDrop the folder that contains them instead.",
+  );
+
+  // The card is narrower than the dropzone, so it only looks deliberate when it sits on the
+  // dropzone's center line; `.dz-inner p` used to zero out its `auto` side margins and pin it
+  // to the left edge.
+  const dzBox = (await page.locator("#dropzone").boundingBox())!;
+  const rejectBox = (await reject.boundingBox())!;
+  expect(rejectBox.width).toBeLessThan(dzBox.width);
+  expect(Math.abs(rejectBox.x + rejectBox.width / 2 - (dzBox.x + dzBox.width / 2))).toBeLessThan(1);
+});

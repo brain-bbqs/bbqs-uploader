@@ -185,6 +185,27 @@ describe("initDropzone drag & drop", () => {
     await vi.waitFor(() => expect(reject.hidden).toBe(false));
     expect(onFolder).not.toHaveBeenCalled();
     expect(reject.textContent).toContain("Drop the folder that contains them");
+
+    // The two halves sit on their own lines, separated by a <br><br> gap...
+    expect(reject.querySelectorAll("br")).toHaveLength(2);
+    expect(reject.childNodes[0].textContent).toBe("Individual files can't be uploaded on their own.");
+    expect(reject.childNodes[3].textContent).toBe("Drop the folder that contains them instead.");
+    // ...built from real nodes, so the prose is never parsed as markup.
+    expect(reject.querySelectorAll("*")).toHaveLength(2);
+  });
+
+  it("replaces the previous rejection message instead of appending to it", async () => {
+    const { dz, folderInput, reject } = setup();
+    // Rejecting twice in a row has to swap the message out: the renderer now appends nodes, so
+    // a missing reset would leave both messages (and four <br>s) stacked in the slot.
+    dz.dispatchEvent(dropEvent(itemsFor([fileEntry("clip.mp4")])));
+    await vi.waitFor(() => expect(reject.textContent).toContain("Individual files"));
+
+    setInputFiles(folderInput, [withRelativePath(new File(["x"], ".DS_Store"), "base/.DS_Store")]);
+    folderInput.dispatchEvent(new Event("change"));
+
+    expect(reject.textContent).toBe("That folder contains no uploadable files.");
+    expect(reject.querySelectorAll("br")).toHaveLength(0);
   });
 
   it("clears the rejection message once a folder is accepted", async () => {

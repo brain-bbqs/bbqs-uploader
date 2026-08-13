@@ -466,7 +466,9 @@ ul.human-subjects-body {
   font-size: 0.8rem;
   color: var(--muted);
 }
-.dz-reject {
+/* Scoped to .dz-inner so the `auto` side margins outrank `.dz-inner p`, which would otherwise
+   zero them out and leave the card flush against the dropzone's left edge. */
+.dz-inner .dz-reject {
   margin: 0.85rem auto 0;
   max-width: 26rem;
   padding: 0.5rem 0.9rem;
