@@ -53,12 +53,11 @@ a BBQS/EMBER admin co-owns an "Incoming: " dandiset, once per candidate
 dandiset on every load of the picker.
 
 That call carries **no credentials of ours**, and it must stay that way. The
-service answers from its own DANDI credentials (API keys for the admin
-accounts, held server-side) rather than from the caller's token: it keeps a
-periodically-refreshed set of the dandiset identifiers those accounts own and
-answers set membership. So the request is a bare unauthenticated `GET` of a
-public dandiset identifier, and the signed-in user's OAuth token still only
-ever goes to DANDI itself.
+service reads the dandiset's owner list from DANDI with its own API key and
+intersects it with the admin roster it holds server-side, rather than
+borrowing the caller's token to do the read. So the request is a bare
+unauthenticated `GET` of a public dandiset identifier, and the signed-in
+user's OAuth token still only ever goes to DANDI itself.
 
 An earlier version of this check did forward the user's live access token to
 that host on every picker load, which put a credential capable of acting as
@@ -68,14 +67,17 @@ own credentials, change the service, not the header. `tests/unit/dandisets.test.
 pins the absence of the `Authorization` header on this call.
 
 What the design does concentrate is credential custody on the service side:
-that host now stores long-lived DANDI API keys for admin accounts, which are
-more powerful than any single user's token. That's a deliberate trade of many
-transient user tokens transiting a third party for a few stored credentials
-that the admins own, can scope to purpose-built accounts, and can rotate on
-their own schedule. Before pointing this at a different or newly-deployed
-instance of that service, confirm it is served over HTTPS, that it does not
-log its own API keys or the admin roster, and that the keys belong to accounts
-whose only job is this check.
+alongside the roster, that host now stores a long-lived DANDI API key, which
+is more powerful than any single user's token, and the account behind it needs
+enough read access to see the owner list of every sanctioned "Incoming: "
+dandiset (embargoed ones are invisible to non-owners, so in practice that
+means an archive superuser or an account co-owning them). That's a deliberate
+trade of many transient user tokens transiting a third party for one stored
+credential the admins own and can rotate on their own schedule. Before
+pointing this at a different or newly-deployed instance of that service,
+confirm it is served over HTTPS, that it does not log its API key, the roster,
+or the owner lists it reads, and that the key belongs to an account whose only
+job is this check.
 
 The residual leak is small and non-identifying: because the endpoint is
 unauthenticated, anyone can ask whether a given dandiset identifier is
