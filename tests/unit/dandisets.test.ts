@@ -52,10 +52,12 @@ describe("listIncomingDandisets", () => {
     expect(url).toBe("https://api-dandi.emberarchive.org/api/dandisets/?user=me&embargoed=true&page_size=1000");
     expect(init.headers.Authorization).toBe("Bearer token-1");
 
+    // The admin-check service resolves ownership with its own DANDI credentials, so the user's
+    // access token must never be attached to this cross-origin call (see SECURITY.md).
     const adminCheckCall = (fetch as ReturnType<typeof vi.fn>).mock.calls.find(([callUrl]) =>
       String(callUrl).includes("/admin-owned/000100"),
     );
-    expect(adminCheckCall?.[1].headers.Authorization).toBe("Bearer token-1");
+    expect(adminCheckCall?.[1]).toBe(undefined);
     vi.unstubAllGlobals();
   });
 

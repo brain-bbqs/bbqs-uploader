@@ -45,21 +45,43 @@ Also keep an eye on:
   runtime dependency is something that could be compromised upstream and ship
   code that reads `localStorage`; don't add one without a reason.
 
-## The admin-owned dandiset check sends the live OAuth token to a third party
+## The admin-owned dandiset check calls a third party, but without our token
 
 `src/lib/dandisets.ts`'s `listIncomingDandisets` calls a companion service
 (not part of this repo, currently hosted on PythonAnywhere) to check whether
-a BBQS/EMBER admin co-owns an "Incoming: " dandiset, forwarding the
-signed-in user's live DANDI OAuth access token in the `Authorization`
-header on every load of the picker.
+a BBQS/EMBER admin co-owns an "Incoming: " dandiset, once per candidate
+dandiset on every load of the picker.
 
-This is a real, deliberate expansion of the trust boundary: previously the
-token only ever went to DANDI itself. Now it also goes to a third-party host
-this repo doesn't control. If that host is compromised, misconfigured, or
-just logs request headers by default, a live token capable of acting as the
-signed-in user leaks. Before pointing this at a different or newly-deployed
-instance of that service, confirm it does not log the `Authorization` header
-or the token it extracts from it, and that it's served over HTTPS.
+That call carries **no credentials of ours**, and it must stay that way. The
+service answers from its own DANDI credentials (API keys for the admin
+accounts, held server-side) rather than from the caller's token: it keeps a
+periodically-refreshed set of the dandiset identifiers those accounts own and
+answers set membership. So the request is a bare unauthenticated `GET` of a
+public dandiset identifier, and the signed-in user's OAuth token still only
+ever goes to DANDI itself.
+
+An earlier version of this check did forward the user's live access token to
+that host on every picker load, which put a credential capable of acting as
+the signed-in user on a machine this repo doesn't control. Do not reintroduce
+that: if the service ever needs to know something it can't resolve with its
+own credentials, change the service, not the header. `tests/unit/dandisets.test.ts`
+pins the absence of the `Authorization` header on this call.
+
+What the design does concentrate is credential custody on the service side:
+that host now stores long-lived DANDI API keys for admin accounts, which are
+more powerful than any single user's token. That's a deliberate trade of many
+transient user tokens transiting a third party for a few stored credentials
+that the admins own, can scope to purpose-built accounts, and can rotate on
+their own schedule. Before pointing this at a different or newly-deployed
+instance of that service, confirm it is served over HTTPS, that it does not
+log its own API keys or the admin roster, and that the keys belong to accounts
+whose only job is this check.
+
+The residual leak is small and non-identifying: because the endpoint is
+unauthenticated, anyone can ask whether a given dandiset identifier is
+BBQS-sanctioned. That reveals nothing about who the admins are (the whole
+point of PR #65), grants no access to embargoed content, and is rate-limited
+service-side.
 
 This is also not a hard access-control boundary even when working correctly:
 real upload authorization is still enforced entirely by DANDI's own dandiset
