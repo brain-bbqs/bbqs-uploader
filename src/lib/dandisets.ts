@@ -33,11 +33,16 @@ interface AdminOwnedResponse {
   adminOwned: boolean;
 }
 
-/** Whether a BBQS/EMBER admin is a listed owner of the given dandiset, per the admin-check service. */
-async function hasAdminOwner(cfg: UploaderConfig, identifier: string): Promise<boolean> {
-  const resp = await fetch(`${ADMIN_CHECK_BASE_URL}/admin-owned/${identifier}`, {
-    headers: { Authorization: `Bearer ${cfg.accessToken}` },
-  });
+/**
+ * Whether a BBQS/EMBER admin is a listed owner of the given dandiset, per the admin-check service.
+ *
+ * Deliberately unauthenticated: the service resolves ownership with its own DANDI credentials, so
+ * the signed-in user's access token never leaves DANDI and this origin. Don't add an `Authorization`
+ * header here without re-reading SECURITY.md — forwarding a live token to a host this repo doesn't
+ * control is the exact trade this call was rewritten to avoid.
+ */
+async function hasAdminOwner(identifier: string): Promise<boolean> {
+  const resp = await fetch(`${ADMIN_CHECK_BASE_URL}/admin-owned/${identifier}`);
   if (!resp.ok) {
     throw new Error(`GET /admin-owned/${identifier} failed with HTTP ${resp.status}`);
   }
@@ -63,7 +68,7 @@ export async function listIncomingDandisets(cfg: UploaderConfig): Promise<Incomi
     .filter((d) => d.title.startsWith(INCOMING_PREFIX));
 
   // Fail closed: a dandiset whose owner list can't be confirmed is excluded rather than shown.
-  const adminOwned = await Promise.all(candidates.map((d) => hasAdminOwner(cfg, d.identifier).catch(() => false)));
+  const adminOwned = await Promise.all(candidates.map((d) => hasAdminOwner(d.identifier).catch(() => false)));
 
   return candidates.filter((_, i) => adminOwned[i]).sort((a, b) => a.title.localeCompare(b.title));
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7
+
+#### 🏠 Internal
+
+- The dataset picker's admin-owner check no longer sends your EMBER sign-in token to the companion admin-check service; that service now answers from its own DANDI credentials, so your token only ever goes to EMBER itself ([#75](https://github.com/brain-bbqs/bbqs-uploader/pull/75))
+
 ## 1.1.6
 
 #### 🐛 Bug Fix
