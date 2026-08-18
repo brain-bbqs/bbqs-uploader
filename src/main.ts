@@ -600,7 +600,9 @@ function loadSettings(): void {
 
 function saveSettings(): void {
   saveStoredSettings({
-    dandisetId: els.dandisetId.value.trim(),
+    // Falls back to the remembered id while the picker is empty (signed out, loading, failed
+    // fetch) so clearing the <select> never wipes the dataset to restore on the next sign-in.
+    dandisetId: els.dandisetId.value.trim() || storedDandisetId,
     oauth: oauthTokens ?? undefined,
   });
 }
@@ -757,8 +759,22 @@ async function refreshHumanSubjectsGate(): Promise<void> {
   renderHumanSubjectsBanner();
 }
 
+// Empties the dandiset picker, remembering the id it held so a later repopulation (signing back
+// in, a retried fetch) can restore the same pick. The <select> keeps its options even while
+// hidden, so without this a stale selection would keep leaking into currentConfig() after the
+// list it came from is gone.
+function clearDandisetSelection(): void {
+  if (els.dandisetId.value) storedDandisetId = els.dandisetId.value;
+  els.dandisetId.replaceChildren();
+  currentDatasets = [];
+}
+
+// A status message means there is no dataset to act on (signed out, loading, none found, error),
+// so the picker's selection goes with it -- otherwise the card heading's "View on EMBER" button
+// would stay pointing at the dataset selected before a mid-session sign-out.
 function setDandisetPlaceholder(text: string): void {
   els.dandisetMessage.textContent = text;
+  clearDandisetSelection();
   showDandisetView("message");
 }
 
