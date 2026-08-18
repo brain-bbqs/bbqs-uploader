@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.8
+
+#### 🐛 Bug Fix
+
+- Fixed the Dataset card's "View on EMBER" button sticking around after signing out mid-session, still pointing at the dataset that was selected before; signing out now clears the dataset selection along with the card's message, matching what a page reload already showed ([#76](https://github.com/brain-bbqs/bbqs-uploader/pull/76))
+
 ## 1.1.7
 
 #### 🏠 Internal

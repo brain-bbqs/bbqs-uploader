@@ -41,6 +41,22 @@ test.describe("BBQS uploader shell", () => {
     await expect(row.locator('[data-role="status"]')).toContainText("Not signed in");
   });
 
+  // Signing out mid-session leaves the dataset card's message behind, but the picker's <select>
+  // keeps its options even while hidden, so the card heading's "View on EMBER" button used to
+  // stay visible (still pointing at the last selected dataset) until the page was reloaded.
+  test("drops the dataset view link on a mid-session sign-out", async ({ page }) => {
+    await seedSignedIn(page);
+    await page.goto("/");
+    await expect(page.locator("#view-dataset-link")).toBeVisible();
+
+    await page.locator("#oauth-avatar").click();
+    await page.locator("#oauth-signout-btn").click();
+
+    await expect(page.locator("#dandiset-message")).toHaveText("Please sign in to see your incoming datasets.");
+    await expect(page.locator("#view-dataset-link")).toBeHidden();
+    await expect(page.locator("#load-remote-btn")).toBeHidden();
+  });
+
   test("accepts non-mp4 files (queued, not rejected, once signed in)", async ({ page }) => {
     await seedSignedIn(page);
     await page.goto("/");
