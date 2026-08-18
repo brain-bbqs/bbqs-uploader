@@ -152,8 +152,10 @@ test("Load from EMBER browses existing archive contents read-only, until a folde
         results: [
           { asset_id: "a-1", path: "sourcedata/raw/sessions/old.bin", size: 16 },
           { asset_id: "a-2", path: "sourcedata/raw/notes.txt", size: 8 },
-          // The transfer-report dot-folder must be hidden from the browse.
+          // The transfer-report dot-folder and clip-extractor outputs must be hidden from the browse.
           { asset_id: "a-3", path: "sourcedata/raw/.transfer/transfer-2026.json", size: 4 },
+          { asset_id: "a-4", path: "sourcedata/raw/clip-extractor/clips/one.mp4", size: 32 },
+          { asset_id: "a-5", path: "sourcedata/raw/sub-01/clip-extractor/two.mp4", size: 64 },
         ],
         next: null,
       },

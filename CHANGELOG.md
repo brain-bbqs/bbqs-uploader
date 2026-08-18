@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.9
+
+#### 🐛 Bug Fix
+
+- The read-only "Load from EMBER" browse no longer lists the dataset's `clip-extractor/` contents, which are tool outputs rather than uploaded material; they are now skipped the same way the app's internal transfer reports already were ([#77](https://github.com/brain-bbqs/bbqs-uploader/pull/77))
+
 ## 1.1.8
 
 #### 🐛 Bug Fix

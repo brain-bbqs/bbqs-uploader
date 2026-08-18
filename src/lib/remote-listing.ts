@@ -42,3 +42,17 @@ export async function listRemoteFiles(cfg: UploaderConfig, signal?: AbortSignal)
   }
   return listing;
 }
+
+// Folder names under sourcedata/raw/ that hold machinery rather than dataset content: this app's
+// own machine-written transfer reports (see transfer-report.ts) and the clip-extractor tool's
+// outputs. The read-only "Load from EMBER" browse hides both, at any depth, so what it shows is
+// the material someone would actually recognize as their upload.
+const HIDDEN_BROWSE_DIRS = new Set([".transfer", "clip-extractor"]);
+
+/**
+ * Whether a directory path relative to sourcedata/raw/ (e.g. "sub-01/videos", or "" for the root)
+ * sits inside one of the hidden machinery folders.
+ */
+export function isHiddenBrowseDir(relativeDir: string): boolean {
+  return relativeDir.split("/").some((segment) => HIDDEN_BROWSE_DIRS.has(segment));
+}
