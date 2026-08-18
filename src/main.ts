@@ -3,7 +3,7 @@ import { getElements } from "./ui/elements";
 import { initDropzone, type AcceptedFolder } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { createSelectionModel, type SelectionFile } from "./lib/selection";
-import { listRemoteFiles, REMOTE_PREFIX } from "./lib/remote-listing";
+import { isHiddenBrowseDir, listRemoteFiles, REMOTE_PREFIX } from "./lib/remote-listing";
 import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
 import {
   uploadTransferReport,
@@ -1171,9 +1171,10 @@ async function renderRemoteBrowse(listing: Map<string, number>): Promise<void> {
     const file = new File([], name);
     Object.defineProperty(file, "size", { value: size, configurable: true });
     return { file, relativePath: segments.join("/") };
-    // The .transfer/ dot-folder holds this app's machine-written transfer reports (see
-    // transfer-report.ts), not dataset content — the browse hides it.
-  }).filter((e) => e.relativePath !== ".transfer" && !e.relativePath.startsWith(".transfer/"));
+    // The .transfer/ and clip-extractor/ folders hold machinery (this app's machine-written
+    // transfer reports, see transfer-report.ts, and the clip-extractor tool's outputs) rather
+    // than dataset content, so the browse hides them.
+  }).filter((e) => !isHiddenBrowseDir(e.relativePath));
   addedFiles = entries.length;
   updateExpandDepthRange();
   els.expandDepthInput.value = String(Math.min(DEFAULT_REVEAL_COUNT, addedFiles));

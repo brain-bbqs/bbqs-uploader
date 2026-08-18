@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listRemoteFiles, REMOTE_PREFIX } from "../../src/lib/remote-listing";
+import { isHiddenBrowseDir, listRemoteFiles, REMOTE_PREFIX } from "../../src/lib/remote-listing";
 import type { UploaderConfig } from "../../src/lib/types";
 
 const cfg = {
@@ -90,5 +90,23 @@ describe("listRemoteFiles", () => {
   it("propagates API failures instead of returning an empty listing", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("boom", { status: 500 })));
     await expect(listRemoteFiles(cfg)).rejects.toThrow(/500/);
+  });
+});
+
+describe("isHiddenBrowseDir", () => {
+  it("hides the transfer-report and clip-extractor folders at any depth", () => {
+    expect(isHiddenBrowseDir(".transfer")).toBe(true);
+    expect(isHiddenBrowseDir(".transfer/2026")).toBe(true);
+    expect(isHiddenBrowseDir("clip-extractor")).toBe(true);
+    expect(isHiddenBrowseDir("clip-extractor/sub-01")).toBe(true);
+    expect(isHiddenBrowseDir("sub-01/clip-extractor/out")).toBe(true);
+  });
+
+  it("keeps ordinary dataset folders, including lookalike names", () => {
+    expect(isHiddenBrowseDir("")).toBe(false);
+    expect(isHiddenBrowseDir("sub-01/videos")).toBe(false);
+    expect(isHiddenBrowseDir("transfer")).toBe(false);
+    expect(isHiddenBrowseDir("clip-extractor-notes")).toBe(false);
+    expect(isHiddenBrowseDir("my-clip-extractor")).toBe(false);
   });
 });
