@@ -2,8 +2,6 @@
 
 ## Live test injections
 
-`npm test` runs unit tests, `npm run test:integration` runs Playwright. Paste one of these into the address bar:
-
 | URL                                     | What it should look like                                                | Try it                                                                      |
 | --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `?test&num_datasets=0`                  | No-datasets-found message                                               | [Open](https://upload.brain-bbqs.org/?test&num_datasets=0)                  |
