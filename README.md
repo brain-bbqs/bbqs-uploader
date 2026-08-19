@@ -12,7 +12,7 @@
   </p>
 </p>
 
-A **fully static, backend-free** web app for BBQS teams to upload files to an existing Dandiset on the EMBER Archive through a simple drag-and-drop interface.
+A web app for BBQS teams to easily upload files to an existing Dandiset on the EMBER Archive through a simple drag-and-drop interface.
 
 ---
 
