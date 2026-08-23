@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+#### 🚀 Enhancement
+
+- A selected folder's own name is now kept as the base of the upload path: its contents land under `sourcedata/raw/<folder name>/` instead of being unpacked directly into `sourcedata/raw/` ([#78](https://github.com/brain-bbqs/bbqs-uploader/pull/78))
+
 ## 1.1.9
 
 #### 🐛 Bug Fix

@@ -101,7 +101,7 @@ describe("initDropzone browse wiring", () => {
     expect(folderClick).toHaveBeenCalledTimes(1);
   });
 
-  it("strips the base folder segment from webkitRelativePath on folder picks", () => {
+  it("keeps the base folder segment from webkitRelativePath on folder picks", () => {
     const { folderInput, onFolder } = setup();
     const top = withRelativePath(new File(["x"], "notes.txt"), "myfolder/notes.txt");
     const nested = withRelativePath(new File(["x"], "clip.mp4"), "myfolder/sub/clip.mp4");
@@ -110,8 +110,8 @@ describe("initDropzone browse wiring", () => {
     expect(acceptedFolder(onFolder)).toEqual({
       folderName: "myfolder",
       entries: [
-        { file: top, relativePath: "" },
-        { file: nested, relativePath: "sub" },
+        { file: top, relativePath: "myfolder" },
+        { file: nested, relativePath: "myfolder/sub" },
       ],
     });
     expect(folderInput.value).toBe("");
@@ -125,7 +125,7 @@ describe("initDropzone browse wiring", () => {
     const inGit = withRelativePath(new File(["x"], "config"), "base/data/.git/config");
     setInputFiles(folderInput, [keep, junk, cached, inGit]);
     folderInput.dispatchEvent(new Event("change"));
-    expect(acceptedFolder(onFolder).entries).toEqual([{ file: keep, relativePath: "data" }]);
+    expect(acceptedFolder(onFolder).entries).toEqual([{ file: keep, relativePath: "base/data" }]);
   });
 
   it("rejects a picked folder whose every file is filtered out", () => {
@@ -148,7 +148,7 @@ describe("initDropzone drag & drop", () => {
     expect(dz.classList.contains("dragover")).toBe(false);
   });
 
-  it("walks a dropped folder recursively, stripping its own name and skipping ignored names", async () => {
+  it("walks a dropped folder recursively, keeping its own name as the base and skipping ignored names", async () => {
     const { dz, onFolder } = setup();
     const tree = dirEntry("session1", [
       fileEntry("clip.mp4"),
@@ -162,8 +162,8 @@ describe("initDropzone drag & drop", () => {
     const folder = acceptedFolder(onFolder);
     expect(folder.folderName).toBe("session1");
     expect(folder.entries.map((e) => [e.relativePath, e.file.name].filter(Boolean).join("/"))).toEqual([
-      "clip.mp4",
-      "sub/trace.csv",
+      "session1/clip.mp4",
+      "session1/sub/trace.csv",
     ]);
   });
 

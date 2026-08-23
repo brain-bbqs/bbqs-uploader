@@ -18,11 +18,11 @@ test("recursive folder selection derives sourcedata/raw paths and skips .git", a
   await page.locator("#folder-input").setInputFiles(dir);
 
   // Only a.txt should surface — the .git/config file and top-level .noannex must be filtered out.
-  // The picked base folder's own name is stripped: its contents land directly under
-  // sourcedata/raw/, and the folder itself is named in the summary row instead.
+  // The picked base folder's own name is kept as the base path segment under sourcedata/raw/,
+  // and the folder is also named in the summary row.
   const row = page.locator("#file-list .file-item").first();
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
-  await expect(row).toHaveAttribute("title", "sourcedata/raw/session1/a.txt");
+  await expect(row).toHaveAttribute("title", `sourcedata/raw/${dirName}/session1/a.txt`);
   await expect(page.locator("#folder-summary-name")).toHaveText(dirName);
   await expect(page.locator("#folder-summary-stats")).toContainText("1 file");
 

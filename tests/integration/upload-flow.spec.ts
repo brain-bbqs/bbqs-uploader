@@ -13,7 +13,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
       const body = route.request().postDataJSON();
-      if (body.metadata.path === "sourcedata/raw/clip.mp4") createdAssets.push(body);
+      if (body.metadata.path === "sourcedata/raw/dataset/clip.mp4") createdAssets.push(body);
       return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
@@ -32,7 +32,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
 
   const row = page.locator("#file-list .file-item").first();
   await expect(row.locator('[data-role="badge"]')).toBeHidden();
-  await expect(row).toHaveAttribute("title", "sourcedata/raw/clip.mp4");
+  await expect(row).toHaveAttribute("title", "sourcedata/raw/dataset/clip.mp4");
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file (32 B)");
   await page.locator("#upload-all-btn").click();
 
@@ -45,7 +45,7 @@ test("full upload pipeline against a mocked DANDI API", async ({ page }) => {
     "https://dandi.emberarchive.org/dandiset/000123/draft/files?location=sourcedata%2Fraw",
   );
   expect(createdAssets).toEqual([
-    { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
+    { blob_id: "blob-1", metadata: { path: "sourcedata/raw/dataset/clip.mp4", encodingFormat: "video/mp4" } },
   ]);
 });
 
@@ -56,7 +56,9 @@ test("replaces the existing asset (PUT) when one exists at the path and the cont
   await mockUploadApi(page);
   // An asset already sits at the path, so registration must go through PUT, not POST.
   await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, (route: Route) =>
-    route.fulfill({ json: { results: [{ asset_id: "existing-1", path: "sourcedata/raw/clip.mp4" }], next: null } }),
+    route.fulfill({
+      json: { results: [{ asset_id: "existing-1", path: "sourcedata/raw/dataset/clip.mp4" }], next: null },
+    }),
   );
   await page.route(`${API}/uploads/upload-1/validate/`, (route: Route) =>
     route.fulfill({ json: { blob_id: "blob-2" } }),
@@ -66,7 +68,7 @@ test("replaces the existing asset (PUT) when one exists at the path and the cont
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
       const body = route.request().postDataJSON();
-      if (body.metadata.path === "sourcedata/raw/clip.mp4") assetCreated = true;
+      if (body.metadata.path === "sourcedata/raw/dataset/clip.mp4") assetCreated = true;
       return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
@@ -74,7 +76,7 @@ test("replaces the existing asset (PUT) when one exists at the path and the cont
   await page.route(`${API}/dandisets/000123/versions/draft/assets/existing-1/`, (route: Route) => {
     if (route.request().method() === "PUT") {
       replacedAssets.push(route.request().postDataJSON());
-      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/clip.mp4" } });
+      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/dataset/clip.mp4" } });
     }
     return route.continue();
   });
@@ -91,7 +93,7 @@ test("replaces the existing asset (PUT) when one exists at the path and the cont
   await expect(row.locator('[data-role="badge"]')).toHaveText("Replaced", { timeout: 15000 });
   await expect(row.locator('[data-role="status"]')).toContainText("content updated");
   expect(replacedAssets).toEqual([
-    { blob_id: "blob-2", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
+    { blob_id: "blob-2", metadata: { path: "sourcedata/raw/dataset/clip.mp4", encodingFormat: "video/mp4" } },
   ]);
   expect(assetCreated).toBe(false);
 });
@@ -103,7 +105,9 @@ test("replaces via the server digest fast-path (409) without re-transferring byt
 
   await mockUploadApi(page);
   await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, (route: Route) =>
-    route.fulfill({ json: { results: [{ asset_id: "existing-1", path: "sourcedata/raw/clip.mp4" }], next: null } }),
+    route.fulfill({
+      json: { results: [{ asset_id: "existing-1", path: "sourcedata/raw/dataset/clip.mp4" }], next: null },
+    }),
   );
   // 409 = the server already holds a blob with this digest; no S3 traffic should follow.
   await page.route(`${API}/uploads/initialize/`, (route: Route) => route.fulfill({ status: 409, body: "blob exists" }));
@@ -117,7 +121,7 @@ test("replaces via the server digest fast-path (409) without re-transferring byt
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
       const body = route.request().postDataJSON();
-      if (body.metadata.path === "sourcedata/raw/clip.mp4") assetCreated = true;
+      if (body.metadata.path === "sourcedata/raw/dataset/clip.mp4") assetCreated = true;
       return route.fulfill({ json: { asset_id: "asset-1", path: body.metadata.path } });
     }
     return route.continue();
@@ -125,7 +129,7 @@ test("replaces via the server digest fast-path (409) without re-transferring byt
   await page.route(`${API}/dandisets/000123/versions/draft/assets/existing-1/`, (route: Route) => {
     if (route.request().method() === "PUT") {
       replacedAssets.push(route.request().postDataJSON());
-      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/clip.mp4" } });
+      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/dataset/clip.mp4" } });
     }
     return route.continue();
   });
@@ -142,7 +146,7 @@ test("replaces via the server digest fast-path (409) without re-transferring byt
   await expect(row.locator('[data-role="badge"]')).toHaveText("Replaced", { timeout: 15000 });
   await expect(row.locator('[data-role="status"]')).toContainText("matched existing content");
   expect(replacedAssets).toEqual([
-    { blob_id: "blob-1", metadata: { path: "sourcedata/raw/clip.mp4", encodingFormat: "video/mp4" } },
+    { blob_id: "blob-1", metadata: { path: "sourcedata/raw/dataset/clip.mp4", encodingFormat: "video/mp4" } },
   ]);
   expect(assetCreated).toBe(false);
   expect(bytesUploaded).toBe(false);

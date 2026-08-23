@@ -6,7 +6,8 @@ How file selection works since the post-user-testing redesign (PR #66), and why.
 
 1. **One base folder.** The dropzone lives in its own card and accepts exactly one dataset
    folder (drag or picker); loose files are rejected with an explanation. The folder's own name
-   is stripped: its contents land directly under `sourcedata/raw/`, and a compact summary row
+   is kept as the base path segment: its contents land under `sourcedata/raw/<folder>/` (changed
+   in PR #78; before that the name was stripped), and a compact summary row
    ("folder, N files, X GB, Change folder") replaces the dropzone once picked. Everything
    file-selection (banner, tree, upload controls) is a second card below it, which also hosts
    the read-only "Load from EMBER" browse of existing archive contents (a button in the Dataset
@@ -40,9 +41,11 @@ How file selection works since the post-user-testing redesign (PR #66), and why.
 
 ## Decisions and deferred ideas
 
-Decided during the redesign: base folder name stripped from destination paths (required for the
-archive diff to line up), one base folder at a time, already-uploaded files default deselected,
-size-only "Changed" detection.
+Decided during the redesign: one base folder at a time, already-uploaded files default
+deselected, size-only "Changed" detection. The redesign originally stripped the base folder name
+from destination paths; that was reversed later (the picked folder's name is now the base path
+segment under `sourcedata/raw/`, so the archive diff lines up when the same folder is re-picked
+by name).
 
 Deferred: persisting ignore patterns per dataset, multiple base folders side by side, and
 checksum-based change detection (the ETag cache in `src/lib/checksum-cache.ts` could catch

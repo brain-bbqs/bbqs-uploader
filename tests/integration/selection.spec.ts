@@ -8,7 +8,11 @@ import { API, seedSignedIn } from "./helpers/auth";
 // mocked archive listing where same.bin already exists unchanged and diff.bin exists at a
 // different size.
 async function stageFolder(page: Page): Promise<void> {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-selection-"));
+  // A fixed-name base folder inside the random temp root: the picked folder's name is the first
+  // segment of every staged path, so it has to be stable for the mocked listing to line up.
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-selection-"));
+  const dir = path.join(root, "dataset");
+  fs.mkdirSync(dir);
   fs.writeFileSync(path.join(dir, "keep.bin"), Buffer.alloc(16));
   fs.writeFileSync(path.join(dir, "scratch.tmp"), Buffer.alloc(16));
   fs.mkdirSync(path.join(dir, "sessions"));
@@ -21,8 +25,8 @@ async function stageFolder(page: Page): Promise<void> {
     route.fulfill({
       json: {
         results: [
-          { asset_id: "a-1", path: "sourcedata/raw/sessions/same.bin", size: 16 },
-          { asset_id: "a-2", path: "sourcedata/raw/sessions/diff.bin", size: 15 },
+          { asset_id: "a-1", path: "sourcedata/raw/dataset/sessions/same.bin", size: 16 },
+          { asset_id: "a-2", path: "sourcedata/raw/dataset/sessions/diff.bin", size: 15 },
         ],
         next: null,
       },
@@ -41,25 +45,26 @@ test("diffs staged files against the archive listing and deselects already-uploa
 
   await expect(page.locator("#remote-banner")).toContainText("Already on EMBER: 2 files");
 
-  const same = rowByTitle(page, "sourcedata/raw/sessions/same.bin");
+  const same = rowByTitle(page, "sourcedata/raw/dataset/sessions/same.bin");
   await expect(same.locator(".badge")).toHaveText("Uploaded");
   await expect(same.locator(".select-check")).not.toBeChecked();
   await expect(same.locator('[data-role="status"]')).toHaveText("already on EMBER");
 
-  const diff = rowByTitle(page, "sourcedata/raw/sessions/diff.bin");
+  const diff = rowByTitle(page, "sourcedata/raw/dataset/sessions/diff.bin");
   await expect(diff.locator(".badge")).toHaveText("Changed");
   await expect(diff.locator(".select-check")).toBeChecked();
   await expect(diff.locator('[data-role="status"]')).toHaveText("will replace");
 
-  await expect(rowByTitle(page, "sourcedata/raw/keep.bin").locator(".badge")).toHaveText("New");
+  await expect(rowByTitle(page, "sourcedata/raw/dataset/keep.bin").locator(".badge")).toHaveText("New");
 
   // 3 of 4 selected (same.bin sits out), and the Upload button carries the live total.
   await expect(page.locator("#selection-summary")).toContainText("3 of 4 files");
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
 
-  // The sessions/ folder is half-selected, so its checkbox reads indeterminate.
-  const sessionsDir = page.locator(".dir-item", { has: page.locator(".dir-name", { hasText: "sessions/" }) });
-  await expect(sessionsDir.locator(".dir-row .select-check").first()).toHaveJSProperty("indeterminate", true);
+  // The sessions/ folder is half-selected, so its checkbox reads indeterminate. Scoped to the
+  // .dir-row (not the whole .dir-item): an ancestor folder's item also contains this .dir-name.
+  const sessionsRow = page.locator(".dir-row", { has: page.locator(".dir-name", { hasText: "sessions/" }) });
+  await expect(sessionsRow.locator(".select-check")).toHaveJSProperty("indeterminate", true);
 
   // Re-checking an uploaded file flips it to a replace.
   await same.locator(".select-check").check();
@@ -71,8 +76,8 @@ test("folder checkboxes cascade and Select all/none drive the whole tree", async
   await stageFolder(page);
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
 
-  const sessionsDir = page.locator(".dir-item", { has: page.locator(".dir-name", { hasText: "sessions/" }) });
-  const sessionsCheck = sessionsDir.locator(".dir-row .select-check").first();
+  const sessionsRow = page.locator(".dir-row", { has: page.locator(".dir-name", { hasText: "sessions/" }) });
+  const sessionsCheck = sessionsRow.locator(".select-check");
 
   // Checking the half-selected folder selects everything under it (including the uploaded file).
   await sessionsCheck.check();
@@ -88,7 +93,9 @@ test("folder checkboxes cascade and Select all/none drive the whole tree", async
 });
 
 test("folders the archive already holds in full start collapsed; the slider re-expands them", async ({ page }) => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-collapse-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbqs-collapse-"));
+  const dir = path.join(root, "dataset");
+  fs.mkdirSync(dir);
   fs.mkdirSync(path.join(dir, "done"));
   fs.writeFileSync(path.join(dir, "done", "one.bin"), Buffer.alloc(16));
   fs.writeFileSync(path.join(dir, "done", "two.bin"), Buffer.alloc(16));
@@ -100,8 +107,8 @@ test("folders the archive already holds in full start collapsed; the slider re-e
     route.fulfill({
       json: {
         results: [
-          { asset_id: "a-1", path: "sourcedata/raw/done/one.bin", size: 16 },
-          { asset_id: "a-2", path: "sourcedata/raw/done/two.bin", size: 16 },
+          { asset_id: "a-1", path: "sourcedata/raw/dataset/done/one.bin", size: 16 },
+          { asset_id: "a-2", path: "sourcedata/raw/dataset/done/two.bin", size: 16 },
         ],
         next: null,
       },
@@ -111,14 +118,14 @@ test("folders the archive already holds in full start collapsed; the slider re-e
   await page.locator("#folder-input").setInputFiles(dir);
   await expect(page.locator("#remote-banner")).toContainText("Already on EMBER: 2 files");
 
+  // Scoped to the .dir-row (not the whole .dir-item): the base folder's item also contains
+  // these .dir-names.
   const doneToggle = page
-    .locator(".dir-item", { has: page.locator(".dir-name", { hasText: "done/" }) })
-    .locator(".dir-toggle")
-    .first();
+    .locator(".dir-row", { has: page.locator(".dir-name", { hasText: "done/" }) })
+    .locator(".dir-toggle");
   const freshToggle = page
-    .locator(".dir-item", { has: page.locator(".dir-name", { hasText: "fresh/" }) })
-    .locator(".dir-toggle")
-    .first();
+    .locator(".dir-row", { has: page.locator(".dir-name", { hasText: "fresh/" }) })
+    .locator(".dir-toggle");
   await expect(doneToggle).toHaveAttribute("aria-expanded", "false");
   await expect(freshToggle).toHaveAttribute("aria-expanded", "true");
 
@@ -179,7 +186,8 @@ test("Load from EMBER browses existing archive contents read-only, until a folde
   fs.writeFileSync(path.join(dir, "fresh.bin"), Buffer.alloc(16));
   await page.locator("#folder-input").setInputFiles(dir);
   await expect(page.locator("#file-list .file-item")).toHaveCount(1);
-  await expect(page.locator("#file-list .select-check")).toHaveCount(1);
+  // Two checkboxes: the staged file's own and its base folder row's.
+  await expect(page.locator("#file-list .select-check")).toHaveCount(2);
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 1 file (16 B)");
   await expect(page.locator("#load-remote-btn")).toBeHidden();
 });
@@ -190,7 +198,7 @@ test("ignore patterns exclude matching files until removed", async ({ page }) =>
   await page.locator("#ignore-pattern-input").fill("*.tmp");
   await page.locator("#ignore-pattern-add").click();
 
-  const scratch = rowByTitle(page, "sourcedata/raw/scratch.tmp");
+  const scratch = rowByTitle(page, "sourcedata/raw/dataset/scratch.tmp");
   await expect(scratch.locator(".badge")).toHaveText("Ignored");
   await expect(scratch.locator(".select-check")).toBeDisabled();
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 2 files (32 B)");
@@ -198,5 +206,5 @@ test("ignore patterns exclude matching files until removed", async ({ page }) =>
   // Removing the chip restores the file's previous selected state.
   await page.locator(".ignore-chip button").click();
   await expect(page.locator("#upload-all-btn")).toHaveText("Upload 3 files (48 B)");
-  await expect(rowByTitle(page, "sourcedata/raw/scratch.tmp").locator(".badge")).toHaveText("New");
+  await expect(rowByTitle(page, "sourcedata/raw/dataset/scratch.tmp").locator(".badge")).toHaveText("New");
 });

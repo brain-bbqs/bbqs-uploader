@@ -101,9 +101,9 @@ async function walkEntry(entry: FileSystemEntryLike, relativeDir: string, out: D
 
 /**
  * Resolves a drop to the single base folder it carries, or null when it holds no folder at all
- * (loose files only, or a browser without webkitGetAsEntry). The base folder's own name is NOT
- * part of the returned relativePaths — its contents land directly under sourcedata/raw/ — and
- * anything dropped alongside the folder is ignored.
+ * (loose files only, or a browser without webkitGetAsEntry). The base folder's own name is the
+ * first segment of every returned relativePath — its contents land under
+ * sourcedata/raw/<folderName>/ — and anything dropped alongside the folder is ignored.
  */
 async function collectDroppedFolder(dataTransfer: DataTransfer): Promise<AcceptedFolder | null> {
   const entries = Array.from(dataTransfer.items)
@@ -116,7 +116,7 @@ async function collectDroppedFolder(dataTransfer: DataTransfer): Promise<Accepte
   if (!folder || isIgnoredName(folder.name)) return null;
   const out: DroppedFile[] = [];
   for (const child of await readAllEntries(folder.createReader())) {
-    await walkEntry(child, "", out);
+    await walkEntry(child, folder.name, out);
   }
   return { folderName: folder.name, entries: out };
 }
@@ -124,7 +124,7 @@ async function collectDroppedFolder(dataTransfer: DataTransfer): Promise<Accepte
 /**
  * Resolves a webkitdirectory picker's FileList to the picked base folder. webkitRelativePath
  * carries the folder structure as "base/sub/clip.mp4"; the base segment names the folder and is
- * stripped from every relativePath, matching the drag-and-drop path above.
+ * kept as the first segment of every relativePath, matching the drag-and-drop path above.
  */
 function folderFromFileList(fileList: FileList): AcceptedFolder {
   const entries: DroppedFile[] = [];
@@ -133,7 +133,7 @@ function folderFromFileList(fileList: FileList): AcceptedFolder {
     const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
     const segments = rel.split("/").filter(Boolean);
     if (!folderName && segments.length > 1) folderName = segments[0];
-    const dirSegments = segments.slice(1, -1);
+    const dirSegments = segments.slice(0, -1);
     if (isIgnoredName(file.name) || segments.slice(0, -1).some((s) => isIgnoredName(s))) continue;
     entries.push({ file, relativePath: dirSegments.join("/") });
   }

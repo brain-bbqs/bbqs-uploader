@@ -9,14 +9,14 @@ test("tracks overall progress and per-outcome counts across a mixed batch", asyn
   await page.route(`${API}/dandisets/000123/versions/draft/assets/?path=*`, (route: Route) => {
     const url = new URL(route.request().url());
     const path = url.searchParams.get("path");
-    if (path === "sourcedata/raw/clip.mp4") {
+    if (path === "sourcedata/raw/dataset/clip.mp4") {
       return route.fulfill({ json: { results: [{ asset_id: "existing-1", path }], next: null } });
     }
     return route.fulfill({ json: { results: [], next: null } });
   });
   await page.route(`${API}/dandisets/000123/versions/draft/assets/existing-1/`, (route: Route) => {
     if (route.request().method() === "PUT") {
-      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/clip.mp4" } });
+      return route.fulfill({ json: { asset_id: "existing-1", path: "sourcedata/raw/dataset/clip.mp4" } });
     }
     return route.continue();
   });
