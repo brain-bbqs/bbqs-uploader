@@ -1498,7 +1498,15 @@ initDropzone(els, (folder) => {
 const mockUploadCount = readTestMockUploadCount();
 if (mockUploadCount !== null) {
   mockMode = true;
-  void addFiles({ folderName: "mock-dataset", entries: generateMockDroppedFiles(mockUploadCount) });
+  // Nest the fake files under the mock base folder, matching how a real pick keeps the picked
+  // folder's name as the first path segment.
+  void addFiles({
+    folderName: "mock-dataset",
+    entries: generateMockDroppedFiles(mockUploadCount).map((e) => ({
+      ...e,
+      relativePath: ["mock-dataset", e.relativePath].filter(Boolean).join("/"),
+    })),
+  });
 } else if (readTestRemoteListingCount() !== null) {
   // "?test&remote_listing=N" with nothing staged auto-opens the read-only "Load from EMBER"
   // browse over N fabricated archive files — see docs/README.md.

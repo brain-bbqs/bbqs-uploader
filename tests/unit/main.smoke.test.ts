@@ -88,26 +88,26 @@ describe("main.ts boot", () => {
     expect(el<HTMLButtonElement>("upload-all-btn").textContent).toBe("Upload 3 files (3 B)");
     const titles = Array.from(document.querySelectorAll<HTMLLIElement>("#file-list .file-item"), (li) => li.title);
     expect(titles.sort()).toEqual([
-      "sourcedata/raw/notes.txt",
-      "sourcedata/raw/session1/a.bin",
-      "sourcedata/raw/session1/b.bin",
+      "sourcedata/raw/base/notes.txt",
+      "sourcedata/raw/base/session1/a.bin",
+      "sourcedata/raw/base/session1/b.bin",
     ]);
   });
 
   it("keeps folder tri-states and the Upload button in step with row toggles", async () => {
-    const sessionCheck = document.querySelector<HTMLInputElement>(".dir-row .select-check")!;
+    const baseDirCheck = document.querySelector<HTMLInputElement>(".dir-row .select-check")!;
     const fileChecks = Array.from(document.querySelectorAll<HTMLInputElement>("#file-list .file-item .select-check"));
     expect(fileChecks).toHaveLength(3);
 
     fileChecks[1].checked = false;
     fileChecks[1].dispatchEvent(new Event("change"));
     await waitForSummary("2 of 3 files");
-    expect(sessionCheck.indeterminate).toBe(true);
+    expect(baseDirCheck.indeterminate).toBe(true);
 
-    sessionCheck.checked = true;
-    sessionCheck.dispatchEvent(new Event("change"));
+    baseDirCheck.checked = true;
+    baseDirCheck.dispatchEvent(new Event("change"));
     await waitForSummary("3 of 3 files");
-    expect(sessionCheck.indeterminate).toBe(false);
+    expect(baseDirCheck.indeterminate).toBe(false);
 
     el("select-none-btn").click();
     await waitForSummary("0 of 3 files");

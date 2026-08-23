@@ -54,7 +54,7 @@ export async function mockUploadApi(page: Page, { partSize = 32 }: MockUploadApi
   );
   await page.route(`${API}/dandisets/000123/versions/draft/assets/`, (route: Route) => {
     if (route.request().method() === "POST") {
-      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/clip.mp4" } });
+      return route.fulfill({ json: { asset_id: "asset-1", path: "sourcedata/raw/dataset/clip.mp4" } });
     }
     return route.continue();
   });
