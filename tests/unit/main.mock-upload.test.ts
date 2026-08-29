@@ -29,6 +29,9 @@ function dispatchBeforeUnload(): boolean {
 
 beforeAll(async () => {
   vi.stubGlobal("fetch", fetchMock);
+  // Pins the injected batch to two 10 MB files at the mock size range's floor, so both phases
+  // animate at their shortest and the staged names/paths are reproducible.
+  vi.spyOn(Math, "random").mockReturnValue(0);
   await bootMain("?test&mock_upload=2");
   await vi.waitFor(() => {
     expect(rows()).toHaveLength(2);
@@ -89,6 +92,8 @@ describe("?test&mock_upload=2 pipeline", () => {
       { timeout: 20_000 },
     );
     // The 500ms ticker refreshes the summary even after the last progress event.
+    // reportHashBytes/reportUploadBytes round progress to whole bytes exactly so the telescoped
+    // done-bytes counters land on the precise totals and both phases settle at "done".
     await vi.waitFor(
       () => {
         expect(el("progress-footer-left").textContent).toBe("2 done");
@@ -97,6 +102,8 @@ describe("?test&mock_upload=2 pipeline", () => {
       },
       { timeout: 5_000 },
     );
+    expect(el("progress-hash-done").textContent).toMatch(/^(.+) of \1$/);
+    expect(el("progress-upload-done").textContent).toMatch(/^(.+) of \1$/);
     expect(el("progress-footer-mid").textContent).toBe("");
     expect(el("progress-hash-pct").textContent).toBe("100%");
     expect(el("progress-upload-pct").textContent).toBe("100%");

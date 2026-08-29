@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+#### 🐛 Bug Fix
+
+- The progress summary's per-phase ETA now reliably reads "done" once a phase completes; floating-point drift in the accumulated byte counters could previously leave it stuck on the placeholder dash even though every file had finished ([#79](https://github.com/brain-bbqs/bbqs-uploader/pull/79))
+
 ## 1.2.0
 
 #### 🚀 Enhancement
