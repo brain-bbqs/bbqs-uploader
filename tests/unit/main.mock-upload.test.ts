@@ -45,26 +45,30 @@ describe("?test&mock_upload=2 pipeline", () => {
     expect(el("cancel-all-btn").hidden).toBe(true);
   });
 
-  it("Upload starts the scan phase: badges, summary, Cancel all, consumed checkboxes", { timeout: 10_000 }, async () => {
-    el("upload-all-btn").click();
-    await vi.waitFor(() => {
-      expect(visibleBadgeTexts()).toEqual(["Scanning", "Scanning"]);
-    });
-    expect(el("progress-summary").hidden).toBe(false);
-    expect(el("cancel-all-btn").hidden).toBe(false);
-    // The batch consumed the selection, so the rows' include checkboxes lock.
-    for (const row of rows()) {
-      expect(row.querySelector<HTMLInputElement>(".select-check")!.disabled).toBe(true);
-    }
-    // Inside the ETA warm-up window the scan chip estimates while the idle upload phase shows —.
-    await vi.waitFor(
-      () => {
-        expect(el("progress-hash-eta").textContent).toBe("estimating…");
-      },
-      { timeout: 5_000 },
-    );
-    expect(el("progress-upload-eta").textContent).toBe("—");
-  });
+  it(
+    "Upload starts the scan phase: badges, summary, Cancel all, consumed checkboxes",
+    { timeout: 10_000 },
+    async () => {
+      el("upload-all-btn").click();
+      await vi.waitFor(() => {
+        expect(visibleBadgeTexts()).toEqual(["Scanning", "Scanning"]);
+      });
+      expect(el("progress-summary").hidden).toBe(false);
+      expect(el("cancel-all-btn").hidden).toBe(false);
+      // The batch consumed the selection, so the rows' include checkboxes lock.
+      for (const row of rows()) {
+        expect(row.querySelector<HTMLInputElement>(".select-check")!.disabled).toBe(true);
+      }
+      // Inside the ETA warm-up window the scan chip estimates while the idle upload phase shows —.
+      await vi.waitFor(
+        () => {
+          expect(el("progress-hash-eta").textContent).toBe("estimating…");
+        },
+        { timeout: 5_000 },
+      );
+      expect(el("progress-upload-eta").textContent).toBe("—");
+    },
+  );
 
   it("rows move to Uploading with a live percent status", { timeout: 15_000 }, async () => {
     await vi.waitFor(
