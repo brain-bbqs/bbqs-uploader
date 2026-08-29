@@ -340,17 +340,23 @@ function reportHashBytes(file: File, bytesDone: number): void {
   // A late progress tick from a scan resetUploader() already forgot about would otherwise
   // re-seed lastHashBytes and skew the next batch's totals.
   if (!hashJobs.has(file)) return;
+  // Progress arrives as fractions of file.size, and summing those float deltas can leave the
+  // phase total an epsilon short of totalBytes forever, so renderPhaseBar's `finished` (>=)
+  // check would never trip. Rounded to whole bytes, the per-file deltas telescope exactly.
+  const rounded = Math.round(bytesDone);
   const prev = lastHashBytes.get(file) ?? 0;
-  hashDoneBytes += bytesDone - prev;
-  lastHashBytes.set(file, bytesDone);
+  hashDoneBytes += rounded - prev;
+  lastHashBytes.set(file, rounded);
   scheduleProgressUpdate();
 }
 
 function reportUploadBytes(file: File, bytesDone: number): void {
   if (!hashJobs.has(file)) return;
+  // Same whole-byte rounding as reportHashBytes, and for the same reason.
+  const rounded = Math.round(bytesDone);
   const prev = lastUploadBytes.get(file) ?? 0;
-  uploadDoneBytes += bytesDone - prev;
-  lastUploadBytes.set(file, bytesDone);
+  uploadDoneBytes += rounded - prev;
+  lastUploadBytes.set(file, rounded);
   scheduleProgressUpdate();
 }
 
