@@ -26,6 +26,16 @@ describe("startLogin", () => {
   });
 });
 
+describe("startLogin default navigation", () => {
+  it("falls back to a real window navigation when no navigate callback is given", async () => {
+    // jsdom implements location.assign as a not-implemented no-op (it logs to the virtual
+    // console rather than throwing synchronously in the page), so the default navigate arrow
+    // can run for real; the observable effect is the stashed PKCE verifier.
+    await startLogin().catch(() => {});
+    expect(sessionStorage.getItem("bbqs-uploader.oauth-pkce.v1")).toBeTruthy();
+  });
+});
+
 describe("startLogin redirect_uri", () => {
   it("uses the page's own current path, not a hardcoded one, so it works from any deploy location", async () => {
     window.history.replaceState({}, "", `${window.location.origin}/pr-preview/pr-19/`);
@@ -48,6 +58,15 @@ describe("handleRedirectCallback", () => {
     const result = await handleRedirectCallback();
     expect(result).toBeNull();
     expect(window.location.search).toBe("");
+  });
+
+  it("treats a corrupted pending-login record as no pending login at all", async () => {
+    sessionStorage.setItem("bbqs-uploader.oauth-pkce.v1", "{not json");
+    window.history.replaceState({}, "", `${window.location.origin}/?code=abc&state=some-state`);
+    const result = await handleRedirectCallback();
+    expect(result).toBeNull();
+    // The unusable record was consumed, not left behind for the next callback.
+    expect(sessionStorage.getItem("bbqs-uploader.oauth-pkce.v1")).toBeNull();
   });
 
   it("exchanges the code for tokens via PKCE when state matches, then cleans the URL", async () => {
@@ -119,6 +138,26 @@ describe("ensureFreshToken", () => {
     const result = await ensureFreshToken(tokens);
     expect(result).toBe(tokens);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a failed token request with the response detail in the error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 400, text: () => Promise.resolve("invalid_grant") }),
+    );
+    const tokens = { accessToken: "at-old", refreshToken: "rt-old", expiresAt: Date.now() - 1 };
+    await expect(ensureFreshToken(tokens)).rejects.toThrow(/HTTP 400.*invalid_grant/);
+  });
+
+  it("still reports the HTTP status when the failure response body is unreadable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 502, text: () => Promise.reject(new Error("stream broke")) }),
+    );
+    const tokens = { accessToken: "at-old", refreshToken: "rt-old", expiresAt: Date.now() - 1 };
+    const err = await ensureFreshToken(tokens).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe("OAuth token request failed (HTTP 502)");
   });
 });
 

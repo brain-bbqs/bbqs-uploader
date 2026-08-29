@@ -11,6 +11,10 @@ interface ScriptedResponse {
   network?: boolean;
   /** Never respond, so only an abort can settle the request. */
   hang?: boolean;
+  /** Throw this value synchronously from send(), as a hostile XHR shim might. */
+  throwOnSend?: unknown;
+  /** Report progress without a byte count (lengthComputable false) before responding. */
+  opaqueProgress?: boolean;
 }
 
 class FakeXHR {
@@ -44,12 +48,14 @@ class FakeXHR {
   send(blob: Blob): void {
     FakeXHR.sent.push({ url: this.url, blob });
     const outcome = FakeXHR.script.shift() ?? { status: 200, etag: '"deadbeef"' };
+    if (outcome.throwOnSend !== undefined) throw outcome.throwOnSend;
     queueMicrotask(() => {
       if (this.aborted || outcome.hang) return;
       if (outcome.network) {
         this.onerror?.();
         return;
       }
+      if (outcome.opaqueProgress) this.upload.onprogress?.({ lengthComputable: false, loaded: 0 });
       this.upload.onprogress?.({ lengthComputable: true, loaded: blob.size });
       this.status = outcome.status ?? 200;
       this.etag = outcome.etag !== undefined ? outcome.etag : '"deadbeef"';
@@ -138,5 +144,26 @@ describe("uploadPartWithRetry", () => {
 
     expect(await settled).toEqual(new Error("Upload cancelled."));
     expect(FakeXHR.sent).toHaveLength(1);
+  });
+
+  it("ignores progress events without a computable length", async () => {
+    FakeXHR.script = [{ status: 200, etag: '"abc"', opaqueProgress: true }];
+    const progress: number[] = [];
+
+    await uploadPartWithRetry("https://s3.example/part-1", blob, (n) => progress.push(n));
+
+    // Only the computable event reaches the callback; the opaque one is dropped.
+    expect(progress).toEqual([blob.size]);
+  });
+
+  it("retries after a non-Error throw from the transport, stringifying it for the retry filter", async () => {
+    vi.useFakeTimers();
+    FakeXHR.script = [{ throwOnSend: "transport exploded" }, { status: 200, etag: '"ok"' }];
+
+    const promise = uploadPartWithRetry("https://s3.example/part-1", blob, () => {});
+    await vi.advanceTimersByTimeAsync(1500);
+
+    await expect(promise).resolves.toBe("ok");
+    expect(FakeXHR.sent).toHaveLength(2);
   });
 });

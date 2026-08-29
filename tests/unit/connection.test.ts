@@ -64,4 +64,14 @@ describe("renderIdentity", () => {
 
     expect(username.textContent).toBe("");
   });
+
+  it("falls back to the '??' avatar when the account has a username but no display name", async () => {
+    apiFetchMock.mockResolvedValue({ username: "jdoe" });
+    const { els, username, avatar } = makeEls();
+
+    await renderIdentity(els, cfg);
+
+    expect(username.textContent).toBe("jdoe");
+    expect(avatar.textContent).toBe("??");
+  });
 });

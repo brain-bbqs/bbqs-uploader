@@ -41,6 +41,7 @@ describe("friendlyEta", () => {
   it("formats hour-scale estimates as hours and minutes", () => {
     expect(friendlyEta(59.5 * 60)).toBe("~1 hour");
     expect(friendlyEta(3650)).toBe("~1 hour 1 minute");
+    expect(friendlyEta(3900)).toBe("~1 hour 5 minutes");
     expect(friendlyEta(2 * 3600)).toBe("~2 hours");
   });
 

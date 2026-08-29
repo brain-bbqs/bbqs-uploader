@@ -38,6 +38,15 @@ describe("planParts", () => {
     expect(parts[0]).toEqual({ number: 1, offset: 0, size: 10 * MB });
   });
 
+  it("grows the part size past the 64 MB default once 10,000 parts would not cover the file", () => {
+    const size = 2 ** 40; // 1 TB: 16,384 default-sized parts, so the part size must be recomputed
+    const parts = planParts(size);
+    expect(parts).toHaveLength(10_000);
+    expect(parts[0].size).toBeGreaterThan(64 * MB);
+    expect(parts.reduce((sum, p) => sum + p.size, 0)).toBe(size);
+    expect(parts[parts.length - 1].offset + parts[parts.length - 1].size).toBe(size);
+  });
+
   it("splits a file spanning multiple default-sized parts", () => {
     const size = 64 * MB + 10;
     const parts = planParts(size);

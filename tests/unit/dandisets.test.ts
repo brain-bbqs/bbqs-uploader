@@ -118,4 +118,11 @@ describe("listIncomingDandisets", () => {
     expect(result).toEqual([]);
     vi.unstubAllGlobals();
   });
+
+  it("treats a dandiset with neither a published nor a draft title as untitled and excludes it", async () => {
+    stubFetch([{ identifier: "000100", embargo_status: "EMBARGOED" }], { "000100": true });
+    const result = await listIncomingDandisets(cfg);
+    expect(result).toEqual([]);
+    vi.unstubAllGlobals();
+  });
 });

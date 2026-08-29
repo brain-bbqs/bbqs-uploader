@@ -183,6 +183,11 @@ describe("findExistingAsset", () => {
     apiFetchMock.mockResolvedValue({ results: [], next: null });
     expect(await findExistingAsset(cfg, "missing")).toBeNull();
   });
+
+  it("treats a page with no results array as an empty page", async () => {
+    apiFetchMock.mockResolvedValue({ next: null });
+    expect(await findExistingAsset(cfg, "missing")).toBeNull();
+  });
 });
 
 describe("createOrReplaceAsset", () => {

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   configProblems,
   resolveConfig,
@@ -7,8 +7,11 @@ import {
   saveStoredTheme,
   loadStoredSettings,
   saveStoredSettings,
+  loadSpeedTipsCollapsed,
+  saveSpeedTipsCollapsed,
   STORAGE_KEY,
   THEME_KEY,
+  SPEED_TIPS_COLLAPSED_KEY,
 } from "../../src/lib/settings";
 
 describe("resolveConfig", () => {
@@ -122,5 +125,55 @@ describe("settings storage", () => {
     expect(loadStoredSettings()).toBe(null);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe("speed tips collapsed storage", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("defaults to expanded and round-trips a minimized state", () => {
+    expect(loadSpeedTipsCollapsed()).toBe(false);
+    saveSpeedTipsCollapsed(true);
+    expect(loadSpeedTipsCollapsed()).toBe(true);
+    saveSpeedTipsCollapsed(false);
+    expect(loadSpeedTipsCollapsed()).toBe(false);
+    expect(localStorage.getItem(SPEED_TIPS_COLLAPSED_KEY)).toBe(null);
+  });
+});
+
+// Private-mode browsers (and some embedded webviews) throw on any localStorage access; every
+// storage helper must degrade to its default instead of crashing the app.
+describe("storage helpers when localStorage itself throws", () => {
+  beforeEach(() => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("storage disabled");
+    });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage disabled");
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("loadStoredTheme falls back to null", () => {
+    expect(loadStoredTheme()).toBe(null);
+  });
+
+  it("saveStoredTheme warns instead of throwing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(() => saveStoredTheme("dark")).not.toThrow();
+    expect(warn).toHaveBeenCalledWith("Could not save theme preference:", expect.any(Error));
+  });
+
+  it("loadSpeedTipsCollapsed falls back to expanded", () => {
+    expect(loadSpeedTipsCollapsed()).toBe(false);
+  });
+
+  it("saveSpeedTipsCollapsed warns instead of throwing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(() => saveSpeedTipsCollapsed(true)).not.toThrow();
+    expect(warn).toHaveBeenCalledWith("Could not save speed tips collapsed state:", expect.any(Error));
   });
 });
