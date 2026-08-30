@@ -86,6 +86,9 @@ describe("?test&mock_upload=2 pipeline", () => {
     for (const row of rows()) {
       expect(row.querySelector<HTMLInputElement>(".select-check")!.disabled).toBe(true);
     }
+    // The ignore box stays usable while the batch is still running (only locked once it settles).
+    expect(el<HTMLInputElement>("ignore-pattern-input").disabled).toBe(false);
+    expect(el<HTMLButtonElement>("ignore-pattern-add").disabled).toBe(false);
 
     // Mid-scan: bytes flow, the warm-up window keeps the ETA estimating, the idle upload phase
     // shows the — placeholder.
@@ -139,6 +142,11 @@ describe("?test&mock_upload=2 pipeline", () => {
     expect(el("upload-bar").hidden).toBe(false);
     expect(el("upload-all-btn").hidden).toBe(true);
     expect(el("upload-all-btn").textContent).toBe("Upload 0 files (0 B)");
+  });
+
+  it("locks the ignore entry box now that every staged file is consumed", () => {
+    expect(el<HTMLInputElement>("ignore-pattern-input").disabled).toBe(true);
+    expect(el<HTMLButtonElement>("ignore-pattern-add").disabled).toBe(true);
   });
 
   it("no longer warns about leaving and never touched the network (mock skips the report)", () => {
