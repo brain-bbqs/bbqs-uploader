@@ -1,11 +1,5 @@
 # Changelog
 
-## 1.2.2
-
-#### 🏠 Internal
-
-- Raised unit test coverage to over 99% on every metric (statements, branches, functions, and lines), covering the previously untested real upload batch flow, archive-listing races, storage failure fallbacks, and worker-pool edge cases, and raised the coverage ratchet thresholds to match ([#80](https://github.com/brain-bbqs/bbqs-uploader/pull/80))
-
 ## 1.2.1
 
 #### 🐛 Bug Fix
