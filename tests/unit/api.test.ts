@@ -106,6 +106,15 @@ describe("apiFetch", () => {
     expect((err as ApiError).status).toBe(0);
     expect((err as ApiError).message).toMatch(/Network error calling \/info\/.*Failed to fetch/);
   });
+
+  it("stringifies a non-Error rejection value into the network ApiError message", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue("socket vanished"));
+
+    const err = await apiFetch(cfg, "/info/").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(0);
+    expect((err as ApiError).message).toContain("socket vanished");
+  });
 });
 
 describe("diagnoseCors", () => {

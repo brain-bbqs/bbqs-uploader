@@ -91,6 +91,24 @@ describe("listRemoteFiles", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("boom", { status: 500 })));
     await expect(listRemoteFiles(cfg)).rejects.toThrow(/500/);
   });
+
+  it("throws an AbortError without fetching when the signal is already aborted", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    controller.abort();
+
+    const err = await listRemoteFiles(cfg, controller.signal).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DOMException);
+    expect((err as DOMException).name).toBe("AbortError");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("tolerates a page with no results array at all", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ next: null })));
+    const listing = await listRemoteFiles(cfg);
+    expect(listing.size).toBe(0);
+  });
 });
 
 describe("isHiddenBrowseDir", () => {

@@ -72,4 +72,15 @@ describe("etag.worker", () => {
     const error = await repliesFor(4, "error");
     expect((error as { message: string }).message).toMatch(/File changed on disk/);
   });
+
+  it("stringifies a non-Error failure value into the error message", async () => {
+    // A file whose slice rejects with a bare string, as some storage layers do.
+    const broken = {
+      slice: () => ({ arrayBuffer: () => Promise.reject("disk vanished") }),
+    } as unknown as File;
+    send({ type: "hash-part", requestId: 5, file: broken, part });
+
+    const error = await repliesFor(5, "error");
+    expect((error as { message: string }).message).toBe("disk vanished");
+  });
 });

@@ -38,7 +38,11 @@ function makeReport(): TransferReport {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  uploadBlobMock.mockResolvedValue({ blobId: "blob-1", reused: false });
+  // Invokes the (deliberately ignored) progress callback the way the real pipeline does.
+  uploadBlobMock.mockImplementation((_cfg, _file, _etag, _parts, onProgress) => {
+    onProgress(1);
+    return Promise.resolve({ blobId: "blob-1", reused: false });
+  });
   findExistingAssetMock.mockResolvedValue(null);
   createOrReplaceAssetMock.mockResolvedValue({ asset_id: "a1", path: "p" });
 });

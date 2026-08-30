@@ -21,13 +21,13 @@ export default defineConfig({
       reporter: ["text", "lcov", "json"],
       // Ratchet thresholds: set just below the current measured coverage so any
       // regression fails locally (and in CI) before the Codecov upload. Raise
-      // these as coverage of src/ui and src/main.ts improves; they are not a
-      // target, only a floor.
+      // these as coverage improves; they are not a target, only a floor. The
+      // remaining uncovered sliver is defensive dead code (unreachable guards).
       thresholds: {
-        statements: 75,
-        branches: 65,
-        functions: 74,
-        lines: 76,
+        statements: 99,
+        branches: 98,
+        functions: 99,
+        lines: 99,
       },
     },
   },

@@ -36,6 +36,18 @@ class FakeWorker {
     this.listener?.({ data });
   }
 
+  /** Injects an arbitrary response, standing in for late or out-of-order worker messages. */
+  emitRaw(data: HashWorkerResponse): void {
+    this.emit(data);
+  }
+
+  /** The requestId of the oldest pending part, for hand-crafting responses to it. */
+  oldestRequestId(): number {
+    const next = this.pending.keys().next();
+    if (next.done) throw new Error("no pending part");
+    return next.value;
+  }
+
   /** Hashes the oldest pending part for real and reports progress + done. */
   async completeNext(): Promise<boolean> {
     const next = this.pending.entries().next();
@@ -267,5 +279,134 @@ describe("createHashPool", () => {
     await drain();
 
     expect(await promise).toBe((await oracle(file, parts)).etag);
+  });
+
+  it("rejects a job aborted while its cache lookup is still in flight, queueing nothing", async () => {
+    let resolveLookup!: (cached: CachedDigests | null) => void;
+    const cache = fakeCache(() => new Promise((resolve) => (resolveLookup = resolve)));
+    const pool = createHashPool(1, cache);
+    const controller = new AbortController();
+
+    const promise = pool.hash(makeFile(100), makeParts([100]), () => {}, controller.signal, "key-1");
+    const settled = promise.catch((e: unknown) => e);
+    controller.abort(); // settles before startJob ever ran
+    resolveLookup(null); // the late lookup result must be ignored
+
+    const err = await settled;
+    expect(err).toBeInstanceOf(DOMException);
+    expect((err as DOMException).name).toBe("AbortError");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(FakeWorker.pendingCount()).toBe(0);
+    expect(FakeWorker.instances).toHaveLength(0); // no part was ever handed to a worker
+  });
+
+  it("leaves another job's in-flight parts alone when one job is cancelled", async () => {
+    const fileA = makeFile(100);
+    const partsA = makeParts([100]);
+    const pool = createHashPool(2);
+    const controller = new AbortController();
+
+    const a = pool.hash(fileA, partsA, () => {});
+    const b = pool.hash(makeFile(50), makeParts([50]), () => {}, controller.signal);
+    const bSettled = b.catch((e: unknown) => e);
+    expect(FakeWorker.pendingCount()).toBe(2);
+    controller.abort(); // B's cancel sweep walks A's in-flight entry and must skip it
+
+    expect(((await bSettled) as DOMException).name).toBe("AbortError");
+    expect(FakeWorker.pendingCount()).toBe(1); // A's part is still pending
+    await drain();
+    expect(await a).toBe((await oracle(fileA, partsA)).etag);
+  });
+
+  it("skips fully claimed jobs when cycling the round-robin queue", async () => {
+    const fileA = makeFile(100);
+    const fileB = makeFile(200);
+    const partsA = makeParts([100]);
+    const partsB = makeParts([100, 100]);
+    const pool = createHashPool(3);
+
+    // A's lone part is claimed first; handing out B's two parts then has to cycle past A.
+    const a = pool.hash(fileA, partsA, () => {});
+    const b = pool.hash(fileB, partsB, () => {});
+    expect(FakeWorker.pendingCount()).toBe(3);
+    await drain();
+
+    expect(await a).toBe((await oracle(fileA, partsA)).etag);
+    expect(await b).toBe((await oracle(fileB, partsB)).etag);
+  });
+
+  it("ignores worker messages for requests it no longer tracks", async () => {
+    const file = makeFile(100);
+    const parts = makeParts([100]);
+    const pool = createHashPool(1);
+
+    const promise = pool.hash(file, parts, () => {});
+    const worker = FakeWorker.instances[0];
+    // A response under an id the pool never issued (e.g. from a worker restarted mid-part).
+    worker.emitRaw({ type: "progress", requestId: 999, bytesDone: 10 });
+    worker.emitRaw({ type: "done", requestId: 999, digest: new Uint8Array(16) });
+    await drain();
+
+    expect(await promise).toBe((await oracle(file, parts)).etag);
+  });
+
+  it("ignores an unsolicited 'cancelled' for a live request without settling the job", async () => {
+    const file = makeFile(100);
+    const parts = makeParts([100]);
+    const pool = createHashPool(1);
+
+    const promise = pool.hash(file, parts, () => {});
+    const worker = FakeWorker.instances[0];
+    const requestId = worker.oldestRequestId();
+    worker.emitRaw({ type: "cancelled", requestId });
+    // The pool dropped its tracking entry, so the eventual real completion is ignored too and
+    // the job simply never settles; nothing crashes and no wrong result is produced.
+    await drain();
+
+    const outcome = await Promise.race([promise.then(() => "settled"), Promise.resolve("pending")]);
+    expect(outcome).toBe("pending");
+  });
+
+  it("drops progress that lands after the job settled but before the worker acked the cancel", async () => {
+    // A worker whose cancel acks never arrive, so the in-flight entry outlives the settle.
+    class QuietCancelWorker extends FakeWorker {
+      postMessage(msg: HashWorkerRequest): void {
+        if (msg.type === "cancel") return;
+        super.postMessage(msg);
+      }
+    }
+    vi.stubGlobal("Worker", QuietCancelWorker);
+    const pool = createHashPool(1);
+    const controller = new AbortController();
+    const fractions: number[] = [];
+
+    const promise = pool.hash(makeFile(100), makeParts([100]), (f) => fractions.push(f), controller.signal);
+    const settled = promise.catch((e: unknown) => e);
+    const worker = FakeWorker.instances[0];
+    const requestId = worker.oldestRequestId();
+    controller.abort();
+    worker.emitRaw({ type: "progress", requestId, bytesDone: 50 });
+
+    expect(((await settled) as DOMException).name).toBe("AbortError");
+    expect(fractions).toEqual([]); // the late progress never reached the caller
+  });
+
+  it("treats a verification digest of the wrong length as a stale record", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const file = makeFile(100);
+    const parts = makeParts([100]);
+    const cache = fakeCache(() => Promise.resolve({ digests: new Uint8Array(16).fill(0xab), present: [true] }));
+    const pool = createHashPool(1, cache);
+
+    const promise = pool.hash(file, parts, () => {}, undefined, "key-1");
+    await new Promise((r) => setTimeout(r, 0));
+    const worker = FakeWorker.instances[0];
+    const requestId = worker.oldestRequestId();
+    worker.pending.delete(requestId);
+    // A digest that isn't even 16 bytes can never match the cached expectation.
+    worker.emitRaw({ type: "done", requestId, digest: new Uint8Array(15) });
+
+    expect(typeof (await promise)).toBe("string");
+    expect(cache.discard).toHaveBeenCalledWith("key-1");
   });
 });

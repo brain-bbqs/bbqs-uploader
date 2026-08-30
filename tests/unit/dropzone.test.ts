@@ -137,6 +137,32 @@ describe("initDropzone browse wiring", () => {
     expect(reject.hidden).toBe(false);
     expect(reject.textContent).toContain("no uploadable files");
   });
+
+  it("does nothing on a change event that carries no files", () => {
+    const { folderInput, reject, onFolder } = setup();
+    setInputFiles(folderInput, []);
+    folderInput.dispatchEvent(new Event("change"));
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.hidden).toBe(true);
+  });
+
+  it("keeps a click on the hidden input itself from bubbling into another picker open", () => {
+    const { folderInput } = setup();
+    const click = vi.spyOn(folderInput, "click").mockImplementation(() => {});
+    // The input's own (synthetic) click bubbles up through the dropzone; stopPropagation must
+    // keep the dropzone's click handler from opening a second picker on top.
+    folderInput.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(click).not.toHaveBeenCalled();
+  });
+
+  it("accepts files without any webkitRelativePath as a nameless base folder", () => {
+    const { folderInput, onFolder } = setup();
+    // A genuine File has webkitRelativePath === "" unless the picker filled it in.
+    const loose = new File(["x"], "clip.mp4");
+    setInputFiles(folderInput, [loose]);
+    folderInput.dispatchEvent(new Event("change"));
+    expect(acceptedFolder(onFolder)).toEqual({ folderName: "", entries: [{ file: loose, relativePath: "" }] });
+  });
 });
 
 describe("initDropzone drag & drop", () => {
@@ -234,5 +260,61 @@ describe("initDropzone drag & drop", () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(onFolder).not.toHaveBeenCalled();
     expect(reject.hidden).toBe(true);
+  });
+
+  it("ignores a drop event without a DataTransfer entirely", async () => {
+    const { dz, reject, onFolder } = setup();
+    dz.dispatchEvent(new Event("drop", { bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onFolder).not.toHaveBeenCalled();
+    expect(reject.hidden).toBe(true);
+  });
+
+  it("ignores non-file items (e.g. dragged text) when resolving the dropped folder", async () => {
+    const { dz, onFolder } = setup();
+    const folder = dirEntry("session1", [fileEntry("a.txt")]);
+    const items = [
+      { kind: "string", webkitGetAsEntry: () => null },
+      { kind: "file", webkitGetAsEntry: () => folder },
+    ];
+    dz.dispatchEvent(dropEvent({ items, files: [] }));
+
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    expect(acceptedFolder(onFolder).folderName).toBe("session1");
+  });
+
+  it("skips entries that are neither files nor directories while walking", async () => {
+    const { dz, onFolder } = setup();
+    const oddity = { name: "socket", isFile: false, isDirectory: false } as unknown as FakeFileEntry;
+    const tree = dirEntry("session1", [oddity, fileEntry("a.txt")]);
+    dz.dispatchEvent(dropEvent(itemsFor([tree])));
+
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    expect(acceptedFolder(onFolder).entries.map((e) => e.file.name)).toEqual(["a.txt"]);
+  });
+
+  it("tolerates a base folder entry with an empty name", async () => {
+    const { dz, onFolder } = setup();
+    const tree = dirEntry("", [fileEntry("a.txt"), dirEntry("sub", [fileEntry("b.txt")])]);
+    dz.dispatchEvent(dropEvent(itemsFor([tree])));
+
+    await vi.waitFor(() => expect(onFolder).toHaveBeenCalled());
+    const folder = acceptedFolder(onFolder);
+    expect(folder.folderName).toBe("");
+    expect(folder.entries.map((e) => [e.relativePath, e.file.name].filter(Boolean).join("/"))).toEqual([
+      "a.txt",
+      "sub/b.txt",
+    ]);
+  });
+
+  it("prevents the browser's default navigation for drags that miss the dropzone", () => {
+    setup();
+    const dragover = new Event("dragover", { cancelable: true });
+    window.dispatchEvent(dragover);
+    expect(dragover.defaultPrevented).toBe(true);
+
+    const drop = new Event("drop", { cancelable: true });
+    window.dispatchEvent(drop);
+    expect(drop.defaultPrevented).toBe(true);
   });
 });

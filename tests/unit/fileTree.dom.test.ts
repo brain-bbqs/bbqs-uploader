@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { renderFileTree, setRevealCount } from "../../src/ui/fileTree";
+import { renderFileTree, setRevealCount, yieldToMain } from "../../src/ui/fileTree";
 import type { DroppedFile } from "../../src/lib/fileTree";
 
 function fakeFile(name: string): File {
@@ -43,7 +43,26 @@ function files(folder: string, count: number): DroppedFile[] {
   }));
 }
 
+describe("yieldToMain", () => {
+  it("resolves on the next animation frame", async () => {
+    await expect(yieldToMain()).resolves.toBeUndefined();
+  });
+});
+
 describe("renderFileTree", () => {
+  it("renders a tree with more directories than one render chunk, yielding between chunks", async () => {
+    const root = document.createElement("ul");
+    // 301 sibling directories crosses the 300-node chunk boundary, so the renderer must yield
+    // to the event loop at least once mid-render and still produce every row.
+    const entries: DroppedFile[] = Array.from({ length: 301 }, (_, i) => ({
+      file: fakeFile(`f${i}.txt`),
+      relativePath: `dir${String(i).padStart(3, "0")}`,
+    }));
+    const { dirs } = await renderFileTree(root, entries);
+    expect(dirs.size).toBe(301);
+    expect(root.querySelectorAll(".dir-item")).toHaveLength(301);
+  });
+
   it("places top-level (non-nested) files directly in the root list, no dir wrapper", async () => {
     const root = document.createElement("ul");
     const entries: DroppedFile[] = [{ file: fakeFile("a.txt"), relativePath: "" }];

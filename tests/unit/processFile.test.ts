@@ -116,6 +116,29 @@ describe("uploadFile", () => {
     expect(createOrReplaceAssetMock).toHaveBeenCalledWith(cfg, path, "b1", "old-asset", "video/mp4");
   });
 
+  it("says the content was updated when a replacement actually re-transferred bytes", async () => {
+    findExistingAssetMock.mockResolvedValue({ asset_id: "old-asset", path: "p" });
+    uploadBlobMock.mockResolvedValue({ blobId: "b2", reused: false });
+    const { row, path } = makeRowAndPath();
+
+    const outcome = await uploadFile(row, file, path, cfg, new Set(), hashJob());
+
+    expect(outcome).toBe("replaced");
+    expect(statusOf(row)).toBe("content updated");
+  });
+
+  it("registers a typeless file without an encodingFormat", async () => {
+    const untyped = new File([new Uint8Array(10)], "clip.bin");
+    const list = document.createElement("ul");
+    document.body.appendChild(list);
+    const { row, path } = queueFileRow(list, untyped, "session1");
+
+    const outcome = await uploadFile(row, untyped, path, cfg, new Set(), hashJob());
+
+    expect(outcome).toBe("done");
+    expect(createOrReplaceAssetMock).toHaveBeenCalledWith(cfg, path, "b1", null, undefined);
+  });
+
   it("reports a cancellation when the hash was aborted before this upload started", async () => {
     const { row, path } = makeRowAndPath();
     const job: HashJob = {

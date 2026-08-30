@@ -208,4 +208,104 @@ describe("openChecksumCache", () => {
     await expect(cache.get("k", parts)).resolves.toBeNull();
     await expect(cache.discard("k")).resolves.toBeUndefined();
   });
+
+  it("discard is a no-op for a key that was never stored", async () => {
+    const cache = open();
+    await expect(cache.discard("never-stored")).resolves.toBeUndefined();
+    expect(await cache.get("never-stored", planParts(MB))).toBeNull();
+  });
+
+  it("turns every operation into a no-op once closed", async () => {
+    const parts = planParts(MB);
+    const cache = open();
+    cache.close();
+    cache.putPart("k", parts, 1, digest(1));
+    await expect(cache.flush("k")).resolves.toBeUndefined();
+    await expect(cache.get("k", parts)).resolves.toBeNull();
+    // Nothing leaked through to storage for a later instance to see.
+    expect(await open().get("k", parts)).toBeNull();
+  });
+
+  it("close tolerates an open that already failed", async () => {
+    // @ts-expect-error simulating an environment without IndexedDB
+    delete globalThis.indexedDB;
+    const cache = open();
+    // Trigger the (failing) open first so close() has a rejected connection to clean up.
+    await cache.get("k", planParts(MB));
+    expect(() => cache.close()).not.toThrow();
+    // The rejected connection promise settles without becoming an unhandled rejection.
+    await new Promise((r) => setTimeout(r, 0));
+  });
+});
+
+// Hand-rolled IDB stand-ins for the storage-error paths fake-indexeddb can't easily produce:
+// requests that fire onerror (with and without an error value attached).
+interface FakeIDBRequest {
+  onsuccess: (() => void) | null;
+  onerror: (() => void) | null;
+  onupgradeneeded: (() => void) | null;
+  result: unknown;
+  error: unknown;
+}
+
+function fakeRequest(outcome: { result?: unknown; error?: unknown; fail?: boolean }): FakeIDBRequest {
+  const request: FakeIDBRequest = {
+    onsuccess: null,
+    onerror: null,
+    onupgradeneeded: null,
+    result: outcome.result,
+    error: outcome.error ?? null,
+  };
+  queueMicrotask(() => (outcome.fail ? request.onerror?.() : request.onsuccess?.()));
+  return request;
+}
+
+describe("openChecksumCache storage-error degradation", () => {
+  it.each([
+    ["a request error value", new Error("open denied")],
+    ["no request error value", null],
+  ])("degrades to misses when opening the database fails with %s", async (_label, error) => {
+    vi.stubGlobal("indexedDB", { open: () => fakeRequest({ fail: true, error }) });
+    const cache = open();
+    expect(await cache.get("k", planParts(MB))).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("degrades to a miss when a store request fails after the database opened", async () => {
+    const store = {
+      // The budget-seeding getAll fails without an error value; the record lookup fails with one.
+      getAll: () => fakeRequest({ fail: true, error: null }),
+      get: () => fakeRequest({ fail: true, error: new Error("get failed") }),
+    };
+    const db = { transaction: () => ({ objectStore: () => store }), close: () => {} };
+    vi.stubGlobal("indexedDB", { open: () => fakeRequest({ result: db }) });
+
+    const cache = open();
+    expect(await cache.get("k", planParts(MB))).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ["a cursor error value", new Error("cursor failed")],
+    ["no cursor error value", null],
+  ])("keeps working when the LRU eviction cursor fails with %s", async (_label, error) => {
+    const openCursor = vi.fn(() => fakeRequest({ fail: true, error }));
+    const store = {
+      // Budget seeding finds a record far over the tiny budget below, forcing an eviction pass.
+      getAll: () => fakeRequest({ result: [{ bytes: 10_000 }] }),
+      get: () => fakeRequest({ result: undefined }),
+      index: () => ({ openCursor }),
+    };
+    const db = { transaction: () => ({ objectStore: () => store }), close: () => {} };
+    vi.stubGlobal("indexedDB", { open: () => fakeRequest({ result: db }) });
+
+    const cache = open({ maxBytes: 100 });
+    expect(await cache.get("k", planParts(MB))).toBeNull();
+    await vi.waitFor(() => {
+      expect(openCursor).toHaveBeenCalled();
+    });
+    // The failed eviction was swallowed; the cache still answers lookups.
+    expect(await cache.get("k2", planParts(MB))).toBeNull();
+    vi.unstubAllGlobals();
+  });
 });
