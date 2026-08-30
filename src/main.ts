@@ -975,6 +975,18 @@ function refreshSelectionUI(): void {
   els.selectionSummary.replaceChildren(filesStrong, " selected, ", bytesStrong, ` of ${humanSize(s.totalBytes)}`);
   updateUploadBar();
   updateUploadGate();
+  updateIgnoreBoxDisabled();
+}
+
+// The ignore entry box only affects files still waiting to be uploaded, so once a batch has
+// finished consuming every staged file there's nothing left it could exclude; leaving it
+// interactive then just invites a user to type a pattern that visibly does nothing. Disabled
+// while a batch is still running too, for the same reason its own files are already consumed.
+function updateIgnoreBoxDisabled(): void {
+  const files = selection.files();
+  const disabled = files.length > 0 && !uploadBatchActive && files.every((f) => f.consumed);
+  els.ignorePatternInput.disabled = disabled;
+  els.ignorePatternAddBtn.disabled = disabled;
 }
 
 function refreshAllRows(): void {
@@ -1321,8 +1333,8 @@ async function startUpload(): Promise<void> {
     batch.push({ file: f.file, row, path: f.path });
   }
   els.progressSummary.hidden = false;
-  refreshSelectionUI();
   uploadBatchActive = true;
+  refreshSelectionUI();
   updateCancelAllVisibility();
   updateProgressSummary();
   const cfg = currentConfig();
@@ -1380,6 +1392,7 @@ async function startUpload(): Promise<void> {
   uploadBatchActive = false;
   updateCancelAllVisibility();
   updateUploadBar();
+  updateIgnoreBoxDisabled();
 
   // Mock mode has no real API to post to; skip it the same way the rest of the mock path never
   // touches the network. Also skip a batch that got Reset out from under this still-running
@@ -1466,6 +1479,7 @@ function resetUploader(): void {
   updateCancelAllVisibility();
   updateUploadBar();
   updateProgressSummary();
+  updateIgnoreBoxDisabled();
 }
 
 function runConnectionCheck(): void {

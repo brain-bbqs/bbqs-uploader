@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3
+
+#### 🐛 Bug Fix
+
+- The ignore-pattern entry box and its Add button are now disabled once a batch has finished uploading, since none of the newly consumed files can be affected by ignore patterns anymore ([#PR_NUMBER](https://github.com/brain-bbqs/bbqs-uploader/pull/PR_NUMBER))
+
 ## 1.2.1
 
 #### 🐛 Bug Fix
