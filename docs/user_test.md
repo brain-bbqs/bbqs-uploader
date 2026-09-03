@@ -7,9 +7,9 @@ A basic manual pass through the app before a release or after a significant chan
 - [ ] Loading the page signed out shows the signed-out state and a working sign-in control
 - [ ] Signing in redirects back to the app in a signed-in state
 - With access to:
-  - [ ] exactly one dandiset, it's shown as plain text with a working archive link
-  - [ ] multiple dandisets, they appear in a dropdown and switching selection updates the page
-  - [ ] no accessible dandisets, the no-datasets-found message appears
+  - [ ] exactly one Dandiset, it's shown as plain text with a working archive link
+  - [ ] multiple Dandisets, they appear in a dropdown and switching selection updates the page
+  - [ ] no accessible Dandisets, the no-datasets-found message appears
 - [ ] A non-embargoed dataset shows the expected error card and disables uploading
 - [ ] A dataset flagged as containing human subjects data shows the warning banner and gates the dropzone/upload button until "I confirm" is clicked
 - [ ] Signing out returns to the signed-out state cleanly
@@ -20,7 +20,7 @@ A basic manual pass through the app before a release or after a significant chan
 - [ ] Using the file/folder picker button stages files the same way
 - [ ] Deselecting (excluding) a file or folder in the tree removes it from what gets uploaded
 - [ ] Clicking "Upload" scans staged files, then uploads them, with progress reflected in the UI
-- [ ] A successful upload's files show up correctly under `sourcedata/raw/` in the actual dandiset on EMBER Archive
+- [ ] A successful upload's files show up correctly under `sourcedata/raw/` in the actual Dandiset on EMBER Archive
 - [ ] "Cancel" (single file) and "Cancel all" during scanning/uploading actually stop those operations
 - [ ] Re-uploading a file that already exists on the archive completes without visible errors in the UI (a `409` in the DevTools console is expected, see docs/README.md)
 - [ ] Re-uploading a changed file (same path, different content) is reflected correctly (row shows "Changed"/"Replaced")
