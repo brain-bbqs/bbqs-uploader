@@ -10,7 +10,6 @@ A basic manual pass through the app before a release or after a significant chan
   - [ ] exactly one Dandiset, it's shown as plain text with a working archive link
   - [ ] multiple Dandisets, they appear in a dropdown and switching selection updates the page
   - [ ] no accessible Dandisets, the no-datasets-found message appears
-- [ ] A non-embargoed dataset shows the expected error card and disables uploading
 - [ ] A dataset flagged as containing human subjects data shows the warning banner and gates the dropzone/upload button until "I confirm" is clicked
 - [ ] Signing out returns to the signed-out state cleanly
 
