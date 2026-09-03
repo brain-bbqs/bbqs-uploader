@@ -38,10 +38,10 @@ A basic manual pass through the app before a release or after a significant chan
 
 If needed, generate a different 1 MB file to cancel on:
 
-  ```python
-  import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
-  ```
-  
+```python
+import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
+```
+
 - [ ] Uploading a large file (multi-GB, multipart) completes successfully
 
 ## Browsing the archive
