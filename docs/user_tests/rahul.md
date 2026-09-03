@@ -60,7 +60,7 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 ## Cross-cutting
 
 - [ ] Reloading the page mid-upload doesn't corrupt local state (localStorage) in a way that breaks the next load
-  - Did not have time to try 
+  - Did not have time to try
 - [x] The app is usable in both light and dark OS/browser theme
 - [x] Basic responsiveness: window resized narrower doesn't break layout or hide controls
 - [ ] No unexpected errors in the browser console outside of the documented `409` dedup case
