@@ -21,6 +21,12 @@ A basic manual pass through the app before a release or after a significant chan
 - [ ] Clicking "Upload" scans staged files, then uploads them, with progress reflected in the UI
 - [ ] A successful upload's files show up correctly under `sourcedata/raw/` in the actual Dandiset on EMBER Archive
 - [ ] "Cancel" (single file) and "Cancel all" during scanning/uploading actually stop those operations
+
+  Generate a throwaway 1 GB file to cancel on:
+
+  ```python
+  import numpy as np; np.save("cancel_test.npy", np.random.rand(1024**3 // 8))
+  ```
 - [ ] Re-uploading a file that already exists on the archive completes without visible errors in the UI (a `409` in the DevTools console is expected, see docs/README.md)
 - [ ] Re-uploading a changed file (same path, different content) is reflected correctly (row shows "Changed"/"Replaced")
 - [ ] Uploading a large file (multi-GB, multipart) completes successfully
