@@ -2,8 +2,6 @@
 
 A basic manual pass through the app before a release or after a significant change. Run through this on the deployed site, signed in with a real EMBER Archive account with access to at least one Dandiset.
 
-Where noted, a `?test` URL (see [docs/README.md](./README.md)) can preview a state without needing real data or a real upload; prefer the real flow when practical and fall back to `?test` for states that are hard to reproduce (e.g. no datasets, human subjects warning, embargoed vs. not).
-
 ## Sign-in and dataset selection
 
 - [ ] Loading the page signed out shows the signed-out state and a working sign-in control
