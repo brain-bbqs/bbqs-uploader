@@ -1,8 +1,8 @@
 # User Test Checklist
 
-|            |         |
-| ---------- | ------- |
-| **Tester** | Rahul |
+|            |        |
+| ---------- | ------ |
+| **Tester** | Rahul  |
 | **Date**   | 9/3/26 |
 
 A basic manual pass through the app before a release or after a significant change. Run through this on the deployed site, signed in with a real EMBER Archive account with access to at least one Dandiset.
@@ -16,7 +16,7 @@ A basic manual pass through the app before a release or after a significant chan
   - [ ] multiple Dandisets, they appear in a dropdown and switching selection updates the page
   - [ ] no accessible Dandisets, the no-datasets-found message appears
 - [ ] A dataset flagged as containing human subjects data shows the warning banner and gates the dropzone/upload button until "I confirm" is clicked
-  - ERROR: no banner showed on first page load; navigated from HEARTH and went to Inman 
+  - ERROR: no banner showed on first page load; navigated from HEARTH and went to Inman
 - [ ] Signing out returns to the signed-out state cleanly
 
 ## Uploading files
@@ -25,7 +25,7 @@ A basic manual pass through the app before a release or after a significant chan
 - [ ] Using the folder picker button stages files the same way
 - [ ] Deselecting (excluding) a file or folder in the tree removes it from what gets uploaded
 - [ ] Ignoring a suffix works as expected
-  - NOTE: edge case to think about - `.slp.nwb` was not ignored by `*.slp` 
+  - NOTE: edge case to think about - `.slp.nwb` was not ignored by `*.slp`
 - [ ] Clicking "Upload" scans staged files, then uploads them, with progress reflected in the UI
 - [ ] A successful upload's files show up correctly under `sourcedata/raw/` in the actual Dandiset on EMBER Archive
 - [ ] "Cancel" (single file) and "Cancel all" during scanning/uploading actually stop those operations
@@ -54,7 +54,7 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 - [ ] "Load from EMBER" opens a read-only browse of the dataset's existing `sourcedata/raw/` contents
 - [ ] Browsing an empty dataset shows a "currently empty" / "nothing uploaded yet" banner
 - [ ] Staging local files against a dataset with existing content shows the diff (uploaded/changed rows) correctly
-  - NOTE: recommends expanding previous upload filetree    
+  - NOTE: recommends expanding previous upload filetree
 
 ## Cross-cutting
 
