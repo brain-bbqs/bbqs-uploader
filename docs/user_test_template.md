@@ -30,11 +30,18 @@ A basic manual pass through the app before a release or after a significant chan
   If needed, generate a throwaway 1 GB file to cancel on:
 
   ```python
-  import numpy as np; np.save("cancel_test.npy", np.random.rand(1024**3 // 8))
+  import numpy as np; np.save("cancel_test.npy", np.random.rand(1000**3 // 8))
   ```
 
 - [ ] Re-uploading a file that already exists on the archive completes without visible errors in the UI (a `409` in the DevTools console is expected, see docs/README.md)
 - [ ] Re-uploading a changed file (same path, different content) is reflected correctly (row shows "Changed"/"Replaced")
+
+If needed, generate a different 1 MB file to cancel on:
+
+  ```python
+  import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
+  ```
+  
 - [ ] Uploading a large file (multi-GB, multipart) completes successfully
 
 ## Browsing the archive
