@@ -27,6 +27,7 @@ A basic manual pass through the app before a release or after a significant chan
   ```python
   import numpy as np; np.save("cancel_test.npy", np.random.rand(1024**3 // 8))
   ```
+
 - [ ] Re-uploading a file that already exists on the archive completes without visible errors in the UI (a `409` in the DevTools console is expected, see docs/README.md)
 - [ ] Re-uploading a changed file (same path, different content) is reflected correctly (row shows "Changed"/"Replaced")
 - [ ] Uploading a large file (multi-GB, multipart) completes successfully
