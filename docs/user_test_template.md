@@ -42,7 +42,8 @@ If needed, generate a different 1 MB file to cancel on:
 import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 ```
 
-- [ ] Uploading a large file (multi-GB, multipart) completes successfully
+- [ ] Uploading the large file (multi-GB, multipart) completes successfully (eventually)
+  - [ ] progress bars and `.transfer` files accurately reflect upload speed
 
 ## Browsing the archive
 
