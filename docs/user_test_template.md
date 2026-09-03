@@ -1,3 +1,6 @@
+Name of user: <enter>
+Date of test: <enter>
+
 # User Test Checklist
 
 A basic manual pass through the app before a release or after a significant change. Run through this on the deployed site, signed in with a real EMBER Archive account with access to at least one Dandiset.
