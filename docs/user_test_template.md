@@ -57,4 +57,3 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 - [ ] The app is usable in both light and dark OS/browser theme
 - [ ] Basic responsiveness: window resized narrower doesn't break layout or hide controls
 - [ ] No unexpected errors in the browser console outside of the documented `409` dedup case
-- [ ] Spot-check in a second browser (e.g. Chrome and Firefox/Safari)
