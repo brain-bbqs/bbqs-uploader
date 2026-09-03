@@ -25,7 +25,7 @@ A basic manual pass through the app before a release or after a significant chan
 - [ ] A successful upload's files show up correctly under `sourcedata/raw/` in the actual Dandiset on EMBER Archive
 - [ ] "Cancel" (single file) and "Cancel all" during scanning/uploading actually stop those operations
 
-  Generate a throwaway 1 GB file to cancel on:
+  If needed, generate a throwaway 1 GB file to cancel on:
 
   ```python
   import numpy as np; np.save("cancel_test.npy", np.random.rand(1024**3 // 8))
