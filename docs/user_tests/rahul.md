@@ -81,5 +81,5 @@ Access to fetch at 'https://api-dandi.emberarchive.org/api/dandisets/000475/vers
 ```
 Failed to load resource: net::ERR_FAILED
 ```
-  
+
 - [x] Can navigate to all hyperlinks in the bottom-left
