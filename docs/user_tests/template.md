@@ -2,8 +2,8 @@
 
 |            |         |
 | ---------- | ------- |
-| **Tester** | <enter> |
-| **Date**   | <enter> |
+| **Tester** | Erik Johnson |
+| **Date**   | 9/4/26 |
 
 A basic manual pass through the app before a release or after a significant change. Run through this on the deployed site, signed in with a real EMBER Archive account with access to at least one Dandiset.
 
