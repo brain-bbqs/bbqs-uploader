@@ -64,5 +64,22 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 - [x] The app is usable in both light and dark OS/browser theme
 - [x] Basic responsiveness: window resized narrower doesn't break layout or hide controls
 - [ ] No unexpected errors in the browser console outside of the documented `409` dedup case
-  - NOTE: A couple of extra ones too, shared over Slack [TODO: investigate]
+  - NOTE: A couple of extra ones took [TODO: investigate]
+
+```
+index-Bp17Vpuh.js:458 Could not list the dataset's existing sourcedata/raw/ contents: ApiError: Network error calling /dandisets/000475/versions/draft/assets/?path=sourcedata%2Fraw%2F&metadata=false&order=path&page_size=1000. Check your connection (or the server's CORS policy): Failed to fetch
+    at b (index-Bp17Vpuh.js:12:2941)
+    at async We (index-Bp17Vpuh.js:12:11681)
+    at async Rr (index-Bp17Vpuh.js:458:15621)
+Rr	@	index-Bp17Vpuh.js:458
+```
+
+```
+Access to fetch at 'https://api-dandi.emberarchive.org/api/dandisets/000475/versions/draft/assets/?path=sourcedata%2Fraw%2F&metadata=false&order=path&page_size=1000' from origin 'https://upload.brain-bbqs.org' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+```
+Failed to load resource: net::ERR_FAILED
+```
+  
 - [x] Can navigate to all hyperlinks in the bottom-left
