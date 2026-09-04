@@ -59,3 +59,5 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 - [ ] Basic responsiveness: window resized narrower doesn't break layout or hide controls
 - [ ] No unexpected errors in the browser console outside of the documented `409` dedup case
 - [ ] Can navigate to all hyperlinks in the bottom-left
+
+## Extra notes
