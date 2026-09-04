@@ -1,9 +1,9 @@
 # User Test Checklist
 
-|            |              |
-| ---------- | ------------ |
+|            |         |
+| ---------- | ------- |
 | **Tester** | Erik Johnson |
-| **Date**   | 9/4/26       |
+| **Date**   | 9/4/26 |
 
 A basic manual pass through the app before a release or after a significant change. Run through this on the deployed site, signed in with a real EMBER Archive account with access to at least one Dandiset.
 
@@ -59,3 +59,12 @@ import numpy as np; np.save("reupload_test.npy", np.random.rand(1000**2 // 8))
 - [ ] Basic responsiveness: window resized narrower doesn't break layout or hide controls
 - [ ] No unexpected errors in the browser console outside of the documented `409` dedup case
 - [ ] Can navigate to all hyperlinks in the bottom-left
+
+
+## Extra notes
+
+First time sign-in required GitHub auth through EMBER
+
+Confusion about 'existing files are desselected blow' text on EMBER dataset banner; also it mentioned 9 files when only 2 are attempting to be uploaded
+
+for ignoring test, first thing was none of the files were selected, and a rule was; second, might want to auto-apply a wildcard (if user says `.slp`) for suffixes
