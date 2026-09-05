@@ -4,7 +4,7 @@
 
 #### 🏠 Internal
 
-- Removed Google Analytics and the cookie consent banner; the page no longer tracks usage or asks for consent (PR_LINK)
+- Removed Google Analytics and the cookie consent banner; the page no longer tracks usage or asks for consent ([#87](https://github.com/brain-bbqs/bbqs-uploader/pull/87))
 
 ## 1.2.3
 
