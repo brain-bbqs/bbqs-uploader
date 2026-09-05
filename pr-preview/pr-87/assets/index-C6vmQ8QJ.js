@@ -23,12 +23,6 @@ Drop the folder that contains them instead.`,h=`This browser can't read dropped 
 `)){let e=r.trim();e&&(e.startsWith(`#### `)?(n&&=(t+=`</ul>`,!1),t+=`<h4>${mn(e.slice(5))}</h4>`):e.startsWith(`- `)?(n||=(t+=`<ul>`,!0),t+=`<li>${mn(e.slice(2))}</li>`):(n&&=(t+=`</ul>`,!1),t+=`<p>${mn(e)}</p>`))}return n&&(t+=`</ul>`),t}function gn(e){return e.split(/^## /m).length-1}function _n(e,t=3){return e.split(/^## /m).slice(1,t+1).map(e=>{let t=e.indexOf(`
 `),n=(t===-1?e:e.slice(0,t)).trim(),r=t===-1?``:e.slice(t+1);return`<section class="changelog-version"><h3>${pn(n)}</h3>${hn(r)}</section>`}).join(``)}var vn=`# Changelog
 
-## 1.3.0
-
-#### 🏠 Internal
-
-- Removed Google Analytics and the cookie consent banner; the page no longer tracks usage or asks for consent ([#87](https://github.com/brain-bbqs/bbqs-uploader/pull/87))
-
 ## 1.2.3
 
 #### 🐛 Bug Fix
