@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 function bodyFromIndexHtml(): string {
   // import.meta.url is an http URL under jsdom; vitest's cwd is the repo root (see its config).
   const html = readFileSync(resolve(process.cwd(), "index.html"), "utf-8");
-  // The inline pre-paint/analytics scripts (and the module entry) don't belong in this harness —
+  // The inline pre-paint script (and the module entry) don't belong in this harness —
   // main.ts is imported directly below instead. Parsed and pruned via the DOM (DOMParser never
   // executes scripts) rather than regex-filtering the HTML.
   const doc = new DOMParser().parseFromString(html, "text/html");

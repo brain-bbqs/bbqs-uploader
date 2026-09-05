@@ -34,13 +34,10 @@ makes accepting client-side token storage a reasonable call for this app.
 
 Also keep an eye on:
 
-- **Third-party runtime scripts are opt-in only.** `index.html` loads Google
-  Analytics' `gtag.js` (see "Google Analytics" below), but only after the
-  user explicitly accepts via the consent banner; nothing else loads a CDN
+- **No third-party runtime scripts.** Nothing in `index.html` loads a CDN
   `<script>` tag. A compromised third-party script is the other realistic way
   a token in storage gets exfiltrated even without a bug in this app's own
-  code, so keep the list of scripts that load unconditionally at page load
-  empty.
+  code, so keep it that way.
 - **Minimal runtime dependencies.** Currently just `spark-md5`. Every added
   runtime dependency is something that could be compromised upstream and ship
   code that reads `localStorage`; don't add one without a reason.
@@ -89,22 +86,6 @@ This is also not a hard access-control boundary even when working correctly:
 real upload authorization is still enforced entirely by DANDI's own dandiset
 ownership permissions. The service's `adminOwned` answer only curates what
 this app's picker shows; it grants no capability on its own.
-
-## Google Analytics
-
-`index.html` loads GA (`gtag.js`, measurement ID `G-8W96QLN0W8`) gated behind
-a cookie-consent banner, copied from the pattern used by
-[dandi/usage-page](https://github.com/dandi/usage-page):
-
-- The consent choice (`'accepted'` / `'declined'` / unset) is stored in
-  `localStorage` under `bbqs-uploader.analytics-consent` and re-checked on
-  every page load.
-- Declining (or leaving the banner unanswered) never fetches `gtag.js`, never
-  sets `window.dataLayer`/`window.gtag`, and never touches a GA cookie.
-  Accepting is the only path that appends the `gtag.js` `<script>` tag.
-- This is not sensitive data: the stored value is a UI preference, not a
-  credential, so it doesn't fall under the "clear text storage" checklist
-  above.
 
 ## Handling a "clear text storage" alert on a new credential
 
