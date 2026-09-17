@@ -5,7 +5,7 @@
 #### 🏠 Internal
 
 - Upgraded Vitest to v5 (and `@vitest/coverage-v8` to match), keeping mocks uncleared between tests in the same suite the way the app's boot-once test setup relies on ([#89](https://github.com/brain-bbqs/bbqs-uploader/pull/89))
-- The Chromatic snapshots now capture each page at phone and tablet sizes in both orientations as well as desktop, and fail by naming any element that runs off the side of the screen ([#N](https://github.com/brain-bbqs/bbqs-uploader/pull/N))
+- The Chromatic snapshots now capture each page at phone and tablet sizes in both orientations as well as desktop, and fail by naming any element that runs off the side of the screen ([#91](https://github.com/brain-bbqs/bbqs-uploader/pull/91))
 
 ## 1.2.3
 
