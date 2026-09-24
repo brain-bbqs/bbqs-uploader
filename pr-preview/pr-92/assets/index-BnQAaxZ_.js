@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,ee=`This browser can't read dropped
 
 #### 🏠 Internal
 
-- Moved the build, lint, test and Storybook configuration onto the shared \`@brain-bbqs/config\` package ([#PR](https://github.com/brain-bbqs/bbqs-uploader/pull/PR))
+- Moved the build, lint, test and Storybook configuration onto the shared \`@brain-bbqs/config\` package ([#92](https://github.com/brain-bbqs/bbqs-uploader/pull/92))
 
 ## 1.3.1
 
