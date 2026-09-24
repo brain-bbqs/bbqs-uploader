@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { jsonResponse, routeFetch } from "@brain-bbqs/test-utils/vitest";
 import { listIncomingDandisets } from "../../src/lib/dandisets";
 import type { UploaderConfig } from "../../src/lib/types";
 
@@ -13,17 +14,19 @@ const ADMIN_CHECK_BASE_URL = "https://uploader-codycbakerphd.pythonanywhere.com"
 
 /** Routes the global fetch mock by URL: the dandiset list, then one admin-check call per dandiset. */
 function stubFetch(listResults: unknown[], adminOwnedByIdentifier: Record<string, boolean>) {
+  const adminCheckPrefix = `${ADMIN_CHECK_BASE_URL}/admin-owned/`;
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockImplementation(async (url: string) => {
-      if (url.includes("/dandisets/?user=me")) {
-        return { ok: true, json: async () => ({ results: listResults }) };
-      }
-      const identifier = url.startsWith(`${ADMIN_CHECK_BASE_URL}/admin-owned/`)
-        ? url.slice(`${ADMIN_CHECK_BASE_URL}/admin-owned/`.length)
-        : "";
-      return { ok: true, json: async () => ({ adminOwned: adminOwnedByIdentifier[identifier] ?? false }) };
-    }),
+    vi.fn(
+      routeFetch([
+        { match: "/dandisets/?user=me", respond: jsonResponse({ results: listResults }) },
+        {
+          match: (url) => url.startsWith(adminCheckPrefix),
+          respond: (url) =>
+            jsonResponse({ adminOwned: adminOwnedByIdentifier[url.slice(adminCheckPrefix.length)] ?? false }),
+        },
+      ]),
+    ),
   );
 }
 

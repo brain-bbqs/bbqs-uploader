@@ -1,3 +1,4 @@
+import { readStorageItem, writeStorageItem } from "@brain-bbqs/utils";
 import type { StoredSettings, UploaderConfig } from "./types";
 import { EMBER_INSTANCE } from "./instances";
 
@@ -10,20 +11,12 @@ export type ThemePreference = "light" | "dark";
 
 /** The user's explicit light/dark choice, if they've ever used the header toggle. */
 export function loadStoredTheme(): ThemePreference | null {
-  try {
-    const value = localStorage.getItem(THEME_KEY);
-    return value === "light" || value === "dark" ? value : null;
-  } catch {
-    return null;
-  }
+  const value = readStorageItem(THEME_KEY);
+  return value === "light" || value === "dark" ? value : null;
 }
 
 export function saveStoredTheme(theme: ThemePreference): void {
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch (e) {
-    console.warn("Could not save theme preference:", e);
-  }
+  writeStorageItem(THEME_KEY, theme, (e) => console.warn("Could not save theme preference:", e));
 }
 
 export const SPEED_TIPS_COLLAPSED_KEY = "bbqs-uploader.speed-tips-collapsed";
@@ -31,20 +24,13 @@ export const SPEED_TIPS_COLLAPSED_KEY = "bbqs-uploader.speed-tips-collapsed";
 /** Whether the user previously minimized the transfer speed recommendations card; defaults to
  *  expanded (false) if they never touched it. */
 export function loadSpeedTipsCollapsed(): boolean {
-  try {
-    return localStorage.getItem(SPEED_TIPS_COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return readStorageItem(SPEED_TIPS_COLLAPSED_KEY) === "1";
 }
 
 export function saveSpeedTipsCollapsed(collapsed: boolean): void {
-  try {
-    if (collapsed) localStorage.setItem(SPEED_TIPS_COLLAPSED_KEY, "1");
-    else localStorage.removeItem(SPEED_TIPS_COLLAPSED_KEY);
-  } catch (e) {
-    console.warn("Could not save speed tips collapsed state:", e);
-  }
+  writeStorageItem(SPEED_TIPS_COLLAPSED_KEY, collapsed ? "1" : null, (e) =>
+    console.warn("Could not save speed tips collapsed state:", e),
+  );
 }
 
 export function loadStoredSettings(): StoredSettings | null {

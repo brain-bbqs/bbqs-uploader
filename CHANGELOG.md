@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.4
+
+#### 🏠 Internal
+
+- Moved the shared formatting, upload queue, path sanitization and storage helpers, and the shared test helpers, onto the `@brain-bbqs/utils` and `@brain-bbqs/test-utils` packages ([#N](https://github.com/brain-bbqs/bbqs-uploader/pull/N))
+
 ## 1.3.3
 
 #### 🏠 Internal

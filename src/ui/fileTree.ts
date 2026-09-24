@@ -1,5 +1,5 @@
+import { humanSize } from "@brain-bbqs/utils";
 import { buildTree, sumSize, type DroppedFile, type TreeNode } from "../lib/fileTree";
-import { humanSize } from "../lib/format";
 
 export const DEFAULT_REVEAL_COUNT = 30;
 

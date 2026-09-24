@@ -1,9 +1,9 @@
 // The whole redesigned upload card: picked-folder summary row, "already on EMBER" banner,
 // include/exclude tree with ignore patterns, and an Upload button carrying the live selection.
 // Fully interactive, against the deterministic fixture dataset and archive listing.
+import { humanSize } from "@brain-bbqs/utils";
 import { FIXTURE_FOLDER_NAME, localFolderFixture, remoteListingFixture } from "./fixtures";
 import { buildRemoteBanner, buildSelectionTree } from "./selectionCard";
-import { humanSize } from "../src/lib/format";
 import { withCard, withTheme } from "./utils";
 
 function buildUploadCard(): HTMLElement {

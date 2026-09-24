@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { seedSignedIn } from "../helpers/auth";
-import { seedTheme } from "../helpers/theme";
+import { seedTheme } from "@brain-bbqs/test-utils/playwright";
+import { THEME_KEY } from "../../../src/lib/settings";
 
 // Exercises the "?test&signed_out" live test injection documented in docs/README.md, in both
 // color themes -- it should force the signed-out UI even over a real (mocked) session, proving
@@ -8,7 +9,7 @@ import { seedTheme } from "../helpers/theme";
 for (const theme of ["light", "dark"] as const) {
   test.describe(`?test&signed_out (${theme} mode)`, () => {
     test.beforeEach(async ({ page }) => {
-      await seedTheme(page, theme);
+      await seedTheme(page, theme, { storageKey: THEME_KEY });
       await seedSignedIn(page);
     });
 

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { jsonResponse } from "@brain-bbqs/test-utils/vitest";
 import { isHiddenBrowseDir, listRemoteFiles, REMOTE_PREFIX } from "../../src/lib/remote-listing";
 import type { UploaderConfig } from "../../src/lib/types";
 
@@ -7,10 +8,6 @@ const cfg = {
   dandisetId: "000123",
   accessToken: "token",
 } as UploaderConfig;
-
-function jsonResponse(body: unknown): Response {
-  return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
-}
 
 afterEach(() => {
   vi.unstubAllGlobals();
