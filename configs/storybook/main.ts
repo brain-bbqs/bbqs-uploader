@@ -1,20 +1,19 @@
-import type { StorybookConfig } from "@storybook/html-vite";
-import { resolveAppVersion } from "../appVersion";
+import type { PluginOption } from "vite";
+import { createStorybookMain } from "@brain-bbqs/config/storybook";
+import { prePaintPlugin } from "@brain-bbqs/config/vite";
 
-const config: StorybookConfig = {
-  stories: ["../../stories/**/*.stories.@(ts|js)"],
-  addons: [],
-  framework: {
-    name: "@storybook/html-vite",
-    options: {},
-  },
-  viteFinal(config) {
-    config.define = {
-      ...config.define,
-      __APP_VERSION__: JSON.stringify(resolveAppVersion()),
-    };
-    return config;
-  },
-};
+// Storybook's Vite builder loads configs/vite.config.ts, whose pre-paint plugin would otherwise
+// inject the app's stored-theme/signed-in script into Storybook's own iframe.html. The stories pin
+// their theme themselves and have no sign-in state, so keep that script out of Storybook.
+const PRE_PAINT = prePaintPlugin({ themeKey: "" }).name;
 
-export default config;
+function withoutPrePaint(plugins: PluginOption[]): PluginOption[] {
+  return plugins
+    .filter((plugin) => !(plugin && "name" in plugin && plugin.name === PRE_PAINT))
+    .map((plugin) => (Array.isArray(plugin) ? withoutPrePaint(plugin) : plugin));
+}
+
+export default createStorybookMain({
+  packageJson: new URL("../../package.json", import.meta.url),
+  viteFinal: (config) => ({ ...config, plugins: withoutPrePaint(config.plugins ?? []) }),
+});

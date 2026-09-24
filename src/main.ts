@@ -549,9 +549,10 @@ window.addEventListener("hashchange", () => {
 });
 if (window.location.hash === CHANGELOG_HASH) openWhatsNewModal();
 
-// The inline script in index.html already applied any stored theme override before first paint,
-// so the toggle only has to flip and persist it. With nothing stored, data-theme is unset and the
-// OS preference is in effect, so the first click flips away from whatever is currently showing.
+// The pre-paint script configs/vite.config.ts injects into index.html already applied any stored
+// theme override before first paint, so the toggle only has to flip and persist it. With nothing
+// stored, data-theme is unset and the OS preference is in effect, so the first click flips away
+// from whatever is currently showing.
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 els.themeToggle.addEventListener("click", () => {
   const current = document.documentElement.dataset.theme ?? (prefersDark.matches ? "dark" : "light");
@@ -666,7 +667,7 @@ function renderAuthUI(): void {
   updateDropzoneVisibility();
   updateCardsVisibility();
   // Once the real auth state is known, this element-level hidden state is authoritative; the
-  // pre-paint script's stand-in attribute (see index.html) is no longer needed.
+  // pre-paint script's stand-in attribute (see configs/vite.config.ts) is no longer needed.
   delete document.documentElement.dataset.signedIn;
 }
 

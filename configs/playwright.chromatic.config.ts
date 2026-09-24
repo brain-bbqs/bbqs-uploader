@@ -1,7 +1,6 @@
 import { defineConfig } from "@playwright/test";
-import { sharedConfig } from "./playwright.shared";
+import { createPlaywrightConfig } from "@brain-bbqs/config/playwright";
 
-export default defineConfig({
-  ...sharedConfig,
-  testDir: "../tests/chromatic",
-});
+export default defineConfig(
+  createPlaywrightConfig({ rootDir: new URL("..", import.meta.url), testDir: "../tests/chromatic" }),
+);

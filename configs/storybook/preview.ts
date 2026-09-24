@@ -1,15 +1,6 @@
 import "../../src/style.css";
+import { storybookPreview } from "@brain-bbqs/config/storybook";
 
-const preview = {
-  parameters: {
-    backgrounds: {
-      default: "app",
-      values: [
-        { name: "app", value: "#f6f7fb" },
-        { name: "dark", value: "#12141c" },
-      ],
-    },
-  },
-};
-
-export default preview;
+// Spread into an object literal: Storybook statically parses preview.ts and logs a "CSF Parsing
+// error" for a bare identifier default export.
+export default { ...storybookPreview };

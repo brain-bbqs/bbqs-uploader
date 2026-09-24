@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+
+#### 🏠 Internal
+
+- Moved the build, lint, test and Storybook configuration onto the shared `@brain-bbqs/config` package ([#PR](https://github.com/brain-bbqs/bbqs-uploader/pull/PR))
+
 ## 1.3.1
 
 #### 🏠 Internal
