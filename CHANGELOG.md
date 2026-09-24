@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.3
+
+#### 🏠 Internal
+
+- Updated the shared `@brain-bbqs/config` package to 0.2.0 ([#PR](https://github.com/brain-bbqs/bbqs-uploader/pull/PR))
+
 ## 1.3.2
 
 #### 🏠 Internal
