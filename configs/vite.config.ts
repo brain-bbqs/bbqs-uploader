@@ -1,20 +1,14 @@
 import { defineConfig } from "vite";
-import { fileURLToPath } from "node:url";
-import { resolveAppVersion } from "./appVersion";
+import { createViteConfig, prePaintPlugin } from "@brain-bbqs/config/vite";
+// With the extension: Vite's native config loader (its future default) refuses extensionless
+// imports between config files.
+import { STORAGE_KEY, THEME_KEY } from "../src/lib/settings.ts";
 
-const rootDir = fileURLToPath(new URL("..", import.meta.url));
-
-export default defineConfig({
-  root: rootDir,
-  base: "./",
-  define: {
-    __APP_VERSION__: JSON.stringify(resolveAppVersion()),
-  },
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-  },
-  worker: {
-    format: "es",
-  },
-});
+export default defineConfig(
+  createViteConfig({
+    rootDir: new URL("..", import.meta.url),
+    overrides: {
+      plugins: [prePaintPlugin({ themeKey: THEME_KEY, settingsKey: STORAGE_KEY })],
+    },
+  }),
+);

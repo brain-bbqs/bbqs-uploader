@@ -1,9 +1,9 @@
 import type { StoredSettings, UploaderConfig } from "./types";
 import { EMBER_INSTANCE } from "./instances";
 
-// Also read by the inline pre-paint script in index.html — keep the two literals in sync.
+// Also read before first paint by the script configs/vite.config.ts injects into index.html.
 export const STORAGE_KEY = "bbqs-uploader.settings.v1";
-// Also read by the inline pre-paint script in index.html — keep the two literals in sync.
+// Also read before first paint by the script configs/vite.config.ts injects into index.html.
 export const THEME_KEY = "bbqs-uploader.theme";
 
 export type ThemePreference = "light" | "dark";
