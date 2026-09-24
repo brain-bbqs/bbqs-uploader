@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,ee=`This browser can't read dropped
 
 #### 🏠 Internal
 
-- Updated the shared \`@brain-bbqs/config\` package to 0.2.0 ([#PR](https://github.com/brain-bbqs/bbqs-uploader/pull/PR))
+- Updated the shared \`@brain-bbqs/config\` package to 0.2.0 ([#93](https://github.com/brain-bbqs/bbqs-uploader/pull/93))
 
 ## 1.3.2
 
