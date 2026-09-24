@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,me=`This browser can't read dropped
 
 #### 🏠 Internal
 
-- Moved the shared formatting, upload queue, path sanitization and storage helpers, and the shared test helpers, onto the \`@brain-bbqs/utils\` and \`@brain-bbqs/test-utils\` packages ([#N](https://github.com/brain-bbqs/bbqs-uploader/pull/N))
+- Moved the shared formatting, upload queue, path sanitization and storage helpers, and the shared test helpers, onto the \`@brain-bbqs/utils\` and \`@brain-bbqs/test-utils\` packages ([#94](https://github.com/brain-bbqs/bbqs-uploader/pull/94))
 
 ## 1.3.3
 
