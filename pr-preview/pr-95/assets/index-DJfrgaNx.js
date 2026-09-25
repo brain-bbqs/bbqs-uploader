@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,Ue=`This browser can't read dropped
 
 #### 🏠 Internal
 
-- Moved sign-in and the EMBER archive client onto the shared \`@brain-bbqs/ember-client\` package; existing sign-ins carry over unchanged ([#PR](https://github.com/brain-bbqs/bbqs-uploader/pull/PR))
+- Moved sign-in and the EMBER archive client onto the shared \`@brain-bbqs/ember-client\` package; existing sign-ins carry over unchanged ([#95](https://github.com/brain-bbqs/bbqs-uploader/pull/95))
 
 ## 1.3.4
 
