@@ -38,13 +38,16 @@ Also keep an eye on:
   `<script>` tag. A compromised third-party script is the other realistic way
   a token in storage gets exfiltrated even without a bug in this app's own
   code, so keep it that way.
-- **Minimal runtime dependencies.** Currently `spark-md5`,
-  `@brain-bbqs/utils` (the BBQS apps' own shared helpers, published from
-  `brain-bbqs/bbqs-web-components`, with no dependencies of its own) and
-  `@brain-bbqs/ember-client` (the shared EMBER archive client from the same
-  repository, which depends only on those two). Every
-  added runtime dependency is something that could be compromised upstream and
-  ship code that reads `localStorage`; don't add one without a reason.
+- **Minimal runtime dependencies.** Currently `@brain-bbqs/utils` (the BBQS
+  apps' own shared helpers, published from `brain-bbqs/bbqs-web-components`,
+  with no dependencies of its own) and `@brain-bbqs/ember-client` (the shared
+  EMBER archive client from the same repository, which depends only on
+  `@brain-bbqs/utils` and `spark-md5`). `spark-md5` is no longer a direct
+  dependency of the app; it arrives through `@brain-bbqs/ember-client`, which
+  uses it for the MD5 and DANDI etag hashing, and still ships in the bundle.
+  Every added runtime dependency, direct or transitive, is
+  something that could be compromised upstream and ship code that reads
+  `localStorage`; don't add one without a reason.
 
 ## The admin-owned dandiset check calls a third party, but without our token
 
