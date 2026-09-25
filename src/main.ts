@@ -1,10 +1,10 @@
 import "./style.css";
+import { bytesPerSecToMBps, friendlyEta, humanSize, runQueue } from "@brain-bbqs/utils";
 import { getElements } from "./ui/elements";
 import { initDropzone, type AcceptedFolder } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
 import { createSelectionModel, type SelectionFile } from "./lib/selection";
 import { isHiddenBrowseDir, listRemoteFiles, REMOTE_PREFIX } from "./lib/remote-listing";
-import { humanSize, friendlyEta, bytesPerSecToMBps } from "./lib/format";
 import {
   uploadTransferReport,
   TRANSFER_REPORT_SCHEMA_VERSION,
@@ -16,7 +16,6 @@ import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT, type
 import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
-import { runQueue } from "./lib/queue";
 import {
   loadStoredSettings,
   saveStoredSettings,

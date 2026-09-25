@@ -1,4 +1,4 @@
-import { humanSize } from "../lib/format";
+import { humanSize } from "@brain-bbqs/utils";
 
 export type BadgeKind = "scan" | "upload" | "ok" | "warn" | "err" | "mute";
 

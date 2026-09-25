@@ -1,7 +1,7 @@
+import { runQueue } from "@brain-bbqs/utils";
 import type { Asset, CompletedPart, FilePart, UploadInitResponse, UploaderConfig } from "./types";
 import { apiFetch } from "./api";
 import { ApiError } from "./errors";
-import { runQueue } from "./queue";
 import { uploadPartWithRetry } from "./s3-upload";
 
 const PARALLEL_PARTS = 3;

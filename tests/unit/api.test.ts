@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { jsonResponse } from "@brain-bbqs/test-utils/vitest";
 import { apiFetch, diagnoseCors } from "../../src/lib/api";
 import { ApiError } from "../../src/lib/errors";
 import type { UploaderConfig } from "../../src/lib/types";
@@ -15,18 +16,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function jsonResponse(status: number, body: unknown): Partial<Response> {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: () => Promise.resolve(body),
-    text: () => Promise.resolve(JSON.stringify(body)),
-  };
-}
-
 describe("apiFetch", () => {
   it("GETs with a bearer token and parses the JSON response", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { hello: "world" }));
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ hello: "world" }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await apiFetch<{ hello: string }>(cfg, "/info/");
@@ -42,7 +34,7 @@ describe("apiFetch", () => {
   });
 
   it("POSTs a JSON body with a Content-Type header", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
 
     await apiFetch(cfg, "/uploads/initialize/", { method: "POST", json: { contentSize: 10 } });

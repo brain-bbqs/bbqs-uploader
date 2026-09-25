@@ -2,10 +2,10 @@
 // docs/README.md -- a snapshot of the scanning/uploading UI mid-flight against a nested batch of
 // fake files, in both color themes. Paste e.g. "?test&mock_upload=25" into the running app's
 // address bar to see the real (animated) thing.
+import { humanSize } from "@brain-bbqs/utils";
 import { buildTree, sumSize, type TreeNode } from "../../src/lib/fileTree";
 import { generateMockDroppedFiles } from "../../src/lib/mockUpload";
 import { createFileRow, type FileRow } from "../../src/ui/fileRow";
-import { humanSize } from "../../src/lib/format";
 import { withCard, withTheme } from "../utils";
 
 // A trimmed-down, synchronous stand-in for src/ui/fileTree.ts's renderFileTree() -- unneeded here

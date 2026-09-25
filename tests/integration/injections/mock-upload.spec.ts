@@ -1,12 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { seedTheme } from "../helpers/theme";
+import { seedTheme } from "@brain-bbqs/test-utils/playwright";
+import { THEME_KEY } from "../../../src/lib/settings";
 
 // Exercises the "?test&mock_upload=N" live test injection documented in docs/README.md, in both
 // color themes, since it drives the same scanning/uploading UI a real batch would.
 for (const theme of ["light", "dark"] as const) {
   test.describe(`?test&mock_upload (${theme} mode)`, () => {
     test.beforeEach(async ({ page }) => {
-      await seedTheme(page, theme);
+      await seedTheme(page, theme, { storageKey: THEME_KEY });
     });
 
     test("queues a nested batch of fake files and animates scanning then uploading", async ({ page }) => {

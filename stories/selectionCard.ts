@@ -3,10 +3,10 @@
 // and the production CSS classes, wired together the same way src/main.ts does. Only the glue is
 // duplicated here — main.ts's wiring is bound to the page-level element registry and can't be
 // imported piecemeal.
+import { humanSize } from "@brain-bbqs/utils";
 import { createSelectionModel, type SelectionFile, type SelectionSummary } from "../src/lib/selection";
 import { renderFileTree, type DirRowEls } from "../src/ui/fileTree";
 import { createFileRow, type FileRow } from "../src/ui/fileRow";
-import { humanSize } from "../src/lib/format";
 import type { DroppedFile } from "../src/lib/fileTree";
 import emberLogoUrl from "../src/assets/ember-logo.png";
 

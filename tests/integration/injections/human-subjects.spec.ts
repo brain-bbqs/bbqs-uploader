@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { seedSignedIn, API } from "../helpers/auth";
-import { seedTheme } from "../helpers/theme";
+import { seedTheme } from "@brain-bbqs/test-utils/playwright";
+import { THEME_KEY } from "../../../src/lib/settings";
 
 // A dataset whose draft description carries the human-subjects marker phrase must show the
 // warning banner and keep the upload button disabled until the user clicks "I confirm".
@@ -12,7 +13,7 @@ test.describe("human subjects warning banner", () => {
   }
 
   test.beforeEach(async ({ page }) => {
-    await seedTheme(page, "light");
+    await seedTheme(page, "light", { storageKey: THEME_KEY });
     await seedSignedIn(page);
   });
 
@@ -68,7 +69,7 @@ test.describe("human subjects warning banner", () => {
 // banner and confirm flow, entirely off the network and even while signed out.
 test.describe("?test&num_datasets=N&human_subjects injection", () => {
   test.beforeEach(async ({ page }) => {
-    await seedTheme(page, "light");
+    await seedTheme(page, "light", { storageKey: THEME_KEY });
   });
 
   test("shows the banner for a fake dataset and confirms without any API calls", async ({ page }) => {

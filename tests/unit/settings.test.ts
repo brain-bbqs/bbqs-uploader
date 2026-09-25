@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { throwingStorage } from "@brain-bbqs/test-utils/vitest";
 import {
   configProblems,
   resolveConfig,
@@ -144,16 +145,14 @@ describe("speed tips collapsed storage", () => {
 // Private-mode browsers (and some embedded webviews) throw on any localStorage access; every
 // storage helper must degrade to its default instead of crashing the app.
 describe("storage helpers when localStorage itself throws", () => {
+  let restoreStorage: () => void;
+
   beforeEach(() => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("storage disabled");
-    });
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new Error("storage disabled");
-    });
+    restoreStorage = throwingStorage();
   });
 
   afterEach(() => {
+    restoreStorage();
     vi.restoreAllMocks();
   });
 

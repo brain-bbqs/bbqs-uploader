@@ -1,7 +1,7 @@
+import { initialsFrom } from "@brain-bbqs/utils";
 import type { UploaderElements } from "./elements";
 import type { UploaderConfig } from "../lib/types";
 import { apiFetch } from "../lib/api";
-import { initialsFrom } from "../lib/format";
 
 /**
  * Renders the header's "who's signed in" avatar/username as soon as there's an access token,
