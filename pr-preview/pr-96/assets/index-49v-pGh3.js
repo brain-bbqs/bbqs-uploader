@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,lt=`This browser can't read dropped
 
 #### 🐛 Bug Fix
 
-- Fixed a folder picked while your datasets were still loading never being checked against EMBER, which left already-uploaded files selected for upload
+- Fixed a folder picked while your datasets were still loading never being checked against EMBER, which left already-uploaded files selected for upload ([#96](https://github.com/brain-bbqs/bbqs-uploader/pull/96))
 
 ## 1.3.5
 
