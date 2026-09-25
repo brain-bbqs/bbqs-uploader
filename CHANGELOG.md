@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.6
+
+#### 🐛 Bug Fix
+
+- Fixed a folder picked while your datasets were still loading never being checked against EMBER, which left already-uploaded files selected for upload
+
 ## 1.3.5
 
 #### 🏠 Internal
