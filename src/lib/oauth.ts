@@ -12,9 +12,7 @@ export const OAUTH_CLIENT_ID = "KoQNdyPaJULkfRJXa9YSm6PTC29TLzEz8yZH3vNv";
 // deploy.
 export const OAUTH_PKCE_STORAGE_KEY = "bbqs-uploader.oauth-pkce.v1";
 
-const client: OAuthClient = createOAuthClient({ clientId: OAUTH_CLIENT_ID, storageKey: OAUTH_PKCE_STORAGE_KEY });
-
-export const startLogin: OAuthClient["startLogin"] = (navigate) => client.startLogin(navigate);
-export const handleRedirectCallback: OAuthClient["handleRedirectCallback"] = () => client.handleRedirectCallback();
-export const ensureFreshToken: OAuthClient["ensureFreshToken"] = (tokens) => client.ensureFreshToken(tokens);
-export const revokeToken: OAuthClient["revokeToken"] = (tokens) => client.revokeToken(tokens);
+export const { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken }: OAuthClient = createOAuthClient({
+  clientId: OAUTH_CLIENT_ID,
+  storageKey: OAUTH_PKCE_STORAGE_KEY,
+});
