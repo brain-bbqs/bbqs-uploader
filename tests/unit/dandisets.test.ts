@@ -1,131 +1,74 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { jsonResponse, routeFetch } from "@brain-bbqs/test-utils/vitest";
-import { listIncomingDandisets } from "../../src/lib/dandisets";
-import type { UploaderConfig } from "../../src/lib/types";
+import { listIncomingDandisets, type ArchiveConfig } from "@brain-bbqs/ember-client";
 
-const cfg: UploaderConfig = {
+// listIncomingDandisets lives in @brain-bbqs/ember-client, whose own suite covers it in full. This
+// suite pins the one property SECURITY.md promises about it from this app's side, so a package
+// update that broke it would fail here too: the user's token goes to the archive and nowhere else.
+
+const cfg: ArchiveConfig = {
   api: "https://api-dandi.emberarchive.org/api",
   web: "https://dandi.emberarchive.org",
   accessToken: "token-1",
   dandisetId: "",
 };
 
-const ADMIN_CHECK_BASE_URL = "https://uploader-codycbakerphd.pythonanywhere.com";
+const ADMIN_CHECK_PREFIX = "https://uploader-codycbakerphd.pythonanywhere.com/admin-owned/";
 
-/** Routes the global fetch mock by URL: the dandiset list, then one admin-check call per dandiset. */
-function stubFetch(listResults: unknown[], adminOwnedByIdentifier: Record<string, boolean>) {
-  const adminCheckPrefix = `${ADMIN_CHECK_BASE_URL}/admin-owned/`;
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("listIncomingDandisets, as the dataset picker calls it", () => {
+  it("sends the access token to the archive but never to the admin-check service", async () => {
+    const fetchMock = vi.fn(
       routeFetch([
-        { match: "/dandisets/?user=me", respond: jsonResponse({ results: listResults }) },
         {
-          match: (url) => url.startsWith(adminCheckPrefix),
-          respond: (url) =>
-            jsonResponse({ adminOwned: adminOwnedByIdentifier[url.slice(adminCheckPrefix.length)] ?? false }),
+          match: "/dandisets/?user=me",
+          respond: jsonResponse({
+            results: [
+              { identifier: "000100", draft_version: { name: "Incoming: Alpha Lab" }, embargo_status: "EMBARGOED" },
+            ],
+          }),
         },
+        { match: (url) => url.startsWith(ADMIN_CHECK_PREFIX), respond: jsonResponse({ adminOwned: true }) },
       ]),
-    ),
-  );
-}
-
-describe("listIncomingDandisets", () => {
-  it("keeps only 'Incoming: ' titled dandisets that are also admin-owned, sorted", async () => {
-    stubFetch(
-      [
-        { identifier: "000200", draft_version: { name: "Incoming: Zeta Lab" }, embargo_status: "EMBARGOED" },
-        {
-          identifier: "000100",
-          most_recent_published_version: { name: "Incoming: Alpha Lab" },
-          embargo_status: "OPEN",
-        },
-        { identifier: "000300", draft_version: { name: "Not an incoming dataset" }, embargo_status: "EMBARGOED" },
-      ],
-      { "000200": true, "000100": true },
     );
+    vi.stubGlobal("fetch", fetchMock);
 
-    const result = await listIncomingDandisets(cfg);
+    const { datasets } = await listIncomingDandisets(cfg, { onUnverified: () => {} });
 
-    expect(result).toEqual([
-      { identifier: "000100", title: "Incoming: Alpha Lab", embargoed: false },
-      { identifier: "000200", title: "Incoming: Zeta Lab", embargoed: true },
-    ]);
-    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(url).toBe("https://api-dandi.emberarchive.org/api/dandisets/?user=me&embargoed=true&page_size=1000");
-    expect(init.headers.Authorization).toBe("Bearer token-1");
-
-    // The admin-check service resolves ownership with its own DANDI credentials, so the user's
-    // access token must never be attached to this cross-origin call (see SECURITY.md).
-    const adminCheckCall = (fetch as ReturnType<typeof vi.fn>).mock.calls.find(([callUrl]) =>
-      String(callUrl).includes("/admin-owned/000100"),
-    );
+    expect(datasets).toEqual([{ identifier: "000100", title: "Incoming: Alpha Lab", embargoed: true }]);
+    const [listUrl, listInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(listUrl).toBe("https://api-dandi.emberarchive.org/api/dandisets/?user=me&embargoed=true&page_size=1000");
+    expect((listInit.headers as Record<string, string>).Authorization).toBe("Bearer token-1");
+    const adminCheckCall = fetchMock.mock.calls.find(([url]) => String(url) === `${ADMIN_CHECK_PREFIX}000100`);
     expect(adminCheckCall?.[1]).toBe(undefined);
-    vi.unstubAllGlobals();
   });
 
-  it("excludes an 'Incoming: ' dandiset the admin-check service says is not admin-owned", async () => {
-    stubFetch([{ identifier: "000100", draft_version: { name: "Incoming: Self Made" }, embargo_status: "EMBARGOED" }], {
-      "000100": false,
-    });
-
-    const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([]);
-    vi.unstubAllGlobals();
-  });
-
-  it("excludes an 'Incoming: ' dandiset when the admin-check service fails", async () => {
+  it("fails closed, silently, when the admin-check service cannot answer", async () => {
+    const warn = vi.spyOn(console, "warn");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockImplementation(async (url: string) => {
-        if (url.includes("/dandisets/?user=me")) {
-          return {
-            ok: true,
-            json: async () => ({
+      vi.fn(
+        routeFetch([
+          {
+            match: "/dandisets/?user=me",
+            respond: jsonResponse({
               results: [
                 { identifier: "000100", draft_version: { name: "Incoming: Broken" }, embargo_status: "EMBARGOED" },
               ],
             }),
-          };
-        }
-        return { ok: false, status: 502 };
-      }),
+          },
+          { match: (url) => url.startsWith(ADMIN_CHECK_PREFIX), respond: () => Promise.reject(new TypeError("down")) },
+        ]),
+      ),
     );
 
-    const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([]);
-    vi.unstubAllGlobals();
-  });
+    const result = await listIncomingDandisets(cfg, { onUnverified: () => {} });
 
-  it("prefers the published version's title over the draft's", async () => {
-    stubFetch(
-      [
-        {
-          identifier: "000100",
-          draft_version: { name: "Incoming: Draft Title" },
-          most_recent_published_version: { name: "Incoming: Published Title" },
-          embargo_status: "EMBARGOED",
-        },
-      ],
-      { "000100": true },
-    );
-
-    const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([{ identifier: "000100", title: "Incoming: Published Title", embargoed: true }]);
-    vi.unstubAllGlobals();
-  });
-
-  it("returns an empty list when the response has no results", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }));
-    const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([]);
-    vi.unstubAllGlobals();
-  });
-
-  it("treats a dandiset with neither a published nor a draft title as untitled and excludes it", async () => {
-    stubFetch([{ identifier: "000100", embargo_status: "EMBARGOED" }], { "000100": true });
-    const result = await listIncomingDandisets(cfg);
-    expect(result).toEqual([]);
-    vi.unstubAllGlobals();
+    expect(result).toEqual({ datasets: [], unverified: 1 });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

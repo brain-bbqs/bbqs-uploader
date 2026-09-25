@@ -40,9 +40,9 @@ Instead:
 
 - No third-party `<script>` tags or CDN includes in `index.html` — only this
   app's own bundled module loads at runtime.
-- Keep runtime dependencies minimal (currently `spark-md5` and `@brain-bbqs/utils`) — a
-  compromised dependency is the other realistic path to a token leaking even
-  without a bug in this app's own code.
+- Keep runtime dependencies minimal (currently `spark-md5`, `@brain-bbqs/utils` and
+  `@brain-bbqs/ember-client`): a compromised dependency is the other realistic
+  path to a token leaking even without a bug in this app's own code.
 
 See `SECURITY.md` for the full reasoning, the OAuth token lifecycle
 (refresh behavior, ~10h access token default), and prior precedent

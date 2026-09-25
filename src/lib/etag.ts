@@ -1,5 +1,9 @@
 import SparkMD5 from "spark-md5";
-import type { FilePart } from "./types";
+import type { FilePart } from "@brain-bbqs/ember-client";
+
+// planParts and hashPart stay here rather than coming from @brain-bbqs/ember-client because the
+// package words their errors differently, and those messages reach the file rows as-is.
+// combineDigests has no such difference and comes from the package.
 
 const MB = 2 ** 20;
 const GB = 2 ** 30;
@@ -45,7 +49,7 @@ export function planParts(fileSize: number): FilePart[] {
 /**
  * MD5 of one part of a file, streamed in 16MB chunks. Parts are independent of each other, so
  * callers may hash any subset of a file's parts concurrently (see createHashPool) and stitch the
- * results together with combineDigests.
+ * results together with @brain-bbqs/ember-client's combineDigests.
  */
 export async function hashPart(
   file: Blob,
@@ -72,11 +76,4 @@ export async function hashPart(
     digest[i] = raw.charCodeAt(i) & 0xff;
   }
   return digest;
-}
-
-/** Folds the concatenated per-part digests (16 bytes per part, in part order) into the final etag. */
-export function combineDigests(partDigests: Uint8Array, partCount: number): string {
-  const finalSpark = new SparkMD5.ArrayBuffer();
-  finalSpark.append(partDigests.buffer as ArrayBuffer);
-  return `${finalSpark.end()}-${partCount}`;
 }

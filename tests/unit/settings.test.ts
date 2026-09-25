@@ -1,81 +1,17 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { throwingStorage } from "@brain-bbqs/test-utils/vitest";
+import type { OAuthTokenSet } from "@brain-bbqs/ember-client";
 import {
-  configProblems,
-  resolveConfig,
   loadStoredTheme,
   saveStoredTheme,
-  loadStoredSettings,
-  saveStoredSettings,
+  settingsStore,
   loadSpeedTipsCollapsed,
   saveSpeedTipsCollapsed,
   STORAGE_KEY,
   THEME_KEY,
   SPEED_TIPS_COLLAPSED_KEY,
 } from "../../src/lib/settings";
-
-describe("resolveConfig", () => {
-  it("resolves the EMBER-DANDI API/web URLs and the dandiset id", () => {
-    const cfg = resolveConfig({
-      dandisetId: "DANDI:000123",
-      oauthAccessToken: "the-access-token",
-    });
-    expect(cfg.api).toBe("https://api-dandi.emberarchive.org/api");
-    expect(cfg.web).toBe("https://dandi.emberarchive.org");
-    expect(cfg.accessToken).toBe("the-access-token");
-    expect(cfg.dandisetId).toBe("000123");
-  });
-
-  it("resolves to an empty id when the input contains no numeric dandiset id", () => {
-    const cfg = resolveConfig({ dandisetId: "not-a-real-id" });
-    expect(cfg.dandisetId).toBe("");
-  });
-
-  it("rejects the negative fake identifiers used by the ?test&num_datasets injection", () => {
-    const cfg = resolveConfig({ dandisetId: "-000001" });
-    expect(cfg.dandisetId).toBe("");
-  });
-
-  it("leaves the access token empty when not signed in", () => {
-    const cfg = resolveConfig({ dandisetId: "000123" });
-    expect(cfg.accessToken).toBe("");
-  });
-
-  it("passes through the selected dataset's embargo status", () => {
-    expect(resolveConfig({ dandisetId: "000123", embargoed: true }).embargoed).toBe(true);
-    expect(resolveConfig({ dandisetId: "000123", embargoed: false }).embargoed).toBe(false);
-    expect(resolveConfig({ dandisetId: "000123" }).embargoed).toBeUndefined();
-  });
-});
-
-describe("configProblems", () => {
-  it("flags a missing API URL and not being signed in (dandiset id is secondary while signed out)", () => {
-    const problems = configProblems({ api: "", web: "", accessToken: "", dandisetId: "" });
-    expect(problems).toHaveLength(2);
-    expect(problems).toContain("Not signed in.");
-  });
-
-  it("passes for a fully valid config", () => {
-    const problems = configProblems({
-      api: "https://api-dandi.emberarchive.org/api",
-      web: "https://dandi.emberarchive.org",
-      accessToken: "abc",
-      dandisetId: "000123",
-    });
-    expect(problems).toHaveLength(0);
-  });
-
-  it("reports 'No dataset selected.' when signed in but no dandiset is chosen", () => {
-    const problems = configProblems({
-      api: "https://api-dandi.emberarchive.org/api",
-      web: "",
-      accessToken: "abc",
-      dandisetId: "",
-    });
-    expect(problems).toEqual(["No dataset selected."]);
-  });
-});
 
 describe("theme preference storage", () => {
   beforeEach(() => localStorage.clear());
@@ -100,8 +36,13 @@ describe("theme preference storage", () => {
 describe("settings storage", () => {
   beforeEach(() => localStorage.clear());
 
+  it("keeps the storage key signed-in browsers already hold", () => {
+    expect(STORAGE_KEY).toBe("bbqs-uploader.settings.v1");
+    expect(settingsStore.key).toBe(STORAGE_KEY);
+  });
+
   it("returns null when nothing has been stored", () => {
-    expect(loadStoredSettings()).toBe(null);
+    expect(settingsStore.load()).toBe(null);
   });
 
   it("round-trips stored settings", () => {
@@ -109,21 +50,42 @@ describe("settings storage", () => {
       dandisetId: "000123",
       oauth: { accessToken: "a", refreshToken: "r", expiresAt: 123456 },
     };
-    saveStoredSettings(settings);
-    expect(loadStoredSettings()).toEqual(settings);
+    settingsStore.save(settings);
+    expect(settingsStore.load()).toEqual(settings);
   });
 
-  it("clears the stored record when saving null (sign-out)", () => {
-    saveStoredSettings({ dandisetId: "000123" });
-    saveStoredSettings(null);
+  // A browser signed in before the store moved into @brain-bbqs/ember-client holds exactly these
+  // bytes (what the app's own saveStoredSettings wrote: JSON.stringify of { dandisetId, oauth }).
+  // It has to load unchanged, and a re-save has to write the very same bytes back.
+  it("loads a record written before the move, and writes the same bytes back", () => {
+    const oauth: OAuthTokenSet = { accessToken: "at-old", refreshToken: "rt-old", expiresAt: 1767225600000 };
+    const written =
+      '{"dandisetId":"000456","oauth":{"accessToken":"at-old","refreshToken":"rt-old","expiresAt":1767225600000}}';
+    localStorage.setItem("bbqs-uploader.settings.v1", written);
+
+    expect(settingsStore.load()).toEqual({ dandisetId: "000456", oauth });
+
+    localStorage.clear();
+    settingsStore.save({ dandisetId: "000456", oauth });
+    expect(localStorage.getItem("bbqs-uploader.settings.v1")).toBe(written);
+  });
+
+  it("drops the tokens from the record on sign-out the same way (an undefined oauth is omitted)", () => {
+    settingsStore.save({ dandisetId: "000456", oauth: undefined });
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('{"dandisetId":"000456"}');
+  });
+
+  it("clears the stored record when saving null", () => {
+    settingsStore.save({ dandisetId: "000123" });
+    settingsStore.save(null);
     expect(localStorage.getItem(STORAGE_KEY)).toBe(null);
-    expect(loadStoredSettings()).toBe(null);
+    expect(settingsStore.load()).toBe(null);
   });
 
   it("treats corrupted stored JSON as absent instead of crashing", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     localStorage.setItem(STORAGE_KEY, "{not json");
-    expect(loadStoredSettings()).toBe(null);
+    expect(settingsStore.load()).toBe(null);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
@@ -174,5 +136,15 @@ describe("storage helpers when localStorage itself throws", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(() => saveSpeedTipsCollapsed(true)).not.toThrow();
     expect(warn).toHaveBeenCalledWith("Could not save speed tips collapsed state:", expect.any(Error));
+  });
+
+  it("settingsStore.load falls back to no stored session", () => {
+    expect(settingsStore.load()).toBe(null);
+  });
+
+  it("settingsStore.save warns instead of throwing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(() => settingsStore.save({ dandisetId: "000123" })).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(`Could not save ${STORAGE_KEY}:`, expect.any(Error));
   });
 });

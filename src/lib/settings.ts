@@ -1,6 +1,5 @@
 import { createChoiceStore, createFlagStore } from "@brain-bbqs/utils";
-import type { StoredSettings, UploaderConfig } from "./types";
-import { EMBER_INSTANCE } from "./instances";
+import { createArchiveSettingsStore } from "@brain-bbqs/ember-client";
 
 // Also read before first paint by the script configs/vite.config.ts injects into index.html.
 export const STORAGE_KEY = "bbqs-uploader.settings.v1";
@@ -38,50 +37,10 @@ export function saveSpeedTipsCollapsed(collapsed: boolean): void {
   speedTipsCollapsedStore.save(collapsed);
 }
 
-export function loadStoredSettings(): StoredSettings | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredSettings;
-  } catch (e) {
-    console.warn("Could not restore settings:", e);
-    return null;
-  }
-}
-
-export function saveStoredSettings(settings: StoredSettings | null): void {
-  if (!settings) {
-    localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-  // codeql[js/clear-text-storage-of-sensitive-data]: bbqs-uploader is a fully static,
-  // backend-free page (no server to hold a session), so client storage is the only place
-  // to persist the OAuth token between page loads; the pasted API key was stored the same way.
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-}
-
-export function resolveConfig(input: {
-  dandisetId: string;
-  oauthAccessToken?: string;
-  embargoed?: boolean;
-}): UploaderConfig {
-  const rawId = input.dandisetId.trim();
-  // A digit run preceded by a hyphen is rejected so the "?test&num_datasets=N" injection's
-  // negative fake identifiers (e.g. "-000001") never resolve to a plausible real dandiset id.
-  const idMatch = rawId.match(/(^|[^-\d])(\d{6,})/);
-  return {
-    api: EMBER_INSTANCE.api,
-    web: EMBER_INSTANCE.web,
-    accessToken: input.oauthAccessToken ?? "",
-    dandisetId: idMatch ? idMatch[2] : "",
-    embargoed: input.embargoed,
-  };
-}
-
-export function configProblems(cfg: UploaderConfig): string[] {
-  const problems: string[] = [];
-  if (!cfg.api || !/^https?:\/\//.test(cfg.api)) problems.push("API base URL is missing or invalid.");
-  if (!cfg.accessToken) problems.push("Not signed in.");
-  else if (!cfg.dandisetId) problems.push("No dataset selected.");
-  return problems;
-}
+/**
+ * The picked dandiset and the OAuth tokens, as one JSON record under STORAGE_KEY in localStorage.
+ * The key and the record's shape are unchanged from before the store moved into
+ * `@brain-bbqs/ember-client`, so a browser signed in before the move stays signed in. Client-side
+ * token storage is an accepted, documented trade-off for this backend-free page; see SECURITY.md.
+ */
+export const settingsStore = createArchiveSettingsStore(STORAGE_KEY);

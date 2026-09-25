@@ -7,19 +7,23 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el, fakeFolderFile, pickFolder } from "./helpers/mainHarness";
+import {
+  listIncomingDandisets,
+  fetchDraftMetadata,
+  HUMAN_SUBJECTS_PHRASE,
+  type DraftVersionMetadata,
+  type OAuthTokenSet,
+} from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { listIncomingDandisets } from "../../src/lib/dandisets";
-import { fetchDraftMetadata, HUMAN_SUBJECTS_PHRASE, type DraftVersionMetadata } from "../../src/lib/humanSubjects";
 import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
-import type { OAuthTokenSet } from "../../src/lib/types";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/lib/dandisets");
 vi.mock("../../src/ui/connection");
-vi.mock("../../src/lib/humanSubjects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/humanSubjects")>()),
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
 vi.mock("../../src/lib/remote-listing", async (importOriginal) => ({
@@ -69,10 +73,13 @@ beforeAll(async () => {
   vi.mocked(ensureFreshToken).mockImplementation((tokens) => Promise.resolve(tokens));
   vi.mocked(renderIdentity).mockResolvedValue(undefined);
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
-  vi.mocked(listIncomingDandisets).mockResolvedValue([
-    { identifier: "000123", title: "Incoming: First", embargoed: true },
-    { identifier: "000456", title: "Incoming: Second", embargoed: true },
-  ]);
+  vi.mocked(listIncomingDandisets).mockResolvedValue({
+    datasets: [
+      { identifier: "000123", title: "Incoming: First", embargoed: true },
+      { identifier: "000456", title: "Incoming: Second", embargoed: true },
+    ],
+    unverified: 0,
+  });
   vi.mocked(fetchDraftMetadata).mockImplementation(
     () => new Promise((resolve, reject) => metadataCalls.push({ resolve, reject })),
   );

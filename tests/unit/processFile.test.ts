@@ -2,20 +2,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { queueFileRow, uploadFile } from "../../src/ui/processFile";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "../../src/lib/upload-pipeline";
-import { diagnoseCors } from "../../src/lib/api";
-import { ApiError } from "../../src/lib/errors";
-import type { UploaderConfig } from "../../src/lib/types";
+import { ApiError, diagnoseCors, type ArchiveConfig } from "@brain-bbqs/ember-client";
 import type { HashJob } from "../../src/ui/processFile";
 
 vi.mock("../../src/lib/upload-pipeline");
-vi.mock("../../src/lib/api");
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  diagnoseCors: vi.fn(),
+}));
 
 const uploadBlobMock = vi.mocked(uploadBlob);
 const findExistingAssetMock = vi.mocked(findExistingAsset);
 const createOrReplaceAssetMock = vi.mocked(createOrReplaceAsset);
 const diagnoseCorsMock = vi.mocked(diagnoseCors);
 
-const cfg: UploaderConfig = {
+const cfg: ArchiveConfig = {
   api: "https://api.example.org/api",
   web: "https://example.org",
   accessToken: "t",

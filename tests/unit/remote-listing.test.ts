@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { jsonResponse } from "@brain-bbqs/test-utils/vitest";
 import { isHiddenBrowseDir, listRemoteFiles, REMOTE_PREFIX } from "../../src/lib/remote-listing";
-import type { UploaderConfig } from "../../src/lib/types";
+import type { ArchiveConfig } from "@brain-bbqs/ember-client";
 
 const cfg = {
   api: "https://api.example.test/api",
   dandisetId: "000123",
   accessToken: "token",
-} as UploaderConfig;
+} as ArchiveConfig;
 
 afterEach(() => {
   vi.unstubAllGlobals();

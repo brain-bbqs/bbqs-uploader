@@ -1,17 +1,15 @@
 import { initialsFrom } from "@brain-bbqs/utils";
+import { fetchArchiveUser, type ArchiveConfig } from "@brain-bbqs/ember-client";
 import type { UploaderElements } from "./elements";
-import type { UploaderConfig } from "../lib/types";
-import { apiFetch } from "../lib/api";
 
 /**
  * Renders the header's "who's signed in" avatar/username as soon as there's an access token,
  * independent of whether a dandiset has been selected yet.
  */
-export async function renderIdentity(els: UploaderElements, cfg: UploaderConfig): Promise<void> {
-  if (!cfg.accessToken) return;
+export async function renderIdentity(els: UploaderElements, cfg: ArchiveConfig): Promise<void> {
   try {
-    const me = await apiFetch<{ username?: string; name?: string }>(cfg, "/users/me/");
-    if (me?.username) {
+    const me = await fetchArchiveUser(cfg);
+    if (me) {
       els.oauthUsername.textContent = me.username;
       els.oauthAvatar.textContent = initialsFrom(me.name ?? "");
     }

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "../../src/lib/oauth";
-import { OAUTH_CLIENT_ID } from "../../src/lib/instances";
+import {
+  startLogin,
+  handleRedirectCallback,
+  ensureFreshToken,
+  revokeToken,
+  OAUTH_CLIENT_ID,
+  OAUTH_PKCE_STORAGE_KEY,
+} from "../../src/lib/oauth";
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -170,5 +176,67 @@ describe("revokeToken", () => {
       "https://api-dandi.emberarchive.org/oauth/revoke_token/",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+});
+
+// The client now comes from @brain-bbqs/ember-client's createOAuthClient. Everything a browser
+// already holds, or the archive already has registered, must read exactly as it did before.
+describe("compatibility with sign-ins made before the move to @brain-bbqs/ember-client", () => {
+  it("keeps the registered client id and the PKCE sessionStorage key", () => {
+    expect(OAUTH_CLIENT_ID).toBe("KoQNdyPaJULkfRJXa9YSm6PTC29TLzEz8yZH3vNv");
+    expect(OAUTH_PKCE_STORAGE_KEY).toBe("bbqs-uploader.oauth-pkce.v1");
+  });
+
+  it("completes a login whose verifier and state the previous code stashed", async () => {
+    // What the app's own savePendingLogin wrote: JSON of { verifier, state } under the PKCE key.
+    sessionStorage.setItem("bbqs-uploader.oauth-pkce.v1", '{"verifier":"old-verifier","state":"old-state"}');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: "at-1", refresh_token: "rt-1", expires_in: 36000 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    window.history.replaceState({}, "", `${window.location.origin}/?code=the-code&state=old-state&scope=read`);
+
+    const tokens = await handleRedirectCallback();
+
+    expect(tokens?.accessToken).toBe("at-1");
+    expect(window.location.search).toBe("");
+    expect(sessionStorage.getItem("bbqs-uploader.oauth-pkce.v1")).toBeNull();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api-dandi.emberarchive.org/oauth/token/");
+    expect(init.method).toBe("POST");
+    expect(init.headers).toEqual({ "Content-Type": "application/x-www-form-urlencoded" });
+    expect(init.body).toBe(
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        code: "the-code",
+        redirect_uri: `${window.location.origin}/`,
+        client_id: OAUTH_CLIENT_ID,
+        code_verifier: "old-verifier",
+      }).toString(),
+    );
+  });
+
+  it("refreshes a stored token set with the same request body as before", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: "at-2", refresh_token: "rt-2", expires_in: 100 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await ensureFreshToken({ accessToken: "at-old", refreshToken: "rt-old", expiresAt: Date.now() + 59_000 });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe(`grant_type=refresh_token&refresh_token=rt-old&client_id=${OAUTH_CLIENT_ID}`);
+  });
+
+  it("revokes with the same request body as before", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await revokeToken({ accessToken: "at", refreshToken: "rt", expiresAt: 0 });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe(`token=at&token_type_hint=access_token&client_id=${OAUTH_CLIENT_ID}`);
   });
 });

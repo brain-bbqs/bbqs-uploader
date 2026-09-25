@@ -1,6 +1,5 @@
-import { combineDigests } from "./etag";
+import { combineDigests, type FilePart } from "@brain-bbqs/ember-client";
 import type { ChecksumCache } from "./checksum-cache";
-import type { FilePart } from "./types";
 
 export type HashWorkerRequest =
   { type: "hash-part"; requestId: number; file: File; part: FilePart } | { type: "cancel"; requestId: number };

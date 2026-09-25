@@ -5,19 +5,24 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
+import {
+  listIncomingDandisets,
+  type IncomingDandiset,
+  type IncomingDandisetsResult,
+  fetchDraftMetadata,
+  type OAuthTokenSet,
+  type StoredArchiveSettings,
+} from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback, revokeToken, startLogin } from "../../src/lib/oauth";
-import { listIncomingDandisets, type IncomingDandiset } from "../../src/lib/dandisets";
-import { fetchDraftMetadata } from "../../src/lib/humanSubjects";
 import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
-import type { OAuthTokenSet, StoredSettings } from "../../src/lib/types";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/lib/dandisets");
 vi.mock("../../src/ui/connection");
-vi.mock("../../src/lib/humanSubjects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/humanSubjects")>()),
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
 vi.mock("../../src/lib/remote-listing", async (importOriginal) => ({
@@ -35,10 +40,10 @@ const DATASETS: IncomingDandiset[] = [
   { identifier: "000123", title: "Incoming: Real set", embargoed: true },
 ];
 
-let resolveDatasets!: (datasets: IncomingDandiset[]) => void;
+let resolveDatasets!: (result: IncomingDandisetsResult) => void;
 
-function storedSettings(): StoredSettings {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredSettings;
+function storedSettings(): StoredArchiveSettings {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredArchiveSettings;
 }
 
 beforeAll(async () => {
@@ -54,7 +59,7 @@ beforeAll(async () => {
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
   // Held pending until the dropdown test resolves it, so the loading placeholder is observable.
   vi.mocked(listIncomingDandisets).mockReturnValue(
-    new Promise<IncomingDandiset[]>((res) => {
+    new Promise<IncomingDandisetsResult>((res) => {
       resolveDatasets = res;
     }),
   );
@@ -78,7 +83,7 @@ describe("OAuth callback sign-in", () => {
   });
 
   it("fills the dropdown, ranked by ascending id, once the dataset fetch resolves", async () => {
-    resolveDatasets(DATASETS);
+    resolveDatasets({ datasets: DATASETS, unverified: 0 });
     const select = el<HTMLSelectElement>("dandiset-id");
     await vi.waitFor(() => {
       expect(select.hidden).toBe(false);

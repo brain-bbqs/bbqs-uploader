@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { hashPart } from "../../src/lib/etag";
 import type { HashWorkerRequest, HashWorkerResponse } from "../../src/lib/etag-worker";
-import type { FilePart } from "../../src/lib/types";
+import type { FilePart } from "@brain-bbqs/ember-client";
 
 // In jsdom, `self` is the window, so the worker script wires itself onto window.onmessage and
 // posts its responses through window.postMessage — both interceptable from the test.

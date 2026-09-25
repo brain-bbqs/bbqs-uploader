@@ -1,10 +1,15 @@
 import { sanitizeFilename, sanitizePath } from "@brain-bbqs/utils";
-import type { FilePart, UploaderConfig } from "../lib/types";
+import {
+  ApiError,
+  configProblems,
+  diagnoseCors,
+  friendlyError,
+  type ArchiveConfig,
+  type FilePart,
+} from "@brain-bbqs/ember-client";
 import { createFileRow, type FileRow } from "./fileRow";
-import { configProblems } from "../lib/settings";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "../lib/upload-pipeline";
-import { diagnoseCors } from "../lib/api";
-import { ApiError, friendlyError } from "../lib/errors";
+import { UPLOADER_MESSAGES } from "../lib/errors";
 
 export type UploadOutcome = "blocked" | "cancelled" | "error" | "replaced" | "done";
 
@@ -34,7 +39,7 @@ export async function uploadFile(
   row: FileRow,
   file: File,
   path: string,
-  cfg: UploaderConfig,
+  cfg: ArchiveConfig,
   activeUploads: Set<AbortController>,
   hashJob: HashJob,
   // Reports bytes uploaded so far for this file (0..file.size), for an aggregate progress bar.
@@ -110,9 +115,9 @@ export async function uploadFile(
   }
 }
 
-async function reportUploadError(e: unknown, row: FileRow, cfg: UploaderConfig): Promise<void> {
+async function reportUploadError(e: unknown, row: FileRow, cfg: ArchiveConfig): Promise<void> {
   row.setBadge("Error", "err");
-  let msg = friendlyError(e);
+  let msg = friendlyError(e, UPLOADER_MESSAGES);
   if (e instanceof ApiError && e.status === 0) {
     try {
       msg += ` ${await diagnoseCors(cfg)}`;

@@ -1,13 +1,9 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { jsonResponse } from "@brain-bbqs/test-utils/vitest";
+import type { ArchiveConfig } from "@brain-bbqs/ember-client";
 import { renderIdentity } from "../../src/ui/connection";
-import { apiFetch } from "../../src/lib/api";
 import type { UploaderElements } from "../../src/ui/elements";
-import type { UploaderConfig } from "../../src/lib/types";
-
-vi.mock("../../src/lib/api");
-
-const apiFetchMock = vi.mocked(apiFetch);
 
 function makeEls(): { els: UploaderElements; username: HTMLSpanElement; avatar: HTMLSpanElement } {
   const username = document.createElement("span");
@@ -16,37 +12,47 @@ function makeEls(): { els: UploaderElements; username: HTMLSpanElement; avatar: 
   return { els, username, avatar };
 }
 
-const cfg: UploaderConfig = {
+const cfg: ArchiveConfig = {
   api: "https://api.example.org/api",
   web: "https://example.org",
   accessToken: "t",
   dandisetId: "000123",
 };
 
-beforeEach(() => {
-  vi.resetAllMocks();
+function stubMe(respond: () => Promise<unknown>): ReturnType<typeof vi.fn> {
+  const fetchMock = vi.fn(respond);
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("renderIdentity", () => {
   it("does nothing (not even a request) without an access token", async () => {
-    const { els } = makeEls();
+    const fetchMock = stubMe(() => Promise.resolve(jsonResponse({ username: "jdoe" })));
+    const { els, username } = makeEls();
     await renderIdentity(els, { ...cfg, accessToken: "" });
-    expect(apiFetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(username.textContent).toBe("");
   });
 
   it("fills in the username and initials-based avatar from /users/me/", async () => {
-    apiFetchMock.mockResolvedValue({ username: "jdoe", name: "Jane Doe" });
+    const fetchMock = stubMe(() => Promise.resolve(jsonResponse({ username: "jdoe", name: "Jane Doe" })));
     const { els, username, avatar } = makeEls();
 
     await renderIdentity(els, cfg);
 
-    expect(apiFetchMock).toHaveBeenCalledWith(cfg, "/users/me/");
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.example.org/api/users/me/");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer t");
     expect(username.textContent).toBe("jdoe");
     expect(avatar.textContent).toBe("JD");
   });
 
   it("leaves the header untouched when the identity lookup fails", async () => {
-    apiFetchMock.mockRejectedValue(new Error("offline"));
+    stubMe(() => Promise.reject(new Error("offline")));
     const { els, username, avatar } = makeEls();
     username.textContent = "previous";
 
@@ -57,7 +63,7 @@ describe("renderIdentity", () => {
   });
 
   it("leaves the header untouched when the response has no username", async () => {
-    apiFetchMock.mockResolvedValue({});
+    stubMe(() => Promise.resolve(jsonResponse({})));
     const { els, username } = makeEls();
 
     await renderIdentity(els, cfg);
@@ -66,7 +72,7 @@ describe("renderIdentity", () => {
   });
 
   it("falls back to the '??' avatar when the account has a username but no display name", async () => {
-    apiFetchMock.mockResolvedValue({ username: "jdoe" });
+    stubMe(() => Promise.resolve(jsonResponse({ username: "jdoe" })));
     const { els, username, avatar } = makeEls();
 
     await renderIdentity(els, cfg);

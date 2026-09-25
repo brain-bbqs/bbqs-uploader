@@ -1,6 +1,6 @@
-import type { UploaderConfig } from "./types";
+import { combineDigests, type ArchiveConfig } from "@brain-bbqs/ember-client";
 import type { UploadOutcome } from "../ui/processFile";
-import { planParts, hashPart, combineDigests } from "./etag";
+import { planParts, hashPart } from "./etag";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "./upload-pipeline";
 
 // The shape below must stay in sync with src/schemas/transfer-report.v1.schema.json, kept
@@ -58,7 +58,7 @@ export interface TransferReport {
  * manifest of what was uploaded (DANDI's own asset listing already covers that).
  */
 export async function uploadTransferReport(
-  cfg: UploaderConfig,
+  cfg: ArchiveConfig,
   report: TransferReport,
   signal?: AbortSignal,
 ): Promise<void> {

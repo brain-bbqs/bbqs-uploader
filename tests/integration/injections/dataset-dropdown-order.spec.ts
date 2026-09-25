@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { seedTheme, stubAdminCheck } from "@brain-bbqs/test-utils/playwright";
 import { STORAGE_KEY, THEME_KEY } from "../../../src/lib/settings";
-import { EMBER_INSTANCE } from "../../../src/lib/instances";
+import { EMBER_INSTANCE } from "@brain-bbqs/ember-client";
 
 const API = EMBER_INSTANCE.api;
 
