@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "../../src/lib/upload-pipeline";
-import { apiFetch } from "../../src/lib/api";
 import { uploadPartWithRetry } from "../../src/lib/s3-upload";
-import { ApiError } from "../../src/lib/errors";
-import type { Asset, FilePart, UploaderConfig } from "../../src/lib/types";
+import { apiFetch, ApiError, type ArchiveConfig, type Asset, type FilePart } from "@brain-bbqs/ember-client";
 
-vi.mock("../../src/lib/api");
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  apiFetch: vi.fn(),
+}));
 vi.mock("../../src/lib/s3-upload");
 
 const apiFetchMock = vi.mocked(apiFetch);
 const uploadPartMock = vi.mocked(uploadPartWithRetry);
 
-const cfg: UploaderConfig = {
+const cfg: ArchiveConfig = {
   api: "https://api.example.org/api",
   web: "https://example.org",
   accessToken: "t",

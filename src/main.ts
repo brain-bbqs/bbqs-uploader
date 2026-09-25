@@ -1,5 +1,15 @@
 import "./style.css";
 import { bytesPerSecToMBps, friendlyEta, humanSize, runQueue } from "@brain-bbqs/utils";
+import {
+  containsHumanSubjects,
+  fetchDraftMetadata,
+  listIncomingDandisets,
+  resolveConfig,
+  type ArchiveConfig,
+  type FilePart,
+  type IncomingDandiset,
+  type OAuthTokenSet,
+} from "@brain-bbqs/ember-client";
 import { getElements } from "./ui/elements";
 import { initDropzone, type AcceptedFolder } from "./ui/dropzone";
 import { queueFileRow, uploadFile, type UploadOutcome, type HashJob } from "./ui/processFile";
@@ -16,19 +26,9 @@ import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT, type
 import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
-import {
-  loadStoredSettings,
-  saveStoredSettings,
-  resolveConfig,
-  saveStoredTheme,
-  loadSpeedTipsCollapsed,
-  saveSpeedTipsCollapsed,
-} from "./lib/settings";
+import { settingsStore, saveStoredTheme, loadSpeedTipsCollapsed, saveSpeedTipsCollapsed } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
-import { listIncomingDandisets, type IncomingDandiset } from "./lib/dandisets";
-import { containsHumanSubjects, fetchDraftMetadata } from "./lib/humanSubjects";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
-import type { FilePart, UploaderConfig, OAuthTokenSet } from "./lib/types";
 import type { FileRow } from "./ui/fileRow";
 import { renderChangelogHtml, countChangelogVersions } from "./lib/changelog";
 import changelog from "../CHANGELOG.md?raw";
@@ -597,7 +597,7 @@ function readTestSignedOutOverride(): boolean {
 const forceSignedOut = readTestSignedOutOverride();
 
 function loadSettings(): void {
-  const s = loadStoredSettings();
+  const s = settingsStore.load();
   if (s) {
     if (s.dandisetId) storedDandisetId = s.dandisetId;
     if (s.oauth) oauthTokens = s.oauth;
@@ -605,7 +605,7 @@ function loadSettings(): void {
 }
 
 function saveSettings(): void {
-  saveStoredSettings({
+  settingsStore.save({
     // Falls back to the remembered id while the picker is empty (signed out, loading, failed
     // fetch) so clearing the <select> never wipes the dataset to restore on the next sign-in.
     dandisetId: els.dandisetId.value.trim() || storedDandisetId,
@@ -613,7 +613,7 @@ function saveSettings(): void {
   });
 }
 
-function currentConfig(): UploaderConfig {
+function currentConfig(): ArchiveConfig {
   const selected = currentDatasets.find((d) => d.identifier === els.dandisetId.value);
   return resolveConfig({
     dandisetId: els.dandisetId.value,
@@ -880,7 +880,9 @@ async function refreshDandisetOptions(): Promise<void> {
   void renderIdentity(els, currentConfig());
   setDandisetPlaceholder("Loading your incoming datasets…");
   try {
-    const datasets = await listIncomingDandisets(currentConfig());
+    // Candidates whose admin check could not complete are left out without a console warning;
+    // the result's `unverified` count is not surfaced in the picker yet.
+    const { datasets } = await listIncomingDandisets(currentConfig(), { onUnverified: () => {} });
     applyDatasetList(datasets);
   } catch {
     setDandisetPlaceholder("Could not load your datasets");

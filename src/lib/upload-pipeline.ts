@@ -1,7 +1,13 @@
 import { runQueue } from "@brain-bbqs/utils";
-import type { Asset, CompletedPart, FilePart, UploadInitResponse, UploaderConfig } from "./types";
-import { apiFetch } from "./api";
-import { ApiError } from "./errors";
+import {
+  apiFetch,
+  ApiError,
+  type ArchiveConfig,
+  type Asset,
+  type CompletedPart,
+  type FilePart,
+  type UploadInitResponse,
+} from "@brain-bbqs/ember-client";
 import { uploadPartWithRetry } from "./s3-upload";
 
 const PARALLEL_PARTS = 3;
@@ -12,7 +18,7 @@ export interface UploadBlobResult {
 }
 
 export async function uploadBlob(
-  cfg: UploaderConfig,
+  cfg: ArchiveConfig,
   file: File,
   etag: string,
   parts: FilePart[],
@@ -106,7 +112,7 @@ export async function uploadBlob(
   return { blobId: blob.blob_id, reused: false };
 }
 
-export async function findExistingAsset(cfg: UploaderConfig, path: string): Promise<Asset | null> {
+export async function findExistingAsset(cfg: ArchiveConfig, path: string): Promise<Asset | null> {
   let url: string | null =
     `/dandisets/${cfg.dandisetId}/versions/draft/assets/` +
     `?path=${encodeURIComponent(path)}&metadata=false&page_size=100`;
@@ -125,7 +131,7 @@ export async function findExistingAsset(cfg: UploaderConfig, path: string): Prom
 }
 
 export async function createOrReplaceAsset(
-  cfg: UploaderConfig,
+  cfg: ArchiveConfig,
   path: string,
   blobId: string,
   existingAssetId: string | null,

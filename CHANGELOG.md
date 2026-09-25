@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.5
+
+#### 🏠 Internal
+
+- Moved sign-in and the EMBER archive client onto the shared `@brain-bbqs/ember-client` package; existing sign-ins carry over unchanged ([#95](https://github.com/brain-bbqs/bbqs-uploader/pull/95))
+
 ## 1.3.4
 
 #### 🏠 Internal

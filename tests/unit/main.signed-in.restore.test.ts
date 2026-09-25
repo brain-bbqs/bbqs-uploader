@@ -5,19 +5,23 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
+import {
+  listIncomingDandisets,
+  type IncomingDandiset,
+  fetchDraftMetadata,
+  type OAuthTokenSet,
+  type StoredArchiveSettings,
+} from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { listIncomingDandisets, type IncomingDandiset } from "../../src/lib/dandisets";
-import { fetchDraftMetadata } from "../../src/lib/humanSubjects";
 import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
-import type { OAuthTokenSet, StoredSettings } from "../../src/lib/types";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/lib/dandisets");
 vi.mock("../../src/ui/connection");
-vi.mock("../../src/lib/humanSubjects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/humanSubjects")>()),
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
 vi.mock("../../src/lib/remote-listing", async (importOriginal) => ({
@@ -38,8 +42,8 @@ const DATASETS: IncomingDandiset[] = [
 
 let warnSpy: MockInstance;
 
-function storedSettings(): StoredSettings {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredSettings;
+function storedSettings(): StoredArchiveSettings {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredArchiveSettings;
 }
 
 beforeAll(async () => {
@@ -57,7 +61,7 @@ beforeAll(async () => {
   );
   vi.mocked(renderIdentity).mockResolvedValue(undefined);
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
-  vi.mocked(listIncomingDandisets).mockResolvedValue(DATASETS);
+  vi.mocked(listIncomingDandisets).mockResolvedValue({ datasets: DATASETS, unverified: 0 });
   vi.mocked(fetchDraftMetadata).mockRejectedValue(new Error("metadata endpoint down"));
   await bootMain();
 });

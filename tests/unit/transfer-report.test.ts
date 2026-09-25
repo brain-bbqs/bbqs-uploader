@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { uploadTransferReport, TRANSFER_REPORT_SCHEMA_VERSION } from "../../src/lib/transfer-report";
 import type { TransferReport } from "../../src/lib/transfer-report";
 import { uploadBlob, findExistingAsset, createOrReplaceAsset } from "../../src/lib/upload-pipeline";
-import type { UploaderConfig } from "../../src/lib/types";
+import type { ArchiveConfig } from "@brain-bbqs/ember-client";
 
 vi.mock("../../src/lib/upload-pipeline");
 
@@ -10,7 +10,7 @@ const uploadBlobMock = vi.mocked(uploadBlob);
 const findExistingAssetMock = vi.mocked(findExistingAsset);
 const createOrReplaceAssetMock = vi.mocked(createOrReplaceAsset);
 
-const cfg: UploaderConfig = {
+const cfg: ArchiveConfig = {
   api: "https://api.example.org/api",
   web: "https://example.org",
   accessToken: "t",

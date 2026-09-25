@@ -1,5 +1,4 @@
-import type { UploaderConfig } from "./types";
-import { apiFetch } from "./api";
+import { apiFetch, type ArchiveConfig } from "@brain-bbqs/ember-client";
 
 // The archive prefix every upload lands under (see queueFileRow); the listing below is scoped to
 // it so the diff only ever considers this uploader's own corner of the dataset.
@@ -21,7 +20,7 @@ interface ListedAsset {
  * prefix filter on the assets endpoint. Throws on network/API failure — callers surface that as a
  * "couldn't check" state rather than mistaking it for an empty dataset.
  */
-export async function listRemoteFiles(cfg: UploaderConfig, signal?: AbortSignal): Promise<Map<string, number>> {
+export async function listRemoteFiles(cfg: ArchiveConfig, signal?: AbortSignal): Promise<Map<string, number>> {
   const listing = new Map<string, number>();
   let url: string | null =
     `/dandisets/${cfg.dandisetId}/versions/draft/assets/` +

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHashPool } from "../../src/lib/etag-worker";
 import type { HashWorkerRequest, HashWorkerResponse } from "../../src/lib/etag-worker";
-import { hashPart, combineDigests } from "../../src/lib/etag";
+import { combineDigests, type FilePart } from "@brain-bbqs/ember-client";
+import { hashPart } from "../../src/lib/etag";
 import type { CachedDigests, ChecksumCache } from "../../src/lib/checksum-cache";
-import type { FilePart } from "../../src/lib/types";
 
 /**
  * Stands in for the real hashing Worker: it queues hash-part requests until the test drives them

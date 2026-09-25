@@ -1,7 +1,7 @@
 import type { Page, Route } from "@playwright/test";
 import { seedSignedIn as seedArchiveSignedIn, type StubDandiset } from "@brain-bbqs/test-utils/playwright";
 import { STORAGE_KEY } from "../../../src/lib/settings";
-import { EMBER_INSTANCE } from "../../../src/lib/instances";
+import { EMBER_INSTANCE } from "@brain-bbqs/ember-client";
 
 export const API = EMBER_INSTANCE.api;
 

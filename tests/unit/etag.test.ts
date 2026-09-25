@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { planParts, hashPart, combineDigests } from "../../src/lib/etag";
-import type { FilePart } from "../../src/lib/types";
+import { combineDigests, type FilePart } from "@brain-bbqs/ember-client";
+import { planParts, hashPart } from "../../src/lib/etag";
 
 const MB = 2 ** 20;
 

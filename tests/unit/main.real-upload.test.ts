@@ -7,23 +7,21 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el, fakeFolderFile, pickFolder } from "./helpers/mainHarness";
+import { listIncomingDandisets, fetchDraftMetadata, type OAuthTokenSet } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { listIncomingDandisets } from "../../src/lib/dandisets";
-import { fetchDraftMetadata } from "../../src/lib/humanSubjects";
 import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
 import { createHashPool } from "../../src/lib/etag-worker";
 import { uploadFile, type UploadOutcome } from "../../src/ui/processFile";
 import { uploadTransferReport, type TransferReport } from "../../src/lib/transfer-report";
-import type { OAuthTokenSet } from "../../src/lib/types";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/lib/dandisets");
 vi.mock("../../src/ui/connection");
 vi.mock("../../src/lib/etag-worker");
-vi.mock("../../src/lib/humanSubjects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/humanSubjects")>()),
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
 vi.mock("../../src/lib/remote-listing", async (importOriginal) => ({
@@ -93,9 +91,10 @@ beforeAll(async () => {
   vi.mocked(handleRedirectCallback).mockResolvedValue(null);
   vi.mocked(ensureFreshToken).mockImplementation((tokens) => Promise.resolve(tokens));
   vi.mocked(renderIdentity).mockResolvedValue(undefined);
-  vi.mocked(listIncomingDandisets).mockResolvedValue([
-    { identifier: "000123", title: "Incoming: Real set", embargoed: true },
-  ]);
+  vi.mocked(listIncomingDandisets).mockResolvedValue({
+    datasets: [{ identifier: "000123", title: "Incoming: Real set", embargoed: true }],
+    unverified: 0,
+  });
   vi.mocked(fetchDraftMetadata).mockResolvedValue({});
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
   vi.mocked(uploadTransferReport).mockResolvedValue(undefined);

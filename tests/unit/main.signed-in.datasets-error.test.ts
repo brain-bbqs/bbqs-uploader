@@ -4,18 +4,21 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
+import {
+  listIncomingDandisets,
+  fetchDraftMetadata,
+  type OAuthTokenSet,
+  type StoredArchiveSettings,
+} from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { listIncomingDandisets } from "../../src/lib/dandisets";
-import { fetchDraftMetadata } from "../../src/lib/humanSubjects";
 import { renderIdentity } from "../../src/ui/connection";
-import type { OAuthTokenSet, StoredSettings } from "../../src/lib/types";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/lib/dandisets");
 vi.mock("../../src/ui/connection");
-vi.mock("../../src/lib/humanSubjects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/lib/humanSubjects")>()),
+vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
 vi.mock("../../src/lib/remote-listing", async (importOriginal) => ({
@@ -29,8 +32,8 @@ const SEEDED_TOKENS: OAuthTokenSet = {
   expiresAt: Date.now() + 3_600_000,
 };
 
-function storedSettings(): StoredSettings {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredSettings;
+function storedSettings(): StoredArchiveSettings {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)!) as StoredArchiveSettings;
 }
 
 beforeAll(async () => {
@@ -54,7 +57,9 @@ describe("failed incoming-datasets fetch while signed in", () => {
     expect(el("dandiset-message").hidden).toBe(false);
     expect(el("dandiset-id").hidden).toBe(true);
     expect(el("oauth-signed-in").hidden).toBe(false);
-    expect(listIncomingDandisets).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "seeded-access" }));
+    expect(listIncomingDandisets).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "seeded-access" }), {
+      onUnverified: expect.any(Function),
+    });
   });
 
   it("keeps the remembered dataset id saved for the next attempt", async () => {

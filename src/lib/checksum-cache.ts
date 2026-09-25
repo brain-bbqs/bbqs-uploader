@@ -1,4 +1,4 @@
-import type { FilePart } from "./types";
+import type { FilePart } from "@brain-bbqs/ember-client";
 
 // Persistent per-part checksum cache backed by IndexedDB (localStorage is far too small for
 // digest arrays and is synchronous). One record per file keyed by relativePath + name + size +

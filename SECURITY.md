@@ -38,15 +38,21 @@ Also keep an eye on:
   `<script>` tag. A compromised third-party script is the other realistic way
   a token in storage gets exfiltrated even without a bug in this app's own
   code, so keep it that way.
-- **Minimal runtime dependencies.** Currently `spark-md5` and
-  `@brain-bbqs/utils` (the BBQS apps' own shared helpers, published from
-  `brain-bbqs/bbqs-web-components`, with no dependencies of its own). Every
-  added runtime dependency is something that could be compromised upstream and
-  ship code that reads `localStorage`; don't add one without a reason.
+- **Minimal runtime dependencies.** Currently `@brain-bbqs/utils` (the BBQS
+  apps' own shared helpers, published from `brain-bbqs/bbqs-web-components`,
+  with no dependencies of its own) and `@brain-bbqs/ember-client` (the shared
+  EMBER archive client from the same repository, which depends only on
+  `@brain-bbqs/utils` and `spark-md5`). `spark-md5` is no longer a direct
+  dependency of the app; it arrives through `@brain-bbqs/ember-client`, which
+  uses it for the MD5 and DANDI etag hashing, and still ships in the bundle.
+  Every added runtime dependency, direct or transitive, is
+  something that could be compromised upstream and ship code that reads
+  `localStorage`; don't add one without a reason.
 
 ## The admin-owned dandiset check calls a third party, but without our token
 
-`src/lib/dandisets.ts`'s `listIncomingDandisets` calls a companion service
+`listIncomingDandisets` (from `@brain-bbqs/ember-client`, called by the
+dataset picker in `src/main.ts`) calls a companion service
 (not part of this repo, currently hosted on PythonAnywhere) to check whether
 a BBQS/EMBER admin co-owns an "Incoming: " dandiset, once per candidate
 dandiset on every load of the picker.
@@ -63,7 +69,8 @@ that host on every picker load, which put a credential capable of acting as
 the signed-in user on a machine this repo doesn't control. Do not reintroduce
 that: if the service ever needs to know something it can't resolve with its
 own credentials, change the service, not the header. `tests/unit/dandisets.test.ts`
-pins the absence of the `Authorization` header on this call.
+pins the absence of the `Authorization` header on this call, as does the
+package's own suite.
 
 What the design does concentrate is credential custody on the service side:
 alongside the roster, that host now stores a long-lived DANDI API key, which
@@ -120,6 +127,18 @@ same question for those tokens using the checklist above rather than assuming
 the OAuth migration made #16's alert moot; it's the same sink, just renamed.
 
 ## OAuth token lifecycle (as of the PR #19 EMBER sign-in flow)
+
+- Where the tokens live: the access/refresh token set is persisted in
+  `localStorage` under `bbqs-uploader.settings.v1`, next to the picked
+  dandiset id, through `createArchiveSettingsStore` from
+  `@brain-bbqs/ember-client` (configured as `settingsStore` in
+  `src/lib/settings.ts`). The write itself happens inside that package, which
+  carries the `codeql[js/clear-text-storage-of-sensitive-data]` marker for
+  this decision; CodeQL does not analyze `node_modules`, so this repo's own
+  scan no longer reports the sink, but the accepted trade-off above is the
+  same one. The PKCE verifier and state sit in `sessionStorage` under
+  `bbqs-uploader.oauth-pkce.v1` only between the redirect out to the archive
+  and the redirect back.
 
 - Access tokens use `django-oauth-toolkit`'s unconfigured default lifetime
   (~10 hours on the EMBER archive, per its settings). `ensureFreshOAuth()` in

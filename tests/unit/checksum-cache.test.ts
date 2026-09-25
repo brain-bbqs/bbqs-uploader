@@ -3,7 +3,7 @@ import { IDBFactory } from "fake-indexeddb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { checksumCacheKey, openChecksumCache, type ChecksumCacheOptions } from "../../src/lib/checksum-cache";
 import { planParts } from "../../src/lib/etag";
-import type { FilePart } from "../../src/lib/types";
+import type { FilePart } from "@brain-bbqs/ember-client";
 
 const MB = 2 ** 20;
 
