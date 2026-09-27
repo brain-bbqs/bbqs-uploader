@@ -45,6 +45,9 @@ Also keep an eye on:
   `@brain-bbqs/utils` and `spark-md5`). `spark-md5` is no longer a direct
   dependency of the app; it arrives through `@brain-bbqs/ember-client`, which
   uses it for the MD5 and DANDI etag hashing, and still ships in the bundle.
+  `@brain-bbqs/ui` (the shared page shell from the same repository, which
+  depends only on `@brain-bbqs/utils`) is a runtime dependency too; so far
+  only its stylesheet is imported, which adds no JavaScript to the bundle.
   Every added runtime dependency, direct or transitive, is
   something that could be compromised upstream and ship code that reads
   `localStorage`; don't add one without a reason.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.7
+
+#### 🏠 Internal
+
+- Moved the page's styling onto the shared `@brain-bbqs/ui` stylesheet; nothing looks different ([#97](https://github.com/brain-bbqs/bbqs-uploader/pull/97))
+
 ## 1.3.6
 
 #### 🐛 Bug Fix

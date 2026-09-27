@@ -20,11 +20,18 @@
 
     <main>
       <header class="site-header">
-        <a href="https://brain-bbqs.org" target="_blank" rel="noopener" aria-label="BBQS" title="BBQS">
+        <a
+          class="header-logo-link"
+          href="https://brain-bbqs.org"
+          target="_blank"
+          rel="noopener"
+          aria-label="BBQS"
+          title="BBQS"
+        >
           <img class="header-logo" src="/src/assets/bbqs-uploader-logo.svg" alt="BBQS Uploader" />
         </a>
         <h1>BBQS Uploader</h1>
-        <div class="oauth-row">
+        <div class="header-actions">
           <button
             type="button"
             id="theme-toggle"
@@ -69,7 +76,7 @@
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           </button>
-          <button type="button" id="oauth-signin-btn" class="primary">Sign in with EMBER</button>
+          <button type="button" id="oauth-signin-btn" class="primary oauth-signin-btn">Sign in with EMBER</button>
           <div id="oauth-signed-in" class="oauth-signed-in" hidden>
             <span id="oauth-avatar" class="oauth-avatar" tabindex="0" aria-label="Account menu"></span>
             <div class="oauth-popover" role="menu">
@@ -208,7 +215,7 @@
       </section>
 
       <section class="card" id="folder-card" hidden>
-        <div id="dropzone">
+        <div id="dropzone" class="dropzone">
           <div class="dz-inner">
             <div class="dz-icon"><span>📁</span></div>
             <p>
@@ -421,16 +428,18 @@
           </button>
         </div>
       </div>
-      <a
-        class="con-brand-link"
-        href="https://centerforopenneuroscience.org"
-        target="_blank"
-        rel="noopener"
-        aria-label="Center for Open Neuroscience"
-        title="Center for Open Neuroscience"
-      >
-        <img src="/src/assets/con-logo.png" alt="Center for Open Neuroscience" />
-      </a>
+      <div class="footer-brands">
+        <a
+          class="footer-brand-link"
+          href="https://centerforopenneuroscience.org"
+          target="_blank"
+          rel="noopener"
+          aria-label="Center for Open Neuroscience"
+          title="Center for Open Neuroscience"
+        >
+          <img class="footer-brand-logo" src="/src/assets/con-logo.png" alt="Center for Open Neuroscience" />
+        </a>
+      </div>
     </div>
 
     <dialog id="whats-new-modal" class="whats-new-modal">

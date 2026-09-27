@@ -16,7 +16,7 @@ test.describe("BBQS uploader shell", () => {
     const versionLink = page.locator("#version-indicator");
     await expect(versionLink).toHaveText(/^v\d+\.\d+\.\d+$/);
     await expect(versionLink).toHaveAttribute("href", "https://github.com/brain-bbqs/bbqs-uploader");
-    const conLink = page.locator('a.con-brand-link[href="https://centerforopenneuroscience.org"]');
+    const conLink = page.locator('a.footer-brand-link[href="https://centerforopenneuroscience.org"]');
     await expect(conLink).toBeVisible();
     await expect(page.locator("#dropzone")).toBeVisible();
   });

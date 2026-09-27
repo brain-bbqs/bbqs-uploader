@@ -5,8 +5,8 @@ import { withCard, withTheme } from "../utils";
 
 function buildHeader(): HTMLElement {
   const header = document.createElement("div");
-  header.className = "oauth-row";
-  header.innerHTML = `<button type="button" id="oauth-signin-btn" class="primary">Sign in with EMBER</button>`;
+  header.className = "header-actions";
+  header.innerHTML = `<button type="button" id="oauth-signin-btn" class="primary oauth-signin-btn">Sign in with EMBER</button>`;
   return withCard(header);
 }
 
