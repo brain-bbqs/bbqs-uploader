@@ -5,6 +5,7 @@ type DropzoneState = "idle" | "dragover" | "rejected";
 function buildDropzone(state: DropzoneState): HTMLElement {
   const dz = document.createElement("div");
   dz.id = "dropzone";
+  dz.className = "dropzone";
   if (state === "dragover") dz.classList.add("dragover");
   dz.innerHTML = `
     <div class="dz-inner">
