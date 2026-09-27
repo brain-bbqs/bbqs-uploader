@@ -22,8 +22,13 @@ describe("getElements", () => {
     }
   });
 
-  it("throws naming the missing id when the page is incomplete", () => {
-    document.getElementById("dropzone")!.remove();
-    expect(() => getElements()).toThrow("Expected #dropzone to exist in the document");
-  });
+  // One of the app's own ids, a shell id the package always requires, the sign-in button (which
+  // the package treats as optional and this page does not), and the rest of the account menu.
+  it.each(["dropzone", "theme-toggle", "oauth-signin-btn", "oauth-username"])(
+    "throws naming the missing id when #%s is absent",
+    (id) => {
+      document.getElementById(id)!.remove();
+      expect(() => getElements()).toThrow(`Expected #${id} to exist in the document`);
+    },
+  );
 });

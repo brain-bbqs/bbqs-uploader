@@ -1,18 +1,26 @@
-function required<T extends Element>(id: string): T {
-  const el = document.getElementById(id);
-  if (!el) throw new Error(`Expected #${id} to exist in the document`);
-  return el as unknown as T;
-}
+import { getShellElements, required, type ShellElementIds } from "@brain-bbqs/ui";
+
+// This page's ids for the shared shell's elements; the package defaults are camelCase.
+const SHELL_IDS = {
+  themeToggle: "theme-toggle",
+  oauthSigninBtn: "oauth-signin-btn",
+  oauthSignedIn: "oauth-signed-in",
+  oauthAvatar: "oauth-avatar",
+  oauthUsername: "oauth-username",
+  oauthSignoutBtn: "oauth-signout-btn",
+} satisfies Partial<ShellElementIds>;
 
 export function getElements() {
+  const shell = getShellElements(SHELL_IDS);
+  // The package looks the account menu up only when its sign-in button exists; this page always
+  // has one, so a missing button is as much a broken page as any other missing id.
+  if (!shell.account) throw new Error(`Expected #${SHELL_IDS.oauthSigninBtn} to exist in the document`);
   return {
+    ...shell.account,
+    themeToggle: shell.themeToggle,
+    versionIndicator: shell.versionIndicator,
     configForm: required<HTMLFormElement>("config-form"),
     dandisetId: required<HTMLSelectElement>("dandiset-id"),
-    oauthSigninBtn: required<HTMLButtonElement>("oauth-signin-btn"),
-    oauthSignedIn: required<HTMLDivElement>("oauth-signed-in"),
-    oauthAvatar: required<HTMLSpanElement>("oauth-avatar"),
-    oauthUsername: required<HTMLSpanElement>("oauth-username"),
-    oauthSignoutBtn: required<HTMLButtonElement>("oauth-signout-btn"),
     dandisetMessage: required<HTMLParagraphElement>("dandiset-message"),
     dandisetSingle: required<HTMLParagraphElement>("dandiset-single"),
     dandisetSingleText: required<HTMLSpanElement>("dandiset-single-text"),
@@ -71,9 +79,7 @@ export function getElements() {
     cancelAllBtn: required<HTMLButtonElement>("cancel-all-btn"),
     resetAllBtn: required<HTMLButtonElement>("reset-all-btn"),
     viewDatasetLink: required<HTMLAnchorElement>("view-dataset-link"),
-    versionIndicator: required<HTMLAnchorElement>("version-indicator"),
     clearScanCacheBtn: required<HTMLButtonElement>("clear-scan-cache-btn"),
-    themeToggle: required<HTMLButtonElement>("theme-toggle"),
     speedTipsToggle: required<HTMLButtonElement>("speed-tips-toggle"),
     speedTipsBody: required<HTMLDivElement>("speed-tips-body"),
     whatsNewButton: required<HTMLButtonElement>("whats-new-button"),

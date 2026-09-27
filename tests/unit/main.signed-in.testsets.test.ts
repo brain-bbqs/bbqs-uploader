@@ -6,6 +6,7 @@ import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import {
+  fetchArchiveUser,
   listIncomingDandisets,
   fetchDraftMetadata,
   type OAuthTokenSet,
@@ -13,12 +14,11 @@ import {
 } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -45,21 +45,23 @@ beforeAll(async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ oauth: SEEDED_TOKENS }));
   vi.mocked(handleRedirectCallback).mockResolvedValue(null);
   vi.mocked(ensureFreshToken).mockRejectedValue(new Error("refresh endpoint down"));
-  vi.mocked(renderIdentity).mockResolvedValue(undefined);
+  vi.mocked(fetchArchiveUser).mockResolvedValue({ username: "jdoe", name: "Jane Doe" });
   await bootMain("?test&num_datasets=2");
 });
 
 describe("injected datasets while signed in", () => {
   it("attempts the refresh and renders the identity, surviving the refresh failure", async () => {
     await vi.waitFor(() => {
-      expect(renderIdentity).toHaveBeenCalled();
+      expect(fetchArchiveUser).toHaveBeenCalled();
     });
     expect(ensureFreshToken).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "seeded-access" }));
     // The failed refresh falls back to the stored tokens rather than signing out.
-    expect(renderIdentity).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ accessToken: "seeded-access" }),
-    );
+    expect(fetchArchiveUser).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "seeded-access" }));
+    // The looked-up account fills the header's avatar and username.
+    await vi.waitFor(() => {
+      expect(el("oauth-username").textContent).toBe("jdoe");
+    });
+    expect(el("oauth-avatar").textContent).toBe("JD");
     expect(el("oauth-signed-in").hidden).toBe(false);
     expect(el("oauth-signin-btn").hidden).toBe(true);
   });

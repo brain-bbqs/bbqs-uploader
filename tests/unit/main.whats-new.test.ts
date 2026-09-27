@@ -4,6 +4,7 @@
 // tips collapse, the config form's submit suppression, and the checksum-cache clear button.
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { throwingStorage } from "@brain-bbqs/test-utils/vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import { SPEED_TIPS_COLLAPSED_KEY, THEME_KEY } from "../../src/lib/settings";
 
@@ -69,6 +70,19 @@ describe("header extras", () => {
     el("theme-toggle").click();
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(localStorage.getItem(THEME_KEY)).toBe("light");
+  });
+
+  it("theme toggle still flips when the browser refuses the write, with the usual warning", () => {
+    const restoreStorage = throwingStorage();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      el("theme-toggle").click();
+      expect(document.documentElement.dataset.theme).toBe("dark");
+      expect(warn).toHaveBeenCalledWith("Could not save theme preference:", expect.any(Error));
+    } finally {
+      warn.mockRestore();
+      restoreStorage();
+    }
   });
 
   it("speed tips start expanded and the toggle collapses, persists, and re-expands", () => {

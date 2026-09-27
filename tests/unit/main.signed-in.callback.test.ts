@@ -6,6 +6,7 @@ import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import {
+  fetchArchiveUser,
   listIncomingDandisets,
   type IncomingDandiset,
   type IncomingDandisetsResult,
@@ -15,13 +16,12 @@ import {
 } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback, revokeToken, startLogin } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -55,7 +55,7 @@ beforeAll(async () => {
   // Nowhere near expiry, so the freshness check hands the same object back (no re-save).
   vi.mocked(ensureFreshToken).mockImplementation((tokens) => Promise.resolve(tokens));
   vi.mocked(revokeToken).mockResolvedValue(undefined);
-  vi.mocked(renderIdentity).mockResolvedValue(undefined);
+  vi.mocked(fetchArchiveUser).mockResolvedValue(null);
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
   // Held pending until the dropdown test resolves it, so the loading placeholder is observable.
   vi.mocked(listIncomingDandisets).mockReturnValue(

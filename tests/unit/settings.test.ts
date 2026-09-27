@@ -3,8 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { throwingStorage } from "@brain-bbqs/test-utils/vitest";
 import type { OAuthTokenSet } from "@brain-bbqs/ember-client";
 import {
-  loadStoredTheme,
-  saveStoredTheme,
   settingsStore,
   loadSpeedTipsCollapsed,
   saveSpeedTipsCollapsed,
@@ -14,22 +12,8 @@ import {
 } from "../../src/lib/settings";
 
 describe("theme preference storage", () => {
-  beforeEach(() => localStorage.clear());
-
-  it("returns null when nothing has been stored", () => {
-    expect(loadStoredTheme()).toBe(null);
-  });
-
-  it("round-trips a saved preference", () => {
-    saveStoredTheme("dark");
-    expect(loadStoredTheme()).toBe("dark");
-    saveStoredTheme("light");
-    expect(loadStoredTheme()).toBe("light");
-  });
-
-  it("ignores a corrupted stored value", () => {
-    localStorage.setItem(THEME_KEY, "sepia");
-    expect(loadStoredTheme()).toBe(null);
+  it("keeps the key browsers already hold their light/dark choice under", () => {
+    expect(THEME_KEY).toBe("bbqs-uploader.theme");
   });
 });
 
@@ -116,16 +100,6 @@ describe("storage helpers when localStorage itself throws", () => {
   afterEach(() => {
     restoreStorage();
     vi.restoreAllMocks();
-  });
-
-  it("loadStoredTheme falls back to null", () => {
-    expect(loadStoredTheme()).toBe(null);
-  });
-
-  it("saveStoredTheme warns instead of throwing", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(() => saveStoredTheme("dark")).not.toThrow();
-    expect(warn).toHaveBeenCalledWith("Could not save theme preference:", expect.any(Error));
   });
 
   it("loadSpeedTipsCollapsed falls back to expanded", () => {

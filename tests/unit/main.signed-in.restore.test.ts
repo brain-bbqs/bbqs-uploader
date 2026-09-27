@@ -6,6 +6,7 @@ import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import {
+  fetchArchiveUser,
   listIncomingDandisets,
   type IncomingDandiset,
   fetchDraftMetadata,
@@ -14,13 +15,12 @@ import {
 } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -59,7 +59,7 @@ beforeAll(async () => {
   vi.mocked(ensureFreshToken).mockImplementation((tokens) =>
     Promise.resolve({ ...tokens, accessToken: "refreshed-access" }),
   );
-  vi.mocked(renderIdentity).mockResolvedValue(undefined);
+  vi.mocked(fetchArchiveUser).mockRejectedValue(new Error("users endpoint down"));
   vi.mocked(listRemoteFiles).mockResolvedValue(new Map());
   vi.mocked(listIncomingDandisets).mockResolvedValue({ datasets: DATASETS, unverified: 0 });
   vi.mocked(fetchDraftMetadata).mockRejectedValue(new Error("metadata endpoint down"));
@@ -79,10 +79,10 @@ describe("signed-in session restored from stored settings", () => {
     });
     expect(ensureFreshToken).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "seeded-access" }));
     // The identity render sees the refreshed token, not the stale seeded one.
-    expect(renderIdentity).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ accessToken: "refreshed-access" }),
-    );
+    expect(fetchArchiveUser).toHaveBeenCalledWith(expect.objectContaining({ accessToken: "refreshed-access" }));
+    // The lookup fails here, which leaves the header as it was rather than breaking the boot.
+    expect(el("oauth-username").textContent).toBe("");
+    expect(el("oauth-avatar").textContent).toBe("");
   });
 
   it("restores the remembered dataset into the dropdown and the archive link", async () => {

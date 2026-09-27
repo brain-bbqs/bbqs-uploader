@@ -1,25 +1,11 @@
-import { createChoiceStore, createFlagStore } from "@brain-bbqs/utils";
+import { createFlagStore } from "@brain-bbqs/utils";
 import { createArchiveSettingsStore } from "@brain-bbqs/ember-client";
 
 // Also read before first paint by the script configs/vite.config.ts injects into index.html.
 export const STORAGE_KEY = "bbqs-uploader.settings.v1";
 // Also read before first paint by the script configs/vite.config.ts injects into index.html.
+// The header toggle (initThemeToggle from @brain-bbqs/ui) writes the light/dark choice here.
 export const THEME_KEY = "bbqs-uploader.theme";
-
-export type ThemePreference = "light" | "dark";
-
-const themeStore = createChoiceStore<ThemePreference>(THEME_KEY, ["light", "dark"], (e) =>
-  console.warn("Could not save theme preference:", e),
-);
-
-/** The user's explicit light/dark choice, if they've ever used the header toggle. */
-export function loadStoredTheme(): ThemePreference | null {
-  return themeStore.load();
-}
-
-export function saveStoredTheme(theme: ThemePreference): void {
-  themeStore.save(theme);
-}
 
 export const SPEED_TIPS_COLLAPSED_KEY = "bbqs-uploader.speed-tips-collapsed";
 

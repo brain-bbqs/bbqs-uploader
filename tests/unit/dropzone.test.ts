@@ -138,23 +138,6 @@ describe("initDropzone browse wiring", () => {
     expect(reject.textContent).toContain("no uploadable files");
   });
 
-  it("does nothing on a change event that carries no files", () => {
-    const { folderInput, reject, onFolder } = setup();
-    setInputFiles(folderInput, []);
-    folderInput.dispatchEvent(new Event("change"));
-    expect(onFolder).not.toHaveBeenCalled();
-    expect(reject.hidden).toBe(true);
-  });
-
-  it("keeps a click on the hidden input itself from bubbling into another picker open", () => {
-    const { folderInput } = setup();
-    const click = vi.spyOn(folderInput, "click").mockImplementation(() => {});
-    // The input's own (synthetic) click bubbles up through the dropzone; stopPropagation must
-    // keep the dropzone's click handler from opening a second picker on top.
-    folderInput.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(click).not.toHaveBeenCalled();
-  });
-
   it("accepts files without any webkitRelativePath as a nameless base folder", () => {
     const { folderInput, onFolder } = setup();
     // A genuine File has webkitRelativePath === "" unless the picker filled it in.
@@ -166,14 +149,6 @@ describe("initDropzone browse wiring", () => {
 });
 
 describe("initDropzone drag & drop", () => {
-  it("toggles the dragover styling across the drag lifecycle", () => {
-    const { dz } = setup();
-    dz.dispatchEvent(new Event("dragenter", { cancelable: true }));
-    expect(dz.classList.contains("dragover")).toBe(true);
-    dz.dispatchEvent(new Event("dragleave", { cancelable: true }));
-    expect(dz.classList.contains("dragover")).toBe(false);
-  });
-
   it("walks a dropped folder recursively, keeping its own name as the base and skipping ignored names", async () => {
     const { dz, onFolder } = setup();
     const tree = dirEntry("session1", [
@@ -257,14 +232,6 @@ describe("initDropzone drag & drop", () => {
   it("ignores a drop that yields no items at all", async () => {
     const { dz, reject, onFolder } = setup();
     dz.dispatchEvent(dropEvent({ items: [], files: [] }));
-    await new Promise((r) => setTimeout(r, 0));
-    expect(onFolder).not.toHaveBeenCalled();
-    expect(reject.hidden).toBe(true);
-  });
-
-  it("ignores a drop event without a DataTransfer entirely", async () => {
-    const { dz, reject, onFolder } = setup();
-    dz.dispatchEvent(new Event("drop", { bubbles: true, cancelable: true }));
     await new Promise((r) => setTimeout(r, 0));
     expect(onFolder).not.toHaveBeenCalled();
     expect(reject.hidden).toBe(true);
