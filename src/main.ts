@@ -876,6 +876,7 @@ async function refreshDandisetOptions(): Promise<void> {
     void refreshHumanSubjectsGate();
     return;
   }
+  const previousDandisetId = els.dandisetId.value;
   await ensureFreshOAuth();
   void renderIdentity(els, currentConfig());
   setDandisetPlaceholder("Loading your incoming datasets…");
@@ -890,6 +891,10 @@ async function refreshDandisetOptions(): Promise<void> {
   saveSettings();
   updateViewDatasetLink();
   void refreshHumanSubjectsGate();
+  // The dropzone is live as soon as stored tokens load, so a folder can be staged while this list
+  // is still loading; its archive check then found no dataset and did nothing. Selecting one here
+  // fires no "change" event, so re-run the check against it.
+  if (els.dandisetId.value && els.dandisetId.value !== previousDandisetId) void refreshRemoteListing();
 }
 
 function updateViewDatasetLink(): void {
