@@ -10,7 +10,6 @@ const MESSAGE_TEXT: Record<"signed-out" | "zero", string> = {
 function buildDatasetCard(mode: Mode): HTMLElement {
   const card = document.createElement("section");
   card.className = "card";
-  card.id = "config-card";
   const showMessage = mode === "signed-out" || mode === "zero";
   const showBrowse = mode === "dropdown" || mode === "single";
   card.innerHTML = `

@@ -5,7 +5,7 @@
 // fallback (stubbed to 0 before boot) and the theme toggle's first flip for an OS-dark visitor.
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { bodyFromIndexHtml, el, installDialogPolyfill, installMatchMedia } from "./helpers/mainHarness";
+import { bootMain, el } from "./helpers/mainHarness";
 import { THEME_KEY } from "../../src/lib/settings";
 
 const fetchMock = vi.fn(() => Promise.reject(new Error("network disabled in test")));
@@ -14,12 +14,8 @@ beforeAll(async () => {
   vi.stubGlobal("fetch", fetchMock);
   // Browsers without the API report undefined/0; the pool size must fall back to its default.
   Object.defineProperty(navigator, "hardwareConcurrency", { value: 0, configurable: true });
-  // Same steps as bootMain, but with an OS-level dark preference instead of the default light.
-  window.history.replaceState(null, "", "/?test&signed_out&mock_upload=0");
-  document.body.innerHTML = bodyFromIndexHtml();
-  installMatchMedia(true);
-  installDialogPolyfill();
-  await import("../../src/main");
+  // An OS-level dark preference instead of the default light.
+  await bootMain({ url: "?test&signed_out&mock_upload=0", matchMedia: true });
 });
 
 describe("signed-out override boot", () => {

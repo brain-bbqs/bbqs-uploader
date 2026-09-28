@@ -110,7 +110,7 @@
         <span>Your direct upload link to the EMBER-DANDI Archive</span>
       </p>
 
-      <div class="speed-tips" id="speed-tips">
+      <div class="speed-tips">
         <button
           type="button"
           id="speed-tips-toggle"
@@ -183,7 +183,7 @@
         </p>
       </div>
 
-      <section class="card" id="config-card">
+      <section class="card">
         <div class="card-heading">
           <h2>Dataset</h2>
           <a id="view-dataset-link" class="view-dataset-link" target="_blank" rel="noopener" hidden
@@ -442,9 +442,9 @@
       </div>
     </div>
 
-    <dialog id="whats-new-modal" class="whats-new-modal">
+    <dialog id="whats-new-modal" class="whats-new-modal" aria-labelledby="whats-new-modal-title">
       <div class="whats-new-modal-header">
-        <h2>What's New</h2>
+        <h2 id="whats-new-modal-title">What's New</h2>
         <button id="whats-new-close" class="whats-new-close" type="button" aria-label="Close">&times;</button>
       </div>
       <div id="whats-new-content" class="whats-new-content"></div>

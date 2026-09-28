@@ -7,6 +7,10 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { throwingStorage } from "@brain-bbqs/test-utils/vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import { SPEED_TIPS_COLLAPSED_KEY, THEME_KEY } from "../../src/lib/settings";
+import changelog from "../../CHANGELOG.md?raw";
+
+// Every `## x.y.z` heading in the shipped CHANGELOG.md, newest first.
+const changelogVersions = Array.from(changelog.matchAll(/^## (.+)$/gm), (m) => m[1].trim());
 
 function modal(): HTMLDialogElement {
   return el<HTMLDialogElement>("whats-new-modal");
@@ -14,6 +18,10 @@ function modal(): HTMLDialogElement {
 
 function versionSections(): number {
   return el("whats-new-content").querySelectorAll(".changelog-version").length;
+}
+
+function renderedVersions(): string[] {
+  return Array.from(el("whats-new-content").querySelectorAll(".changelog-version > h3"), (h) => h.textContent);
 }
 
 beforeAll(async () => {
@@ -24,7 +32,14 @@ describe("What's New modal", () => {
   it("boots closed, with only the recent versions rendered and Show more offered", () => {
     expect(modal().open).toBe(false);
     expect(versionSections()).toBe(3);
+    expect(renderedVersions()).toEqual(changelogVersions.slice(0, 3));
     expect(el("whats-new-show-more").hidden).toBe(false);
+  });
+
+  it("is named by its heading", () => {
+    const labelledBy = modal().getAttribute("aria-labelledby");
+    expect(labelledBy).toBe("whats-new-modal-title");
+    expect(el(labelledBy!).textContent).toBe("What's New");
   });
 
   it("opens from the header button and writes the #changelog fragment", () => {
@@ -38,6 +53,7 @@ describe("What's New modal", () => {
     el("whats-new-show-more").click();
     expect(el("whats-new-show-more").hidden).toBe(true);
     expect(versionSections()).toBeGreaterThan(before);
+    expect(renderedVersions()).toEqual(changelogVersions);
   });
 
   it("the close button closes the modal and strips the fragment", () => {

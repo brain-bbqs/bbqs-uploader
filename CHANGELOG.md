@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.9
+
+#### 🏠 Internal
+
+- Moved the "What's New" modal onto the shared `@brain-bbqs/ui` package; nothing looks or behaves differently ([#99](https://github.com/brain-bbqs/bbqs-uploader/pull/99))
+
 ## 1.3.8
 
 #### 🏠 Internal
