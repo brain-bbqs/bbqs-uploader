@@ -27,7 +27,7 @@ Drop the folder that contains them instead.`,Ht=`This browser can't read dropped
 
 #### 🐛 Bug Fix
 
-- Fixed the page scrolling sideways on narrow phone screens; the title now sits on its own line under the logo and sign-in button ([#100](https://github.com/brain-bbqs/bbqs-uploader/pull/100))
+- Fixed the page scrolling sideways on narrow phone screens, moving the title below the sign-in button and the "Change folder" button below the folder name when space runs out ([#100](https://github.com/brain-bbqs/bbqs-uploader/pull/100))
 
 ## 1.3.9
 
