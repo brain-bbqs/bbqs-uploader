@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.8
+
+#### 🏠 Internal
+
+- Moved the theme toggle, account menu, human-subjects confirmation and dropzone wiring onto the shared `@brain-bbqs/ui` package; nothing behaves differently ([#98](https://github.com/brain-bbqs/bbqs-uploader/pull/98))
+
 ## 1.3.7
 
 #### 🏠 Internal

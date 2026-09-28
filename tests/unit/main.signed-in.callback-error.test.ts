@@ -4,15 +4,14 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
-import { listIncomingDandisets, fetchDraftMetadata } from "@brain-bbqs/ember-client";
+import { fetchArchiveUser, listIncomingDandisets, fetchDraftMetadata } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback, startLogin } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -47,7 +46,7 @@ describe("failed OAuth callback", () => {
   it("leaves every signed-in fetch path untouched", () => {
     expect(ensureFreshToken).not.toHaveBeenCalled();
     expect(listIncomingDandisets).not.toHaveBeenCalled();
-    expect(renderIdentity).not.toHaveBeenCalled();
+    expect(fetchArchiveUser).not.toHaveBeenCalled();
     expect(fetchDraftMetadata).not.toHaveBeenCalled();
   });
 

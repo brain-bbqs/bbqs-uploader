@@ -7,20 +7,24 @@
 import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { bootMain, el, fakeFolderFile, pickFolder } from "./helpers/mainHarness";
-import { listIncomingDandisets, fetchDraftMetadata, type OAuthTokenSet } from "@brain-bbqs/ember-client";
+import {
+  fetchArchiveUser,
+  listIncomingDandisets,
+  fetchDraftMetadata,
+  type OAuthTokenSet,
+} from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 import { listRemoteFiles } from "../../src/lib/remote-listing";
 import { createHashPool } from "../../src/lib/etag-worker";
 import { uploadFile, type UploadOutcome } from "../../src/ui/processFile";
 import { uploadTransferReport, type TransferReport } from "../../src/lib/transfer-report";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("../../src/lib/etag-worker");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -90,7 +94,7 @@ beforeAll(async () => {
 
   vi.mocked(handleRedirectCallback).mockResolvedValue(null);
   vi.mocked(ensureFreshToken).mockImplementation((tokens) => Promise.resolve(tokens));
-  vi.mocked(renderIdentity).mockResolvedValue(undefined);
+  vi.mocked(fetchArchiveUser).mockResolvedValue(null);
   vi.mocked(listIncomingDandisets).mockResolvedValue({
     datasets: [{ identifier: "000123", title: "Incoming: Real set", embargoed: true }],
     unverified: 0,

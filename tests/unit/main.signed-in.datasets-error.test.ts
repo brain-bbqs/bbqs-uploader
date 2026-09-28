@@ -5,6 +5,7 @@ import "fake-indexeddb/auto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootMain, el } from "./helpers/mainHarness";
 import {
+  fetchArchiveUser,
   listIncomingDandisets,
   fetchDraftMetadata,
   type OAuthTokenSet,
@@ -12,12 +13,11 @@ import {
 } from "@brain-bbqs/ember-client";
 import { STORAGE_KEY } from "../../src/lib/settings";
 import { ensureFreshToken, handleRedirectCallback } from "../../src/lib/oauth";
-import { renderIdentity } from "../../src/ui/connection";
 
 vi.mock("../../src/lib/oauth");
-vi.mock("../../src/ui/connection");
 vi.mock("@brain-bbqs/ember-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@brain-bbqs/ember-client")>()),
+  fetchArchiveUser: vi.fn(),
   listIncomingDandisets: vi.fn(),
   fetchDraftMetadata: vi.fn(),
 }));
@@ -44,7 +44,7 @@ beforeAll(async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ dandisetId: "000456", oauth: SEEDED_TOKENS }));
   vi.mocked(handleRedirectCallback).mockResolvedValue(null);
   vi.mocked(ensureFreshToken).mockImplementation((tokens) => Promise.resolve(tokens));
-  vi.mocked(renderIdentity).mockResolvedValue(undefined);
+  vi.mocked(fetchArchiveUser).mockResolvedValue(null);
   vi.mocked(listIncomingDandisets).mockRejectedValue(new Error("archive is down"));
   await bootMain();
 });

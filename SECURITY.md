@@ -46,8 +46,11 @@ Also keep an eye on:
   dependency of the app; it arrives through `@brain-bbqs/ember-client`, which
   uses it for the MD5 and DANDI etag hashing, and still ships in the bundle.
   `@brain-bbqs/ui` (the shared page shell from the same repository, which
-  depends only on `@brain-bbqs/utils`) is a runtime dependency too; so far
-  only its stylesheet is imported, which adds no JavaScript to the bundle.
+  depends only on `@brain-bbqs/utils`) is a runtime dependency too: besides
+  its stylesheet, the page takes the theme toggle, the account menu's
+  rendering, the human-subjects gate and the dropzone wiring from it. None of
+  those parse markup (they build nodes and set `.textContent`), and the only
+  storage they touch is the theme preference, through `@brain-bbqs/utils`.
   Every added runtime dependency, direct or transitive, is
   something that could be compromised upstream and ship code that reads
   `localStorage`; don't add one without a reason.

@@ -1,7 +1,16 @@
 import "./style.css";
 import { bytesPerSecToMBps, friendlyEta, humanSize, runQueue } from "@brain-bbqs/utils";
 import {
+  bindAccountMenu,
+  createHumanSubjectsGate,
+  initThemeToggle,
+  refreshIdentity,
+  renderAuthState,
+  renderVersion,
+} from "@brain-bbqs/ui";
+import {
   containsHumanSubjects,
+  fetchArchiveUser,
   fetchDraftMetadata,
   listIncomingDandisets,
   resolveConfig,
@@ -21,12 +30,11 @@ import {
   type TransferReport,
   type FileTransferStats,
 } from "./lib/transfer-report";
-import { renderIdentity } from "./ui/connection";
 import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT, type DirRowEls } from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
-import { settingsStore, saveStoredTheme, loadSpeedTipsCollapsed, saveSpeedTipsCollapsed } from "./lib/settings";
+import { settingsStore, THEME_KEY, loadSpeedTipsCollapsed, saveSpeedTipsCollapsed } from "./lib/settings";
 import { startLogin, handleRedirectCallback, ensureFreshToken, revokeToken } from "./lib/oauth";
 import { generateMockDroppedFiles, mockPhaseDurationMs, simulateProgress } from "./lib/mockUpload";
 import type { FileRow } from "./ui/fileRow";
@@ -506,7 +514,7 @@ function updateExpandBubble(): void {
   els.expandDepthBubble.style.left = `calc(8px + (100% - 16px) * ${fraction})`;
 }
 
-els.versionIndicator.textContent = `v${__APP_VERSION__}`;
+renderVersion(els.versionIndicator, __APP_VERSION__);
 
 // The modal opens on the latest few versions; "Show more" swaps in the entire changelog for
 // anyone curious enough to keep reading.
@@ -549,16 +557,8 @@ window.addEventListener("hashchange", () => {
 if (window.location.hash === CHANGELOG_HASH) openWhatsNewModal();
 
 // The pre-paint script configs/vite.config.ts injects into index.html already applied any stored
-// theme override before first paint, so the toggle only has to flip and persist it. With nothing
-// stored, data-theme is unset and the OS preference is in effect, so the first click flips away
-// from whatever is currently showing.
-const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
-els.themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.dataset.theme ?? (prefersDark.matches ? "dark" : "light");
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  saveStoredTheme(next);
-});
+// theme override before first paint, so the toggle only has to flip and persist it.
+initThemeToggle(els.themeToggle, { storageKey: THEME_KEY });
 
 // Expanded by default; a returning visitor who minimized it stays minimized.
 function setSpeedTipsCollapsed(collapsed: boolean): void {
@@ -580,11 +580,23 @@ let storedDandisetId = "";
 // selected dandiset's embargo status without a second API round-trip.
 let currentDatasets: IncomingDandiset[] = [];
 // Whether the currently selected dataset's draft description carries the human-subjects marker
-// phrase, and the dandiset ids the user already confirmed this session, so flipping between
-// datasets in the dropdown doesn't demand re-confirming one already confirmed. The counter
-// guards the metadata fetch so a slow response can't apply to a newer selection.
+// phrase. The gate remembers the dandiset ids the user already confirmed this session, so
+// flipping between datasets in the dropdown doesn't demand re-confirming one already confirmed.
+// The counter guards the metadata fetch so a slow response can't apply to a newer selection.
 let humanSubjectsRequired = false;
-const confirmedHumanSubjects = new Set<string>();
+const humanSubjectsGate = createHumanSubjectsGate(
+  {
+    banner: els.humanSubjectsBanner,
+    unconfirmed: els.humanSubjectsUnconfirmed,
+    confirmBtn: els.humanSubjectsConfirmBtn,
+    confirmed: els.humanSubjectsConfirmed,
+  },
+  () => {
+    updateUploadGate();
+    updateDropzoneVisibility();
+    updateCardsVisibility();
+  },
+);
 let humanSubjectsRefreshSeq = 0;
 
 // Debug-only escape hatch for previewing the signed-out UI regardless of the real sign-in state:
@@ -659,15 +671,12 @@ function updateLoadRemoteBtn(): void {
   els.loadRemoteBtn.hidden = staged || (!canReal && !canTest);
 }
 
+// Also retires the pre-paint script's stand-in attribute (see configs/vite.config.ts): once the
+// real auth state is known, the element-level hidden state is authoritative.
 function renderAuthUI(): void {
-  const signedIn = isSignedIn();
-  els.oauthSigninBtn.hidden = signedIn;
-  els.oauthSignedIn.hidden = !signedIn;
+  renderAuthState(els, isSignedIn());
   updateDropzoneVisibility();
   updateCardsVisibility();
-  // Once the real auth state is known, this element-level hidden state is authoritative; the
-  // pre-paint script's stand-in attribute (see configs/vite.config.ts) is no longer needed.
-  delete document.documentElement.dataset.signedIn;
 }
 
 // Refreshes the OAuth access token first if it's near expiry, so the config used for the request
@@ -694,7 +703,7 @@ function showDandisetView(view: "message" | "single" | "dropdown"): void {
 // True while the selected dataset holds human-subjects data the user hasn't confirmed
 // de-identification/IRB coverage for yet.
 function humanSubjectsUnconfirmed(): boolean {
-  return humanSubjectsRequired && !confirmedHumanSubjects.has(els.dandisetId.value);
+  return humanSubjectsGate.isBlocking(els.dandisetId.value);
 }
 
 // True while the selected dataset must not be uploaded to: either it isn't embargoed, or its
@@ -714,15 +723,10 @@ function updateUploadGate(): void {
 
 // Reflects the human-subjects state onto the warning banner (below the speed tips): hidden for
 // ordinary datasets, the full scary warning with its "I confirm" button for an unconfirmed
-// human-subjects dataset, or a slimmed "confirmed" notice once confirmed this session.
+// human-subjects dataset, or a slimmed "confirmed" notice once confirmed this session. The gate's
+// onChange then re-applies the upload gate and the folder card's visibility.
 function renderHumanSubjectsBanner(): void {
-  const confirmed = confirmedHumanSubjects.has(els.dandisetId.value);
-  els.humanSubjectsBanner.hidden = !humanSubjectsRequired || !els.dandisetId.value;
-  els.humanSubjectsUnconfirmed.hidden = confirmed;
-  els.humanSubjectsConfirmed.hidden = !confirmed;
-  updateUploadGate();
-  updateDropzoneVisibility();
-  updateCardsVisibility();
+  humanSubjectsGate.render(els.dandisetId.value, humanSubjectsRequired && !!els.dandisetId.value);
 }
 
 // Debug-only companion to "?test&num_datasets=N": adding "&human_subjects" marks every fake
@@ -863,7 +867,7 @@ async function refreshDandisetOptions(): Promise<void> {
     // whatever the browser is really signed in as, if anything.
     if (oauthTokens) {
       await ensureFreshOAuth();
-      void renderIdentity(els, currentConfig());
+      void refreshIdentity(els, () => fetchArchiveUser(currentConfig()));
     }
     applyDatasetList(testDatasets);
     updateViewDatasetLink();
@@ -878,7 +882,7 @@ async function refreshDandisetOptions(): Promise<void> {
   }
   const previousDandisetId = els.dandisetId.value;
   await ensureFreshOAuth();
-  void renderIdentity(els, currentConfig());
+  void refreshIdentity(els, () => fetchArchiveUser(currentConfig()));
   setDandisetPlaceholder("Loading your incoming datasets…");
   try {
     // Candidates whose admin check could not complete are left out without a console warning;
@@ -1586,19 +1590,17 @@ els.ignorePatternInput.addEventListener("keydown", (e) => {
     addIgnorePatternFromInput();
   }
 });
-els.humanSubjectsConfirmBtn.addEventListener("click", () => {
-  confirmedHumanSubjects.add(els.dandisetId.value);
-  renderHumanSubjectsBanner();
-});
 els.configForm.addEventListener("submit", (e) => e.preventDefault());
-els.oauthSigninBtn.addEventListener("click", () => void startLogin());
-els.oauthSignoutBtn.addEventListener("click", () => {
-  const tokens = oauthTokens;
-  oauthTokens = null;
-  saveSettings();
-  renderAuthUI();
-  if (tokens) void revokeToken(tokens);
-  void refreshDandisetOptions();
+bindAccountMenu(els, {
+  onSignIn: () => void startLogin(),
+  onSignOut: () => {
+    const tokens = oauthTokens;
+    oauthTokens = null;
+    saveSettings();
+    renderAuthUI();
+    if (tokens) void revokeToken(tokens);
+    void refreshDandisetOptions();
+  },
 });
 void refreshDandisetOptions();
 // A range input fires "input" continuously while dragging (many events per second).

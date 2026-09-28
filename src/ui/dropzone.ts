@@ -1,3 +1,4 @@
+import { bindDropzone, showDropzoneReject } from "@brain-bbqs/ui";
 import type { UploaderElements } from "./elements";
 import type { DroppedFile } from "../lib/fileTree";
 
@@ -60,7 +61,7 @@ export interface AcceptedFolder {
   entries: DroppedFile[];
 }
 
-// A blank line (\n\n) renders as <br><br> — see showReject. Splitting the "what went wrong" and
+// A blank line (\n\n) renders as <br><br>; see showDropzoneReject. Splitting the "what went wrong" and
 // "what to do instead" halves onto their own lines keeps the fix visible at a glance.
 const REJECT_LOOSE_FILES =
   "Individual files can't be uploaded on their own.\n\nDrop the folder that contains them instead.";
@@ -141,23 +142,9 @@ function folderFromFileList(fileList: FileList): AcceptedFolder {
 }
 
 export function initDropzone(els: UploaderElements, onFolder: (folder: AcceptedFolder) => void): void {
-  const dz = els.dropzone;
-
-  /**
-   * Renders `message` into the reject slot, turning each blank line into a <br><br> gap. The
-   * breaks are appended as real elements and the prose as text nodes, so no part of `message`
-   * is ever parsed as markup — the messages are static today, but this keeps a future caller
-   * from turning a dynamic string (an API error, a filename) into an XSS vector. See SECURITY.md.
-   */
-  function showReject(message: string): void {
-    const el = els.dropzoneReject;
-    el.textContent = "";
-    message.split("\n\n").forEach((paragraph, i) => {
-      if (i) el.append(document.createElement("br"), document.createElement("br"));
-      el.append(paragraph);
-    });
-    el.hidden = false;
-  }
+  // showDropzoneReject builds the <br><br> gaps as real elements and the prose as text nodes, so
+  // no part of a message is ever parsed as markup (see SECURITY.md).
+  const showReject = (message: string): void => showDropzoneReject(els.dropzoneReject, message);
 
   function accept(folder: AcceptedFolder): void {
     if (!folder.entries.length) {
@@ -168,48 +155,26 @@ export function initDropzone(els: UploaderElements, onFolder: (folder: AcceptedF
     onFolder(folder);
   }
 
-  // The dropzone accepts exactly one thing — a folder — so clicking anywhere on it opens the
-  // folder picker; stopPropagation keeps the browse button's own click (and the synthetic click
-  // bubbling back out of the hidden input) from opening a second picker on top.
-  dz.addEventListener("click", () => els.folderInput.click());
-  els.browseFolderBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.folderInput.click();
+  // The dropzone accepts exactly one thing, a folder, so clicking anywhere on it opens the folder
+  // picker; the binding also installs the page-level guard against a drop that misses the zone.
+  bindDropzone(els.dropzone, {
+    input: els.folderInput,
+    browseButton: els.browseFolderBtn,
+    onPick: (files) => accept(folderFromFileList(files)),
+    onDrop: (dataTransfer) => {
+      // DataTransfer items are only readable synchronously during the event; snapshot what the
+      // rejection message needs before the async folder walk starts.
+      const hadItems = dataTransfer.items.length > 0 || dataTransfer.files.length > 0;
+      const hasEntrySupport = Array.from(dataTransfer.items).some(
+        (item) => typeof item.webkitGetAsEntry === "function",
+      );
+      void collectDroppedFolder(dataTransfer).then((folder) => {
+        if (folder) {
+          accept(folder);
+        } else if (hadItems) {
+          showReject(hasEntrySupport ? REJECT_LOOSE_FILES : REJECT_UNSUPPORTED_DROP);
+        }
+      });
+    },
   });
-  els.folderInput.addEventListener("click", (e) => e.stopPropagation());
-  els.folderInput.addEventListener("change", () => {
-    if (els.folderInput.files?.length) accept(folderFromFileList(els.folderInput.files));
-    els.folderInput.value = "";
-  });
-  ["dragenter", "dragover"].forEach((evt) =>
-    dz.addEventListener(evt, (e) => {
-      e.preventDefault();
-      dz.classList.add("dragover");
-    }),
-  );
-  ["dragleave", "drop"].forEach((evt) =>
-    dz.addEventListener(evt, (e) => {
-      e.preventDefault();
-      dz.classList.remove("dragover");
-    }),
-  );
-  dz.addEventListener("drop", (e) => {
-    if (!e.dataTransfer) return;
-    // DataTransfer items are only readable synchronously during the event; snapshot what the
-    // rejection message needs before the async folder walk starts.
-    const hadItems = e.dataTransfer.items.length > 0 || e.dataTransfer.files.length > 0;
-    const hasEntrySupport = Array.from(e.dataTransfer.items).some(
-      (item) => typeof item.webkitGetAsEntry === "function",
-    );
-    void collectDroppedFolder(e.dataTransfer).then((folder) => {
-      if (folder) {
-        accept(folder);
-      } else if (hadItems) {
-        showReject(hasEntrySupport ? REJECT_LOOSE_FILES : REJECT_UNSUPPORTED_DROP);
-      }
-    });
-  });
-  // Prevent the browser from navigating away when a drop misses the dropzone.
-  window.addEventListener("dragover", (e) => e.preventDefault());
-  window.addEventListener("drop", (e) => e.preventDefault());
 }
