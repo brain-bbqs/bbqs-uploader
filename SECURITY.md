@@ -26,11 +26,16 @@ otherwise non-literal) string is assigned via `.textContent` (or an
 `element.value` type property) rather than concatenated into the HTML string
 itself. A fixed, hardcoded template assigned via `innerHTML` is fine — the
 risk is interpolating untrusted data into HTML source, not the property name.
-As of this writing, all three `innerHTML` uses in `src/` (`fileRow.ts`,
-`fileTree.ts`, the "What's New" modal) follow this pattern: static skeleton
-via `innerHTML`, then `.textContent` for anything dynamic (file names,
-dandiset titles, usernames). Keep it that way — this is the property that
-makes accepting client-side token storage a reasonable call for this app.
+As of this writing, both `innerHTML` uses in `src/` (`fileRow.ts` and
+`fileTree.ts`) follow this pattern: static skeleton via `innerHTML`, then
+`.textContent` for anything dynamic (file names, dandiset titles,
+usernames). Keep it that way: this is the property that makes accepting
+client-side token storage a reasonable call for this app.
+The "What's New" modal is no longer one of them: it comes from
+`@brain-bbqs/ui`, whose changelog renderer reads `CHANGELOG.md` into plain
+objects and builds the DOM nodes itself (`createElement` and text nodes),
+never parsing markup, and sets a link's `href` only for an absolute `https:`
+URL.
 
 Also keep an eye on:
 
@@ -48,7 +53,8 @@ Also keep an eye on:
   `@brain-bbqs/ui` (the shared page shell from the same repository, which
   depends only on `@brain-bbqs/utils`) is a runtime dependency too: besides
   its stylesheet, the page takes the theme toggle, the account menu's
-  rendering, the human-subjects gate and the dropzone wiring from it. None of
+  rendering, the human-subjects gate, the dropzone wiring and the "What's
+  New" modal from it. None of
   those parse markup (they build nodes and set `.textContent`), and the only
   storage they touch is the theme preference, through `@brain-bbqs/utils`.
   Every added runtime dependency, direct or transitive, is

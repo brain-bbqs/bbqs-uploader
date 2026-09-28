@@ -1,6 +1,6 @@
 {
   "name": "bbqs-uploader",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "A fully static, backend-free web page for uploading files to an existing dandiset on the EMBER Archive.",
   "type": "module",
   "license": "MIT",
@@ -22,12 +22,12 @@
   },
   "dependencies": {
     "@brain-bbqs/ember-client": "^0.2.0",
-    "@brain-bbqs/ui": "^0.2.0",
+    "@brain-bbqs/ui": "^0.3.0",
     "@brain-bbqs/utils": "^0.2.0"
   },
   "devDependencies": {
     "@brain-bbqs/config": "^0.2.0",
-    "@brain-bbqs/test-utils": "^0.2.0",
+    "@brain-bbqs/test-utils": "^0.3.0",
     "@chromatic-com/playwright": "^0.14.11",
     "@eslint/js": "9.39.5",
     "@playwright/test": "^1.48.0",

@@ -1,4 +1,4 @@
-import { getShellElements, required, type ShellElementIds } from "@brain-bbqs/ui";
+import { getShellElements, getWhatsNewElements, required, type ShellElementIds } from "@brain-bbqs/ui";
 
 // This page's ids for the shared shell's elements; the package defaults are camelCase.
 const SHELL_IDS = {
@@ -82,11 +82,7 @@ export function getElements() {
     clearScanCacheBtn: required<HTMLButtonElement>("clear-scan-cache-btn"),
     speedTipsToggle: required<HTMLButtonElement>("speed-tips-toggle"),
     speedTipsBody: required<HTMLDivElement>("speed-tips-body"),
-    whatsNewButton: required<HTMLButtonElement>("whats-new-button"),
-    whatsNewModal: required<HTMLDialogElement>("whats-new-modal"),
-    whatsNewClose: required<HTMLButtonElement>("whats-new-close"),
-    whatsNewContent: required<HTMLDivElement>("whats-new-content"),
-    whatsNewShowMore: required<HTMLButtonElement>("whats-new-show-more"),
+    whatsNew: getWhatsNewElements(),
   };
 }
 

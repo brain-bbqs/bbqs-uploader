@@ -4,38 +4,8 @@
 // wiring, this guards the index.html/elements.ts id contract: getElements() throws on import if
 // any registered id is missing from the page.
 import "fake-indexeddb/auto";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-
-function bodyFromIndexHtml(): string {
-  // import.meta.url is an http URL under jsdom; vitest's cwd is the repo root (see its config).
-  const html = readFileSync(resolve(process.cwd(), "index.html"), "utf-8");
-  // The module entry script doesn't belong in this harness: main.ts is imported directly below
-  // instead. Parsed and pruned via the DOM (DOMParser never executes scripts) rather than
-  // regex-filtering the HTML.
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  for (const script of Array.from(doc.querySelectorAll("script"))) script.remove();
-  return doc.body.innerHTML;
-}
-
-function el<T extends HTMLElement>(id: string): T {
-  const found = document.getElementById(id);
-  if (!found) throw new Error(`missing #${id}`);
-  return found as T;
-}
-
-function fakeFolderFile(name: string, webkitRelativePath: string): File {
-  const file = new File(["x"], name);
-  Object.defineProperty(file, "webkitRelativePath", { value: webkitRelativePath, configurable: true });
-  return file;
-}
-
-function pickFolder(files: File[]): void {
-  const input = el<HTMLInputElement>("folder-input");
-  Object.defineProperty(input, "files", { value: files, configurable: true });
-  input.dispatchEvent(new Event("change"));
-}
+import { bootMain, el, fakeFolderFile, pickFolder } from "./helpers/mainHarness";
 
 async function waitForSummary(text: string): Promise<void> {
   await vi.waitFor(() => {
@@ -44,19 +14,7 @@ async function waitForSummary(text: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  document.body.innerHTML = bodyFromIndexHtml();
-  // jsdom has no matchMedia; main.ts only reads `.matches` for the theme toggle's starting point.
-  window.matchMedia = ((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addEventListener() {},
-    removeEventListener() {},
-    addListener() {},
-    removeListener() {},
-    dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia;
-  await import("../../src/main");
+  await bootMain();
 });
 
 describe("main.ts boot", () => {
