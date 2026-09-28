@@ -1,19 +1,5 @@
 @import "@brain-bbqs/ui/styles/index.css";
 
-/* The shared header restacks on a phone, dropping the title to a second row; this one never did,
-   so it keeps its three columns at every width. */
-@media (max-width: 600px) {
-  .site-header {
-    grid-template-columns: 1fr auto 1fr;
-  }
-  .header-logo-link,
-  .header-actions,
-  .site-header > h1 {
-    grid-column: auto;
-    grid-row: auto;
-  }
-}
-
 .speed-tips {
   max-width: 773px;
   margin: 1rem auto 0;

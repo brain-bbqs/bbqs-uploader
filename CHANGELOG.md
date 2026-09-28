@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.10
+
+#### 🐛 Bug Fix
+
+- Fixed the page scrolling sideways on narrow phone screens; the title now sits on its own line under the logo and sign-in button ([#N](https://github.com/brain-bbqs/bbqs-uploader/pull/N))
+
 ## 1.3.9
 
 #### 🏠 Internal
