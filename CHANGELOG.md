@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.10
+
+#### 🐛 Bug Fix
+
+- Fixed the page scrolling sideways on narrow phone screens, moving the title below the sign-in button and the "Change folder" button below the folder name when space runs out ([#100](https://github.com/brain-bbqs/bbqs-uploader/pull/100))
+
 ## 1.3.9
 
 #### 🏠 Internal

@@ -1,19 +1,5 @@
 @import "@brain-bbqs/ui/styles/index.css";
 
-/* The shared header restacks on a phone, dropping the title to a second row; this one never did,
-   so it keeps its three columns at every width. */
-@media (max-width: 600px) {
-  .site-header {
-    grid-template-columns: 1fr auto 1fr;
-  }
-  .header-logo-link,
-  .header-actions,
-  .site-header > h1 {
-    grid-column: auto;
-    grid-row: auto;
-  }
-}
-
 .speed-tips {
   max-width: 773px;
   margin: 1rem auto 0;
@@ -132,8 +118,14 @@
   border-radius: 10px;
   background: var(--accent-soft);
   font-size: 0.9rem;
+  flex-wrap: wrap;
 }
+/* A zero basis keeps a long name from forcing a wrap; the row wraps (the button drops to its own
+   line) only when the icon, stats and button alone cannot fit. The name then grows into what is
+   left, up to its own width, and ellipsizes past that as before. */
 .folder-summary-name {
+  flex: 1 1 0;
+  max-width: max-content;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
