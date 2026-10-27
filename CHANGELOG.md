@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.11
+
+#### 🏠 Internal
+
+- Updated frontend build dependencies (npm group update) ([#106](https://github.com/brain-bbqs/bbqs-uploader/pull/106))
+
 ## 1.3.10
 
 #### 🐛 Bug Fix
