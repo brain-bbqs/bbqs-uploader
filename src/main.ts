@@ -31,7 +31,14 @@ import {
   type TransferReport,
   type FileTransferStats,
 } from "./lib/transfer-report";
-import { renderFileTree, setRevealCount, yieldToMain, DEFAULT_REVEAL_COUNT, type DirRowEls } from "./ui/fileTree";
+import {
+  clearSeeAll,
+  renderFileTree,
+  setRevealCount,
+  yieldToMain,
+  DEFAULT_REVEAL_COUNT,
+  type DirRowEls,
+} from "./ui/fileTree";
 import { createHashPool } from "./lib/etag-worker";
 import { openChecksumCache, checksumCacheKey } from "./lib/checksum-cache";
 import { planParts } from "./lib/etag";
@@ -1140,6 +1147,7 @@ function clearRemoteBrowse(): void {
   if (!remoteBrowseActive) return;
   remoteBrowseActive = false;
   els.fileList.replaceChildren();
+  clearSeeAll(els.fileList);
   els.fileList.classList.remove("browse");
   els.destRoot.classList.remove("browse");
   els.destRoot.hidden = true;
@@ -1414,6 +1422,7 @@ function resetUploader(): void {
   remoteCheckSeq++; // discard any in-flight listing so it can't apply to the next folder
   sessionStartedAt = null;
   els.fileList.replaceChildren();
+  clearSeeAll(els.fileList);
   els.folderSummary.hidden = true;
   els.selectionBar.hidden = true;
   els.remoteCheckToggle.checked = true;
@@ -1576,8 +1585,10 @@ els.expandDepthInput.addEventListener("input", () => {
   requestAnimationFrame(() => {
     expandDepthUpdateScheduled = false;
     // The slider means "show me this many files", so it overrides any collapsed folders —
-    // including the automatically collapsed already-on-EMBER ones — or its count would lie.
+    // including the automatically collapsed already-on-EMBER ones — and any folders opened in
+    // full with "[see all files]", or its count would lie.
     for (const dir of dirEls.values()) dir.setExpanded(true);
+    clearSeeAll(els.fileList);
     setRevealCount(els.fileList, Number(els.expandDepthInput.value));
   });
 });
