@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { renderFileTree, setRevealCount, yieldToMain } from "../../src/ui/fileTree";
+import { clearSeeAll, renderFileTree, setRevealCount, yieldToMain } from "../../src/ui/fileTree";
 import type { DroppedFile } from "../../src/lib/fileTree";
 
 function fakeFile(name: string): File {
@@ -33,7 +33,11 @@ function visibleFileNames(root: HTMLUListElement): string[] {
 }
 
 function placeholderTexts(root: HTMLUListElement): string[] {
-  return Array.from(root.querySelectorAll<HTMLLIElement>(".more-files"), (li) => li.textContent!);
+  return Array.from(root.querySelectorAll<HTMLSpanElement>(".more-files .more-files-label"), (s) => s.textContent!);
+}
+
+function seeAllButton(root: HTMLUListElement, name: string): HTMLButtonElement {
+  return root.querySelector<HTMLButtonElement>(`.see-all-files[aria-label="See all files in ${name}/"]`)!;
 }
 
 function files(folder: string, count: number): DroppedFile[] {
@@ -200,6 +204,81 @@ describe("setRevealCount", () => {
     setRevealCount(root, 1);
     expect(visibleFileNames(root)).toEqual(["a-0.txt"]);
     expect(placeholderTexts(root)).toEqual(["… 1 more file", "… 2 more files"]);
+  });
+
+  it("gives each placeholder a right-aligned '[see all files]' link", async () => {
+    const root = document.createElement("ul");
+    await renderWithRows(root, files("a", 3));
+
+    setRevealCount(root, 1);
+    const more = root.querySelector<HTMLLIElement>(".more-files")!;
+    const button = more.querySelector<HTMLButtonElement>(".see-all-files")!;
+    expect(button.textContent).toBe("[see all files]");
+    expect(button.type).toBe("button");
+    expect(button.getAttribute("aria-label")).toBe("See all files in a/");
+    // The link sits after the "… N more files" label, so the row's flex layout pushes it right.
+    expect(more.lastElementChild).toBe(button);
+  });
+
+  it("'[see all files]' reveals just that folder's own files, leaving siblings and subfolders alone", async () => {
+    const root = document.createElement("ul");
+    await renderWithRows(root, [
+      ...files("a", 4),
+      ...files("b", 4),
+      { file: fakeFile("inner-0.txt"), relativePath: "a/inner" },
+      { file: fakeFile("inner-1.txt"), relativePath: "a/inner" },
+    ]);
+
+    // Round-robin over a, inner, b (breadth-first) with 3 slots: one file each.
+    setRevealCount(root, 3);
+    expect(visibleFileNames(root)).toEqual(["a-0.txt", "b-0.txt", "inner-0.txt"].sort());
+
+    seeAllButton(root, "a").click();
+    expect(visibleFileNames(root)).toEqual(
+      ["a-0.txt", "a-1.txt", "a-2.txt", "a-3.txt", "b-0.txt", "inner-0.txt"].sort(),
+    );
+    // Only "a" loses its placeholder; "a/inner" and "b" keep theirs.
+    expect(placeholderTexts(root)).toEqual(["… 1 more file", "… 3 more files"]);
+  });
+
+  it("keeps a '[see all files]' folder open in full through later reveal passes, without shifting other folders", async () => {
+    const root = document.createElement("ul");
+    await renderWithRows(root, [...files("a", 4), ...files("b", 4)]);
+
+    setRevealCount(root, 2);
+    seeAllButton(root, "a").click();
+
+    // "a" still takes its round-robin share, so "b" shows exactly what it would without the opening.
+    setRevealCount(root, 4);
+    expect(visibleFileNames(root)).toEqual(["a-0.txt", "a-1.txt", "a-2.txt", "a-3.txt", "b-0.txt", "b-1.txt"].sort());
+    expect(placeholderTexts(root)).toEqual(["… 2 more files"]);
+  });
+
+  it("clearSeeAll returns opened folders to their share of the budget on the next reveal pass", async () => {
+    const root = document.createElement("ul");
+    await renderWithRows(root, [{ file: fakeFile("top.txt"), relativePath: "" }, ...files("a", 3), ...files("b", 3)]);
+
+    setRevealCount(root, 0);
+    seeAllButton(root, "a").click();
+    seeAllButton(root, "b").click();
+    root.querySelector<HTMLButtonElement>(":scope > .more-files .see-all-files")!.click();
+    expect(visibleFileNames(root)).toHaveLength(7);
+
+    clearSeeAll(root);
+    setRevealCount(root, 0);
+    expect(visibleFileNames(root)).toEqual([]);
+    expect(placeholderTexts(root)).toEqual(["… 3 more files", "… 3 more files", "… 1 more file"]);
+  });
+
+  it("labels the root list's own '[see all files]' link without a folder name", async () => {
+    const root = document.createElement("ul");
+    await renderWithRows(root, [
+      { file: fakeFile("top-0.txt"), relativePath: "" },
+      { file: fakeFile("top-1.txt"), relativePath: "" },
+    ]);
+
+    setRevealCount(root, 1);
+    expect(root.querySelector(".see-all-files")!.getAttribute("aria-label")).toBe("See all files");
   });
 
   it("does not touch folder collapse state, which stays a purely manual toggle", async () => {

@@ -565,12 +565,35 @@
 }
 
 .more-files {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   list-style: none;
   padding: 0.06rem 0.3rem;
   font-size: 0.78rem;
   line-height: 1.55;
   font-style: italic;
   color: var(--muted);
+}
+/* Right-aligned (in line with the file rows' status column), opens just this folder in full. */
+.see-all-files {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-style: normal;
+  color: var(--accent);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.see-all-files:hover {
+  text-decoration: underline;
+}
+.see-all-files:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 2px;
 }
 
 .file-item {
