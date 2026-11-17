@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.13
+
+#### 🚀 Enhancement
+
+- Added a "[see all files]" link to the end of each folder's "… N more files" row, which shows every file in just that folder without moving the file-count slider ([#110](https://github.com/brain-bbqs/bbqs-uploader/pull/110))
+
 ## 1.3.12
 
 #### 🏠 Internal

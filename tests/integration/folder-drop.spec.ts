@@ -128,7 +128,24 @@ test("a folder with more than 30 files reveals the first 30 and truncates the re
   await expect(page.locator("#expand-depth-bubble")).toHaveText("30 files");
   await expect(page.locator("#file-list .file-item")).toHaveCount(35);
   await expect(page.locator("#file-list .file-item:visible")).toHaveCount(30);
-  await expect(page.locator("#file-list .more-files")).toHaveText("… 5 more files");
+  await expect(page.locator("#file-list .more-files-label")).toHaveText("… 5 more files");
+
+  // The placeholder's right-aligned "[see all files]" link opens that folder in full without
+  // moving the slider.
+  const placeholderBox = (await page.locator("#file-list .more-files").boundingBox())!;
+  const seeAll = page.locator("#file-list .see-all-files");
+  const seeAllBox = (await seeAll.boundingBox())!;
+  expect(Math.abs(seeAllBox.x + seeAllBox.width - (placeholderBox.x + placeholderBox.width))).toBeLessThan(8);
+  await seeAll.click();
+  await expect(page.locator("#file-list .file-item:visible")).toHaveCount(35);
+  await expect(page.locator("#file-list .more-files")).toHaveCount(0);
+  expect(await page.locator("#expand-depth").inputValue()).toBe("30");
+  await expect(page.locator("#expand-depth-bubble")).toHaveText("30 files");
+
+  // Moving the slider takes over again, truncating the folder back to the slider's count.
+  await page.locator("#expand-depth").fill("32");
+  await expect(page.locator("#file-list .file-item:visible")).toHaveCount(32);
+  await expect(page.locator("#file-list .more-files-label")).toHaveText("… 3 more files");
 
   // Dragging the slider to the max reveals every row, drops the placeholder, and the value
   // bubble riding the thumb tracks the new count.

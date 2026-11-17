@@ -93,6 +93,10 @@ export async function renderFileTree(
  * on — so a single huge folder can't consume all the slots before its siblings get any. Directory
  * rows themselves don't consume slots (they're always shown), and every directory still holding
  * hidden files gets a free "… N more files" placeholder row so the truncation is visible.
+ *
+ * A directory opened in full with its placeholder's "[see all files]" link keeps showing every
+ * file on top of that budget. It still takes part in the round-robin as if it hadn't been opened,
+ * so opening one folder never changes how many files any other folder shows.
  */
 export function setRevealCount(root: HTMLUListElement, revealCount: number): void {
   // Breadth-first list of every directory container, starting with the root list itself (which
@@ -127,15 +131,42 @@ export function setRevealCount(root: HTMLUListElement, revealCount: number): voi
   }
 
   containers.forEach((ul, i) => {
+    const shown = isSeeAll(ul) ? fileRows[i].length : revealed[i];
     fileRows[i].forEach((li, fileIndex) => {
-      li.hidden = fileIndex >= revealed[i];
+      li.hidden = fileIndex >= shown;
     });
-    updateMoreIndicator(ul, fileRows[i].length - revealed[i]);
+    updateMoreIndicator(ul, fileRows[i].length - shown);
   });
 }
 
+// Directories opened in full via "[see all files]" carry this marker on their file-row <ul>.
+function isSeeAll(ul: HTMLUListElement): boolean {
+  return ul.dataset.seeAll !== undefined;
+}
+
+/**
+ * Drops every "[see all files]" opening under `root` (including `root` itself), so the next
+ * `setRevealCount` call truncates those folders to their share of the budget again.
+ */
+export function clearSeeAll(root: HTMLUListElement): void {
+  delete root.dataset.seeAll;
+  for (const ul of root.querySelectorAll<HTMLUListElement>("ul[data-see-all]")) delete ul.dataset.seeAll;
+}
+
+// Shows every file row directly inside `ul` (one level only: subfolders keep their own reveal
+// state) and remembers it, so later reveal passes leave the folder open in full.
+function seeAllFiles(ul: HTMLUListElement): void {
+  ul.dataset.seeAll = "";
+  for (const li of ul.children) {
+    if (li instanceof HTMLLIElement && li.classList.contains("file-item")) li.hidden = false;
+  }
+  updateMoreIndicator(ul, 0);
+}
+
 // The "… N more files" placeholder is created lazily, updated in place, and kept as the last row
-// of its directory (file rows appended by later drops would otherwise land after it).
+// of its directory (file rows appended by later drops would otherwise land after it). Its
+// right-aligned "[see all files]" link opens just that directory in full without moving the
+// slider.
 function updateMoreIndicator(ul: HTMLUListElement, hiddenCount: number): void {
   let more = ul.querySelector<HTMLLIElement>(":scope > .more-files");
   if (hiddenCount === 0) {
@@ -145,7 +176,17 @@ function updateMoreIndicator(ul: HTMLUListElement, hiddenCount: number): void {
   if (!more) {
     more = document.createElement("li");
     more.className = "more-files";
+    const label = document.createElement("span");
+    label.className = "more-files-label";
+    const seeAll = document.createElement("button");
+    seeAll.type = "button";
+    seeAll.className = "see-all-files";
+    seeAll.textContent = "[see all files]";
+    const dirName = ul.parentElement?.querySelector(":scope > .dir-row .dir-name")?.textContent;
+    seeAll.setAttribute("aria-label", dirName ? `See all files in ${dirName}` : "See all files");
+    seeAll.addEventListener("click", () => seeAllFiles(ul));
+    more.append(label, seeAll);
   }
-  more.textContent = `… ${hiddenCount} more file${hiddenCount === 1 ? "" : "s"}`;
+  more.querySelector(".more-files-label")!.textContent = `… ${hiddenCount} more file${hiddenCount === 1 ? "" : "s"}`;
   if (more !== ul.lastElementChild) ul.appendChild(more);
 }
